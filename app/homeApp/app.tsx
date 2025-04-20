@@ -24,6 +24,7 @@ import {
   faChartLine,
   faCreditCard,
 } from '@fortawesome/free-solid-svg-icons';
+import AccountEditPage from '~/components/AccountEdit'
 
 export function AppInicial() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -33,7 +34,7 @@ export function AppInicial() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationCount, setNotificationCount] = useState<number>(3);
   const [toasts, setToasts] = useState<ToastType[]>([]);
-  const [view, setView] = useState<'dashboard' | 'transfer' | 'cards' | 'investments' | 'billets'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'transfer' | 'cards' | 'investments' | 'billets' | 'accountEdit'>('dashboard');
   const [transferData, setTransferData] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successToast, setSuccessToast] = useState({ isOpen: false, message: '' });
@@ -138,6 +139,10 @@ export function AppInicial() {
     setView('billets');
   };
 
+  const handleAccountClick = () => {
+    setView('accountEdit');
+  };
+
   const handleCardsClick = () => {
     console.log('Navigating to cards view');
     setView('cards');
@@ -189,6 +194,7 @@ export function AppInicial() {
             onCardsClick={handleCardsClick}
             investmentClick={handleInvestmentsClick}
             billetsClick={handleBilletsClick}
+            accountEditClick={handleAccountClick}
             view={view} // Pass the current view to Sidebar
           />
           <div className="flex-grow">
@@ -205,8 +211,10 @@ export function AppInicial() {
               <CardsContent />
             ) : view === 'investments' ? (
               <InvestmentsContent />
-            ) : (
+            ) : view === 'billets' ? (
               <BilletsContent />
+            ): (
+              <AccountEditPage />
             )}
           </div>
         </div>

@@ -19,7 +19,8 @@ interface SidebarProps {
   onCardsClick: () => void;
   investmentClick: () => void;
   billetsClick: () => void;
-  view: 'dashboard' | 'transfer' | 'cards' | 'investments' | 'billets'; // Add view prop to track current view
+  accountEditClick: () => void;
+  view: 'dashboard' | 'transfer' | 'cards' | 'investments' | 'billets' | 'accountEdit'; // Add view prop to track current view
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -30,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCardsClick,
   investmentClick,
   billetsClick,
+  accountEditClick,
   view,
 }) => {
   const menuItems = [
@@ -38,8 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { icon: faCreditCard, color: 'text-purple-500', label: 'Cartões', onClick: onCardsClick, view: 'cards' }, // Fixed typo: onclick -> onClick
     { icon: faChartLine, color: 'text-green-500', label: 'Investimentos', onClick: investmentClick, view: 'investments' },
     { icon: faBarcode, color: 'text-green-500', label: 'billets', onClick: billetsClick, view: 'billets' },
-    { icon: faBell, color: 'text-yellow-500', label: 'Notificações', badge: notificationCount, onClick: () => {}, view: '' },
-    { icon: faCog, color: 'text-gray-500', label: 'Configurações', onClick: () => {}, view: '' },
+    { icon: faCog, color: 'text-gray-500', label: 'Configurações', onClick: accountEditClick, view: 'accountEdit' },
   ];
 
   return (
@@ -76,11 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               >
                 <FontAwesomeIcon icon={item.icon} className="w-5" />
                 <span>{item.label}</span>
-                {item.badge && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
-                    {item.badge}
-                  </span>
-                )}
               </button>
             </li>
           ))}

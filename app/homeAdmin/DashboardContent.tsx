@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Chart, type ChartTypeRegistry } from 'chart.js/auto';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faExchangeAlt,
+  faUsers,
+  faBarcode,
+  faCheckCircle,
+  faMoneyBillWave,
+  faUniversity,
+} from '@fortawesome/free-solid-svg-icons';
 
 // Type definitions
 type MetricCardProps = {
   title: string;
   value: string;
   description?: string;
-  icon: string;
+  icon: any;
   iconBgColor: string;
   iconTextColor: string;
 };
@@ -29,7 +38,6 @@ type ChartProps = {
   data: ChartData;
   title: string;
   filterOptions?: { label: string; active: boolean }[];
-  darkMode: boolean;
 };
 
 // Components
@@ -42,32 +50,46 @@ const MetricCard: React.FC<MetricCardProps> = ({
   iconTextColor,
 }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200 dark:border-gray-700">
       <div className="flex justify-between items-start">
         <div>
-          <h3 className="text-gray-500 dark:text-gray-300 text-sm font-medium">{title}</h3>
-          <p className="text-2xl font-bold mt-1 text-gray-800 dark:text-white">{value}</p>
+          <h3 className="text-gray-600 dark:text-gray-300 text-sm font-medium">{title}</h3>
+          <p className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">{value}</p>
           {description && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
           )}
         </div>
         <div className={`p-3 rounded-full ${iconBgColor} ${iconTextColor} transition-colors duration-300`}>
-          <i className={`fas ${icon} text-xl`}></i>
+          <FontAwesomeIcon icon={icon} className="text-xl" />
         </div>
       </div>
     </div>
   );
 };
 
-const CustomChart: React.FC<ChartProps> = ({ type, data, title, filterOptions, darkMode }) => {
+const CustomChart: React.FC<ChartProps> = ({ type, data, title, filterOptions }) => {
   const chartRef = React.useRef<HTMLCanvasElement>(null);
-  const chartInstance = React.useRef<Chart>(null);
+  const chartInstance = React.useRef<Chart | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(document.documentElement.classList.contains('dark'));
+
+  // Monitor dark mode changes
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (chartRef.current) {
       const ctx = chartRef.current.getContext('2d');
       if (ctx) {
-        // Destroy previous chart instance if exists
         if (chartInstance.current) {
           chartInstance.current.destroy();
         }
@@ -82,44 +104,39 @@ const CustomChart: React.FC<ChartProps> = ({ type, data, title, filterOptions, d
               legend: {
                 position: 'top',
                 labels: {
-                  color: darkMode ? '#e2e8f0' : '#64748b',
-                  font: {
-                    size: 14
-                  }
+                  color: isDarkMode ? '#f1f5f9' : '#475569',
+                  font: { size: 14 },
                 },
               },
               tooltip: {
-                bodyFont: {
-                  size: 14
-                },
-                titleFont: {
-                  size: 16
-                }
-              }
+                bodyFont: { size: 14 },
+                titleFont: { size: 16 },
+                backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                titleColor: isDarkMode ? '#f1f5f9' : '#1f2937',
+                bodyColor: isDarkMode ? '#f1f5f9' : '#1f2937',
+                borderColor: isDarkMode ? '#4b5563' : '#d1d5db',
+                borderWidth: 1,
+              },
             },
             scales: type !== 'pie' ? {
               x: {
                 grid: {
-                  color: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                  tickColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
+                  color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                  tickColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                 },
                 ticks: {
-                  color: darkMode ? '#e2e8f0' : '#64748b',
-                  font: {
-                    size: 12
-                  }
+                  color: isDarkMode ? '#f1f5f9' : '#475569',
+                  font: { size: 12 },
                 },
               },
               y: {
                 grid: {
-                  color: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                  tickColor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
+                  color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                  tickColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                 },
                 ticks: {
-                  color: darkMode ? '#e2e8f0' : '#64748b',
-                  font: {
-                    size: 12
-                  }
+                  color: isDarkMode ? '#f1f5f9' : '#475569',
+                  font: { size: 12 },
                 },
               },
             } : undefined,
@@ -133,12 +150,12 @@ const CustomChart: React.FC<ChartProps> = ({ type, data, title, filterOptions, d
         chartInstance.current.destroy();
       }
     };
-  }, [type, data, darkMode]);
+  }, [type, data, isDarkMode]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-white">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
         {filterOptions && (
           <div className="flex gap-2">
             {filterOptions.map((option, index) => (
@@ -146,9 +163,10 @@ const CustomChart: React.FC<ChartProps> = ({ type, data, title, filterOptions, d
                 key={index}
                 className={`px-3 py-1 text-xs rounded-md transition-colors duration-300 ${
                   option.active
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
+                    ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                 }`}
+                aria-label={`Filtrar por ${option.label}`}
               >
                 {option.label}
               </button>
@@ -163,7 +181,7 @@ const CustomChart: React.FC<ChartProps> = ({ type, data, title, filterOptions, d
   );
 };
 
-const ActivityLog: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
+const ActivityLog: React.FC = () => {
   const activities = [
     {
       time: '10/05 14:30',
@@ -198,8 +216,8 @@ const ActivityLog: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
-      <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Registro de Eventos (Últimas 24h)</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+      <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Registro de Eventos (Últimas 24h)</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead>
@@ -221,14 +239,14 @@ const ActivityLog: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {activities.map((activity, index) => (
               <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{activity.time}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{activity.action}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{activity.user}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{activity.time}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{activity.action}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{activity.user}</td>
                 <td
                   className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${
                     activity.amount !== '-'
                       ? 'text-green-600 dark:text-green-400'
-                      : 'text-gray-700 dark:text-gray-300'
+                      : 'text-gray-900 dark:text-gray-300'
                   }`}
                 >
                   {activity.amount}
@@ -243,8 +261,8 @@ const ActivityLog: React.FC<{ darkMode: boolean }> = ({ darkMode }) => {
 };
 
 const Dashboard: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(document.documentElement.classList.contains('dark'));
 
   // Update date time
   const updateDateTime = () => {
@@ -263,23 +281,23 @@ const Dashboard: React.FC = () => {
   // Initialize and update date time
   useEffect(() => {
     updateDateTime();
-    const interval = setInterval(updateDateTime, 60000); // Update every minute
+    const interval = setInterval(updateDateTime, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Check for saved user preference
+  // Monitor dark mode changes
   useEffect(() => {
-    if (localStorage.getItem('darkMode') === 'true') {
-      setDarkMode(true);
-    }
-  }, []);
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    localStorage.setItem('darkMode', String(newMode));
-  };
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Chart data
   const transfersData: ChartData = {
@@ -288,19 +306,19 @@ const Dashboard: React.FC = () => {
       {
         label: 'PIX',
         data: [120, 150, 200, 180, 240, 300, 350],
-        backgroundColor: '#3b82f6',
+        backgroundColor: isDarkMode ? '#60a5fa' : '#3b82f6',
         borderRadius: 4,
       },
       {
         label: 'TED',
         data: [50, 70, 60, 80, 90, 100, 120],
-        backgroundColor: '#10b981',
+        backgroundColor: isDarkMode ? '#34d399' : '#10b981',
         borderRadius: 4,
       },
       {
         label: 'DOC',
         data: [10, 15, 20, 18, 25, 30, 40],
-        backgroundColor: '#8b5cf6',
+        backgroundColor: isDarkMode ? '#a78bfa' : '#8b5cf6',
         borderRadius: 4,
       },
     ],
@@ -312,8 +330,8 @@ const Dashboard: React.FC = () => {
       {
         label: 'Cadastros',
         data: [1200, 1500, 1800, 2100, 2400, 2900, 3200],
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderColor: isDarkMode ? '#60a5fa' : '#3b82f6',
+        backgroundColor: isDarkMode ? 'rgba(96, 165, 250, 0.2)' : 'rgba(59, 130, 246, 0.1)',
         tension: 0.3,
         fill: true,
       },
@@ -325,22 +343,23 @@ const Dashboard: React.FC = () => {
     datasets: [
       {
         data: [65, 25, 10],
-        backgroundColor: ['#10b981', '#3b82f6', '#ef4444'],
+        backgroundColor: isDarkMode
+          ? ['#34d399', '#60a5fa', '#f87171']
+          : ['#10b981', '#3b82f6', '#ef4444'],
       },
     ],
   };
 
   return (
-    <div className={`min-h-screen font-sans antialiased transition-colors duration-300 ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="min-h-screen font-sans antialiased transition-colors duration-300 bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto px-4 py-6">
-    
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <MetricCard
             title="Transferências (Hoje)"
             value="1.245"
             description="PIX: 890 | TED: 300"
-            icon="fa-exchange-alt"
+            icon={faExchangeAlt}
             iconBgColor="bg-blue-100 dark:bg-blue-900"
             iconTextColor="text-blue-600 dark:text-blue-300"
           />
@@ -348,7 +367,7 @@ const Dashboard: React.FC = () => {
             title="Novos Cadastros"
             value="328"
             description="Últimas 24h"
-            icon="fa-users"
+            icon={faUsers}
             iconBgColor="bg-green-100 dark:bg-green-900"
             iconTextColor="text-green-600 dark:text-green-300"
           />
@@ -356,7 +375,7 @@ const Dashboard: React.FC = () => {
             title="Boletos Gerados"
             value="512"
             description="Valor total: R$ 1.245.000"
-            icon="fa-barcode"
+            icon={faBarcode}
             iconBgColor="bg-purple-100 dark:bg-purple-900"
             iconTextColor="text-purple-600 dark:text-purple-300"
           />
@@ -364,7 +383,7 @@ const Dashboard: React.FC = () => {
             title="Boletos Pagos"
             value="287"
             description="87% do total"
-            icon="fa-check-circle"
+            icon={faCheckCircle}
             iconBgColor="bg-orange-100 dark:bg-orange-900"
             iconTextColor="text-orange-600 dark:text-orange-300"
           />
@@ -372,14 +391,14 @@ const Dashboard: React.FC = () => {
             title="Depósitos"
             value="R$ 890.450"
             description="42 operações"
-            icon="fa-money-bill-wave"
+            icon={faMoneyBillWave}
             iconBgColor="bg-teal-100 dark:bg-teal-900"
             iconTextColor="text-teal-600 dark:text-teal-300"
           />
           <MetricCard
             title="Saldo Total do Sistema"
             value="R$ 98.754.321"
-            icon="fa-university"
+            icon={faUniversity}
             iconBgColor="bg-yellow-100 dark:bg-yellow-900"
             iconTextColor="text-yellow-600 dark:text-yellow-300"
           />
@@ -396,7 +415,6 @@ const Dashboard: React.FC = () => {
               { label: 'Semana', active: true },
               { label: 'Mês', active: false },
             ]}
-            darkMode={darkMode}
           />
           <CustomChart
             type="line"
@@ -406,7 +424,6 @@ const Dashboard: React.FC = () => {
               { label: '2023', active: false },
               { label: '2024', active: true },
             ]}
-            darkMode={darkMode}
           />
         </div>
 
@@ -416,9 +433,8 @@ const Dashboard: React.FC = () => {
             type="pie"
             data={invoicesData}
             title="Status dos Boletos"
-            darkMode={darkMode}
           />
-          <ActivityLog darkMode={darkMode} />
+          <ActivityLog />
         </div>
       </div>
     </div>

@@ -18,7 +18,19 @@ export function HomeApp () {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
-  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev: boolean) => {
+      const newMode: boolean = !prev;
+      localStorage.setItem('darkMode', String(newMode));
+      localStorage.setItem('theme', newMode ? 'dark' : 'light');
+      if (newMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      return newMode;
+    });
+  };
   const openModal = (type: ModalState['type'], data?: any) => setModalState({ type, data });
   const closeModal = () => setModalState({ type: null });
 
@@ -31,7 +43,8 @@ export function HomeApp () {
           isCollapsed={isSidebarCollapsed}
           toggleSidebar={toggleSidebar}
           toggleDarkMode={toggleDarkMode}
-          setActiveTab={setActiveTab} // Pass setActiveTab from HomeAdmin
+          setActiveTab={setActiveTab}
+          activeTab={activeTab}
           isDarkMode={isDarkMode}
         />
         <div
