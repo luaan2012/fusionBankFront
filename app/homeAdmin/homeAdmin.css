@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+body {
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar {
+  transition: all 0.3s ease;
+}
+
+.sidebar-collapsed {
+  width: 5rem;
+}
+
+.sidebar-collapsed .sidebar-item-text {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-header-text {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-item {
+  justify-content: center;
+}
+
+.content-area {
+  transition: margin-left 0.3s ease;
+}
+
+.content-area-expanded {
+  margin-left: 16rem;
+}
+
+.content-area-collapsed {
+  margin-left: 5rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background-color: #1f2937;
+  z-index: 10;
+}
+
+.data-table tr:hover {
+  background-color: #374151;
+}
+
+.data-table td, .data-table th {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #4b5563;
+}
+
+.dark .data-table th {
+  background-color: #111827;
+}
+
+.dark .data-table tr:hover {
+  background-color: #1f2937;
+}
+
+.dark .data-table td, .dark .data-table th {
+  border-bottom: 1px solid #374151;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Animation for notifications */
+@keyframes slideIn {
+  from {
+      transform: translateX(100%);
+      opacity: 0;
+  }
+  to {
+      transform: translateX(0);
+      opacity: 1;
+  }
+}
+
+.notification {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+/* 2FA modal */
+.twofa-modal {
+  max-width: 400px;
+}

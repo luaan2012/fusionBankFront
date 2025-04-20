@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+.smooth-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.menu-item.active {
+  background-color: rgba(37, 99, 235, 0.1);
+  border-left: 4px solid #2563eb;
+}
+
+.input-with-icon {
+  padding-left: 40px;
+}
+
+.dark .dark\:bg-dark-primary {
+  background-color: #1e293b;
+}
+
+.dark .dark\:bg-dark-secondary {
+  background-color: #0f172a;
+}
+
+.dark .dark\:text-light {
+  color: #f8fafc;
+}
+
+.dark .dark\:border-dark {
+  border-color: #334155;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu {
+      transform: translateX(-100%);
+  }
+  
+  .mobile-menu.active {
+      transform: translateX(0);
+  }
+}
+
+@keyframes cardFlip {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+@keyframes cardUnlock {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+.card-flip {
+  animation: cardFlip 0.5s ease-in-out;
+}
+.card-unlock {
+  animation: cardUnlock 0.5s ease-in-out;
+}
+.gradient-bg {
+  background: linear-gradient(135deg, #6e8efb, #a777e3);
+}
+.card-chip {
+  background: linear-gradient(135deg, #ffd700, #d4af37);
+}
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.dark .dark\:bg-dark-800 {
+  background-color: #1a202c;
+}
+.dark .dark\:text-white {
+  color: #fff;
+}
+.dark .dark\:bg-dark-700 {
+  background-color: #2d3748;
+}
+.dark .dark\:border-dark-600 {
+  border-color: #4a5568;
+}
+.dark .dark\:text-gray-300 {
+  color: #d1d5db;
+}
+.dark .dark\:bg-dark-600 {
+  background-color: #4a5568;
+}
