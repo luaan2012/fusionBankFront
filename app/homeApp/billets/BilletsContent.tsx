@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import TabNavigation from './TabBilletNavigation';
-import DepositContent from './DepositContent';
-import BoletoPaymentContent from './BoletoPaymentContent';
-import GenerateBoletoContent from './GenereteBoletoContent';
-import ErrorToast from './ErrorToast';
+import BoletoPaymentContent from '~/components/BoletoPaymentContent'
+import DepositContent from '~/components/DepositContent'
+import ErrorToast from '~/components/ErrorToast'
+import GenerateBoletoContent from '~/components/GenereteBoletoContent'
+import TabNavigation from '~/components/TabBilletNavigation'
 
-const App: React.FC = () => {
+export function BilletsContent() {
+
   const [activeTab, setActiveTab] = useState<string>('deposit');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showBoletoModal, setShowBoletoModal] = useState<boolean>(false);
@@ -44,5 +45,3 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-export default App;

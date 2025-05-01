@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import TransferCard from './TransferCard';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUniversity, faHistory, faCamera, faQrcode, faBolt, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
+import TransferCard from '~/components/TransferCard'
 
 interface TransferCardData {
   type: 'pix' | 'ted' | 'doc';

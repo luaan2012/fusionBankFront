@@ -10,7 +10,7 @@ interface ModalProps {
   closeModal: () => void;
 }
 
-const Modal: React.FC<ModalProps> = ({ modalState, closeModal }) => {
+const ModalAdmin: React.FC<ModalProps> = ({ modalState, closeModal }) => {
   if (!modalState.type) return null;
 
   return (
@@ -300,4 +300,4 @@ const Modal: React.FC<ModalProps> = ({ modalState, closeModal }) => {
   );
 };
 
-export default Modal;
+export default ModalAdmin;

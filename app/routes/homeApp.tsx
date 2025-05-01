@@ -1,6 +1,6 @@
-import { AppInicial } from "~/homeApp/app"
+import { Index } from "~/homeApp/"
 import type { Route } from "./+types/home";
-import "../homeApp/app.css";
+import "../homeApp/css/app.css";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -10,5 +10,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  return <AppInicial />;
+  return <Index />;
 }

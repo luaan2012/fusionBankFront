@@ -1,12 +1,12 @@
 import ThemeToggle from '~/components/ThemeToggle'
 import TabNavigation from '~/components/TabNavigation'
-import LoginForm from '~/components/LoginForm'
-import RegistrationForm from '~/components/RegistrationForm'
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUniversity } from '@fortawesome/free-solid-svg-icons'
+import LoginForm from './login/LoginForm'
+import RegistrationForm from './register/RegistrationForm'
 
-export function HomePage() {
+export function Index() {
     const [activeTab, setActiveTab] = useState<string>('login');
 
   const resetRegistration = () => {

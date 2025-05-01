@@ -1,7 +1,7 @@
-import { HomeApp } from "../homeAdmin/HomeApp"
+import { Index } from "../homeAdmin/"
 import type { Route } from "./+types/home";
 
-import "../homeAdmin/homeAdmin.css";
+import "../homeAdmin/css/home.css"
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,5 +11,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  return < HomeApp />;
+  return < Index />;
 }

@@ -12,12 +12,13 @@ import {
   faUserClock,
   faCreditCard,
 } from '@fortawesome/free-solid-svg-icons';
+import type Header from './Header'
 
 interface HeaderProps {
   openModal: (type: 'bank' | 'transfer' | 'twofa' | 'confirm', data?: any) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ openModal }) => {
+const HeaderAdmin: React.FC<HeaderProps> = ({ openModal }) => {
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
@@ -206,4 +207,4 @@ const Header: React.FC<HeaderProps> = ({ openModal }) => {
   );
 };
 
-export default Header;
+export default HeaderAdmin;

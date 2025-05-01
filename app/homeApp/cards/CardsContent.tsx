@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import CardDashboard from './CardDashboard';
-import CardManagementTabs from './CardManagementTabs';
-import RequestCardModal from './RequestCardModal';
-import SuccessNotification from './SuccessNotifications';
-import type { Card } from '../../types';
+import type { Card } from 'types'
+import CardDashboard from '~/components/CardDashboard'
+import CardManagementTabs from '~/components/CardManagementTabs'
+import RequestCardModal from '~/components/RequestCardModal'
+import SuccessNotification from '~/components/SuccessNotifications'
 
 const CardsContent: React.FC = () => {
   const [cards, setCards] = useState<Card[]>([

@@ -70,15 +70,15 @@ const MetricCard: React.FC<MetricCardProps> = ({
 const CustomChart: React.FC<ChartProps> = ({ type, data, title, filterOptions }) => {
   const chartRef = React.useRef<HTMLCanvasElement>(null);
   const chartInstance = React.useRef<Chart | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(document.documentElement.classList.contains('dark'));
+  const [isDarkMode, setIsDarkMode] = useState<boolean>();
 
   // Monitor dark mode changes
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
+      setIsDarkMode(document?.documentElement.classList.contains('dark'));
     });
 
-    observer.observe(document.documentElement, {
+    observer.observe(document?.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
     });
@@ -262,7 +262,7 @@ const ActivityLog: React.FC = () => {
 
 const Dashboard: React.FC = () => {
   const [currentDateTime, setCurrentDateTime] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(document.documentElement.classList.contains('dark'));
+  const [isDarkMode, setIsDarkMode] = useState<boolean>();
 
   // Update date time
   const updateDateTime = () => {
@@ -288,10 +288,10 @@ const Dashboard: React.FC = () => {
   // Monitor dark mode changes
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
+      setIsDarkMode(document?.documentElement.classList.contains('dark'));
     });
 
-    observer.observe(document.documentElement, {
+    observer.observe(document?.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
     });

@@ -1,4 +1,4 @@
-import { HomePage } from "~/homePage"
+import { Index } from "~/homePage"
 import type { Route } from "./+types/home";
 
 import "../app.css";
@@ -11,5 +11,5 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  return <HomePage />;
+  return <Index />;
 }

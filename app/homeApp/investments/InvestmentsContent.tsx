@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import Header from './Header';
-import SummaryCard from './SummaryCard';
-import InvestmentTabs from './InvestmentTabs';
-import InvestModal from './InvestModal';
-import VerificationModal from './VerificationModal';
-import SuccessNotification from './SuccessNotifications';
+import InvestmentTabs from '~/components/InvestmentTabs'
+import InvestModal from '~/components/InvestModal'
+import SummaryCard from '~/components/SummaryCard'
+import VerificationModal from '~/components/VerificationModal'
+
 
 interface Notification {
     show: boolean;

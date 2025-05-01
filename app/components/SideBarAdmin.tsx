@@ -20,14 +20,14 @@ interface SidebarProps {
   isDarkMode: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
+export function SidebarAdmin({
   isCollapsed,
   toggleSidebar,
   toggleDarkMode,
   setActiveTab,
   activeTab,
   isDarkMode,
-}) => {
+} : SidebarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: faTachometerAlt },
     { id: 'accounts', label: 'Contas', icon: faUsers, group: 'Gerenciamento' },
@@ -144,5 +144,3 @@ const Sidebar: React.FC<SidebarProps> = ({
     </div>
   );
 };
-
-export default Sidebar;

@@ -14,8 +14,8 @@ import {
   faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons';
 import { type IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import ProgressSteps from './ProgressSteps';
-import BankCard from './BankCard';
+import ProgressSteps from '~/components/ProgressSteps'
+import BankCard from '~/components/BankCard'
 
 // Define the Bank type
 interface Bank {

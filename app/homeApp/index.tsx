@@ -8,12 +8,8 @@ import QuickActions from '../components/QuickActions';
 import AccountSummary from '../components/AccountSummary';
 import RecentTransactions from '../components/RecentTransactions';
 import Investments from '../components/Investments';
-import InvestmentsContent from '../components/InvestmentsContent';
-import BilletsContent from '../components/BilletsContent';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
-import TransferContent from '../components/Transfer';
-import CardsContent from '../components/CardsContent';
 import ConfirmationModal from '../components/ConfirmationModel';
 import SuccessToast from '../components/SuccessToast';
 import ErrorToast from '../components/ErrorToast';
@@ -24,9 +20,13 @@ import {
   faChartLine,
   faCreditCard,
 } from '@fortawesome/free-solid-svg-icons';
-import AccountEditPage from '~/components/AccountEdit'
+import TransferContent from './transfer/Transfer'
+import CardsContent from './cards/CardsContent'
+import InvestmentsContent from './investments/InvestmentsContent'
+import AccountEditPage from './config/AccountEdit'
+import { BilletsContent } from './billets/BilletsContent'
 
-export function AppInicial() {
+export function Index() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);

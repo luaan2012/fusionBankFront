@@ -1,17 +1,23 @@
-// App.tsx (example adjustment)
+import BankContexts from "./banks/BankContexts"
+import DashboardContent from "./dashboard/DashboardContent"
+import TransationMain from "./transactions/Transaction"
 import React, { useState } from 'react';
-import Sidebar from './SideBar';
-import Header from './Header';
-import MainAdmin from './MainAdmin';
-import NotificationArea from './NotificationArea';
-import Modal from './Modal';
+import { SidebarAdmin } from "~/components/SideBarAdmin"
+import ModalAdmin from "~/components/ModalAdmin"
+import HeaderAdmin from "~/components/HeaderAdmin"
+import NotificationAreaAdmin from "~/components/NotificationAreaAdmin"
 
 interface ModalState {
   type: 'bank' | 'transfer' | 'twofa' | 'confirm' | null;
   data?: any;
 }
 
-export function HomeApp () {
+interface MainContentProps {
+  activeTab: string;
+  openModal: (type: 'bank' | 'transfer' | 'twofa' | 'confirm', data?: any) => void;
+}
+
+export function Index () {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [modalState, setModalState] = useState<ModalState>({ type: null });
@@ -36,10 +42,10 @@ export function HomeApp () {
 
   return (
     <div className={`bg-gray-100 dark:bg-gray-900 ${isDarkMode ? 'dark' : ''}`}>
-      <NotificationArea />
-      <Modal modalState={modalState} closeModal={closeModal} />
+      <NotificationAreaAdmin />
+      <ModalAdmin modalState={modalState} closeModal={closeModal} />
       <div className="flex h-screen overflow-hidden">
-        <Sidebar
+        <SidebarAdmin
           isCollapsed={isSidebarCollapsed}
           toggleSidebar={toggleSidebar}
           toggleDarkMode={toggleDarkMode}
@@ -52,8 +58,12 @@ export function HomeApp () {
             isSidebarCollapsed ? 'content-area-collapsed' : 'content-area-expanded'
           }`}
         >
-          <Header openModal={openModal} />
-          <MainAdmin openModal={openModal} activeTab={activeTab}/>
+          <HeaderAdmin openModal={openModal} />
+          <main className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+            {activeTab === 'dashboard' && <DashboardContent />}
+            {activeTab === 'accounts' && <BankContexts />}
+            {activeTab === 'transactions' && <TransationMain />}
+          </main>
         </div>
       </div>
     </div>
