@@ -1,10 +1,11 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faUniversity, faSun, faMoon, faBell } from '@fortawesome/free-solid-svg-icons';
-import { getInitials } from '../../utils';
+import { defaultMessage, getInitials } from '../../utils';
+import type { Account } from '~/models/account'
 
 interface HeaderProps {
-  user: { name: string; account: string };
+  user: Account | null;
   toggleMobileMenu: () => void;
   toggleDarkMode: () => void;
   toggleNotificationCenter: () => void;
@@ -54,11 +55,11 @@ const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-white">
+            {/* <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center font-medium text-gray-700 dark:text-white">
               <span>{getInitials(user.name)}</span>
-            </div>
+            </div> */}
             <span className="hidden lg:inline text-gray-700 dark:text-gray-300 font-medium">
-              {user.name}
+              {user?.fullName || defaultMessage.loading}
             </span>
           </div>
         </div>

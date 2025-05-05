@@ -25,9 +25,11 @@ import CardsContent from './cards/CardsContent'
 import InvestmentsContent from './investments/InvestmentsContent'
 import AccountEditPage from './config/AccountEdit'
 import { BilletsContent } from './billets/BilletsContent'
+import type { Account } from '~/models/account'
+import { useHomeStore } from '~/context/homeStore'
+import { useAccountStore } from '~/context/accountStore'
 
 export function Index() {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -39,37 +41,39 @@ export function Index() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successToast, setSuccessToast] = useState({ isOpen: false, message: '' });
   const [errorToast, setErrorToast] = useState({ isOpen: false, message: '' });
-  const user = { name: 'João da Silva', account: '12345-6' };
-
+  const { updateUser } = useHomeStore();
+  const { setDarkMode, user } = useAccountStore();
+  
   useEffect(() => {
-    if (isDarkMode) {
+    if (user?.darkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-  }, [isDarkMode]);
+  }, [user?.darkMode]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.1) {
-        setNotificationCount((prev) => prev + 1);
-        const newToast: ToastType = {
-          id: Date.now(),
-          message: 'Nova notificação recebida',
-        };
-        setToasts((prev) => [...prev, newToast]);
-        setTimeout(() => {
-          setToasts((prev) => prev.filter((toast) => toast.id !== newToast.id));
-        }, 3300);
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (Math.random() > 0.1) {
+  //       setNotificationCount((prev) => prev + 1);
+  //       const newToast: ToastType = {
+  //         id: Date.now(),
+  //         message: 'Nova notificação recebida',
+  //       };
+  //       setToasts((prev) => [...prev, newToast]);
+  //       setTimeout(() => {
+  //         setToasts((prev) => prev.filter((toast) => toast.id !== newToast.id));
+  //       }, 3300);
+  //     }
+  //   }, 3000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
+   setDarkMode(!user?.darkMode)
+   updateUser();
   };
 
   const toggleMobileMenu = () => {
@@ -182,7 +186,7 @@ export function Index() {
         toggleDarkMode={toggleDarkMode}
         toggleNotificationCenter={toggleNotificationCenter}
         notificationCount={notificationCount}
-        isDarkMode={isDarkMode}
+        isDarkMode={user?.darkMode || false}
       />
       <main className="flex-grow container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
@@ -201,7 +205,7 @@ export function Index() {
             {view === 'dashboard' ? (
               <>
                 <QuickActions />
-                <AccountSummary />
+                <AccountSummary user={user}/>
                 <RecentTransactions />
                 <Investments />
               </>

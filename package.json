@@ -13,9 +13,11 @@
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@hookform/resolvers": "^5.0.1",
     "@react-router/node": "^7.5.1",
     "@react-router/serve": "^7.5.1",
     "@types/cleave.js": "^1.4.12",
+    "axios": "^1.9.0",
     "cleave": "^1.0.2",
     "cleave.js": "^1.6.0",
     "isbot": "^5.1.17",
@@ -23,8 +25,12 @@
     "react-chartjs-2": "^5.3.0",
     "react-chartjs2": "^1.2.1",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.56.2",
     "react-router": "^7.5.1",
-    "uuid": "^11.1.0"
+    "react-router-dom": "^7.5.3",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.4",
+    "zustand": "^5.0.4"
   },
   "devDependencies": {
     "@react-router/dev": "^7.5.1",

@@ -9,10 +9,11 @@ import {
   faBarcode,
   faCog,
 } from '@fortawesome/free-solid-svg-icons';
-import { getInitials } from '../../utils';
+import { defaultMessage, formatNumberAccount, formatToBRL, getInitials } from '../../utils';
+import type { Account } from '~/models/account'
 
 interface SidebarProps {
-  user: { name: string; account: string };
+  user: Account | null;
   notificationCount: number;
   onTransferClick: () => void;
   onDashboardClick: () => void;
@@ -23,7 +24,7 @@ interface SidebarProps {
   view: 'dashboard' | 'transfer' | 'cards' | 'investments' | 'billets' | 'accountEdit'; // Add view prop to track current view
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
+export function Sidebar ({
   user,
   notificationCount,
   onTransferClick,
@@ -33,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   billetsClick,
   accountEditClick,
   view,
-}) => {
+} : SidebarProps) {
   const menuItems = [
     { icon: faHome, color: 'text-primary-light', label: 'Início', onClick: onDashboardClick, view: 'dashboard' },
     { icon: faExchangeAlt, color: 'text-blue-500', label: 'Transferências', onClick: onTransferClick, view: 'transfer' },
@@ -48,16 +49,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="bg-white dark:bg-dark-secondary rounded-lg shadow p-4 mb-6">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-primary-light flex items-center justify-center text-white">
-            <span>{getInitials(user.name)}</span>
+            <span>{getInitials(user?.fullName || defaultMessage.loading)}</span>
           </div>
           <div>
-            <p className="font-medium text-gray-800 dark:text-light">{user.name}</p>
-            <p className="text-xs text-gray-500">Conta: {user.account}</p>
+            <p className="font-medium text-gray-800 dark:text-light">{user?.fullName || defaultMessage.loading}</p>
+            <p className="text-xs text-gray-500">Conta: {formatNumberAccount(user?.accountNumber || defaultMessage.loading)}</p>
           </div>
         </div>
         <div className="mb-4">
           <p className="text-sm text-gray-500">Saldo disponível</p>
-          <p className="text-2xl font-bold text-gray-800 dark:text-light">R$ 12.345,67</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-light">{formatToBRL(user?.balance || defaultMessage.balance)}</p>
         </div>
         <button className="w-full bg-primary-light hover:bg-primary-dark text-white py-2 px-4 rounded-lg smooth-transition">
           Ver extrato completo
