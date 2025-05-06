@@ -28,6 +28,7 @@ import { BilletsContent } from './billets/BilletsContent'
 import type { Account } from '~/models/account'
 import { useHomeStore } from '~/context/homeStore'
 import { useAccountStore } from '~/context/accountStore'
+import { useNavigate } from 'react-router';
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -43,7 +44,8 @@ export function Index() {
   const [errorToast, setErrorToast] = useState({ isOpen: false, message: '' });
   const { updateUser } = useHomeStore();
   const { setDarkMode, user } = useAccountStore();
-  
+
+
   useEffect(() => {
     if (user?.darkMode) {
       document.documentElement.classList.add('dark');
@@ -72,8 +74,8 @@ export function Index() {
   // }, []);
 
   const toggleDarkMode = () => {
-   setDarkMode(!user?.darkMode)
-   updateUser();
+    setDarkMode(!user?.darkMode)
+    updateUser();
   };
 
   const toggleMobileMenu = () => {
@@ -125,6 +127,24 @@ export function Index() {
     setTimeout(() => {
       console.log('Redirect to login');
     }, 1500);
+  };
+
+  const quickActionsNagivate = (rota: string) => {
+
+    switch (rota) {
+      case 'PIX':
+        setView("transfer")
+        break
+      case 'Boletos':
+        setView("billets")
+        break
+      case 'Cartões':
+        setView("cards")
+        break
+      case 'Investir':
+        setView("investments")
+        break
+    }
   };
 
   const handleTransferClick = () => {
@@ -204,8 +224,9 @@ export function Index() {
           <div className="flex-grow">
             {view === 'dashboard' ? (
               <>
-                <QuickActions />
-                <AccountSummary user={user}/>
+                <QuickActions onClick={quickActionsNagivate} />
+
+                <AccountSummary user={user} />
                 <RecentTransactions />
                 <Investments />
               </>
@@ -217,7 +238,7 @@ export function Index() {
               <InvestmentsContent />
             ) : view === 'billets' ? (
               <BilletsContent />
-            ): (
+            ) : (
               <AccountEditPage />
             )}
           </div>

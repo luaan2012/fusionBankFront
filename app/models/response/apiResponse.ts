@@ -9,4 +9,4 @@ export interface ApiResponse<T> {
 export interface AxyosResponse<T> {
   data: ApiResponse<T>;
   status: number
-}
+}  
