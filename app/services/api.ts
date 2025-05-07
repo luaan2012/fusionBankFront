@@ -39,12 +39,8 @@ api.interceptors.request.use(config => {
 // Função genérica para GET
 async function get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
   try {
-    const response: ApiResponse<T> = await api.get(url, config);
-    return {
-      data: response.data,
-      error: response.error,
-      success: response.success,
-    };
+    const response: AxyosResponse<T> = await api.get(url, config);
+    return response.data
   } catch (error) {
     throw handleError(error);
   }

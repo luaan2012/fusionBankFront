@@ -7,7 +7,7 @@ interface ModalState {
 
 interface ModalProps {
   modalState: ModalState;
-  closeModal: () => void;
+  closeModal?: () => void;
 }
 
 const ModalAdmin: React.FC<ModalProps> = ({ modalState, closeModal }) => {

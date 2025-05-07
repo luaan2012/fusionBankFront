@@ -1,20 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
-import MobileMenu from '../components/MobileMenu';
 import NotificationCenter from '../components/NotificationCenter';
 import LoadingOverlay from '../components/LoadingOverlay';
 import QuickActions from '../components/QuickActions';
 import AccountSummary from '../components/AccountSummary';
-import RecentTransactions from '../components/RecentTransactions';
-import Investments from '../components/Investments';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModel';
 import SuccessToast from '../components/SuccessToast';
-import ErrorToast from '../components/ErrorToast';
 import { type Notification, type Toast as ToastType } from '../../types';
-import { getInitials } from '../../utils';
 import {
   faMoneyBillTransfer,
   faChartLine,
@@ -25,9 +20,12 @@ import CardsContent from './cards/CardsContent'
 import InvestmentsContent from './investments/InvestmentsContent'
 import AccountEditPage from './config/AccountEdit'
 import { BilletsContent } from './billets/BilletsContent'
-import type { Account } from '~/models/account'
-import { useHomeStore } from '~/context/homeStore'
 import { useAccountStore } from '~/context/accountStore'
+import { useEventStore } from '~/context/eventStore'
+import { RecentTransactions } from '~/components/RecentTransactions'
+import Loading from '~/components/Loading'
+import { useInvestmentStore } from '~/context/investmentStore'
+import { InvestmentsDisplay } from '~/components/InvestmentsDisplay'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -41,8 +39,10 @@ export function Index() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successToast, setSuccessToast] = useState({ isOpen: false, message: '' });
   const [errorToast, setErrorToast] = useState({ isOpen: false, message: '' });
-  const { updateUser } = useHomeStore();
-  const { setDarkMode, user } = useAccountStore();
+  const { getEventsHome, event } = useEventStore();
+  const { getInvestmentsHome, investment } = useInvestmentStore();
+  const { setDarkMode, user, updateUser } = useAccountStore();
+  
   
   useEffect(() => {
     if (user?.darkMode) {
@@ -52,7 +52,22 @@ export function Index() {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+
+    if(!event && user){
+      getEventsHome(user.accountId, 3)
+    }
+
   }, [user?.darkMode]);
+
+  useEffect(() => {
+    if(!event && user){
+      getEventsHome(user.accountId, 3)
+    }
+
+    if(!investment && user){
+      getInvestmentsHome(user.accountId, 3)
+    }
+  }, [event, investment]);
 
   // useEffect(() => {
   //   const interval = setInterval(() => {
@@ -206,8 +221,8 @@ export function Index() {
               <>
                 <QuickActions />
                 <AccountSummary user={user}/>
-                <RecentTransactions />
-                <Investments />
+                {!event ? <Loading/> : <RecentTransactions lastTransactions={event}/>}
+                {!investment ? <Loading/> : <InvestmentsDisplay investments={investment}/>}
               </>
             ) : view === 'transfer' ? (
               <TransferContent onConfirm={handleTransferConfirm} />

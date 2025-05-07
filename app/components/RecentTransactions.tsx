@@ -1,6 +1,9 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp, faArrowDown, faBarcode } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faArrowDown, faBarcode, faInbox } from '@fortawesome/free-solid-svg-icons';
+import { useEventStore } from '~/context/eventStore'
+import type { EventMessage } from '~/models/eventMessage'
+import { mapEventMessagesToTransactions } from '~/utils/map'
 
 interface Transaction {
   icon: any; // Use specific icon type if needed
@@ -12,36 +15,12 @@ interface Transaction {
   balance: string;
 }
 
-const RecentTransactions: React.FC = () => {
-  const transactions: Transaction[] = [
-    {
-      icon: faArrowUp,
-      iconColor: 'text-red-500',
-      bg: 'bg-red-100',
-      title: 'Transferência enviada',
-      description: 'PIX para Maria Souza • 10/06/2023',
-      amount: '- R$ 150,00',
-      balance: 'R$ 12.345,67',
-    },
-    {
-      icon: faArrowDown,
-      iconColor: 'text-green-500',
-      bg: 'bg-green-100',
-      title: 'Depósito recebido',
-      description: 'Salário • 05/06/2023',
-      amount: '+ R$ 5.000,00',
-      balance: 'R$ 12.495,67',
-    },
-    {
-      icon: faBarcode,
-      iconColor: 'text-blue-500',
-      bg: 'bg-blue-100',
-      title: 'Pagamento de boleto',
-      description: 'Energia Elétrica • 01/06/2023',
-      amount: '- R$ 350,00',
-      balance: 'R$ 7.495,67',
-    },
-  ];
+interface RecentTransactionProps{
+  lastTransactions: EventMessage[]
+}
+
+export function RecentTransactions ({lastTransactions}: RecentTransactionProps) {
+  const transactions = mapEventMessagesToTransactions(lastTransactions);
 
   return (
     <div className="bg-white dark:bg-dark-secondary rounded-lg shadow mb-6 p-6">
@@ -52,7 +31,8 @@ const RecentTransactions: React.FC = () => {
         </a>
       </div>
       <div className="space-y-4">
-        {transactions.map((transaction, index) => (
+      {transactions.length > 0 ? (
+        transactions.map((transaction, index) => (
           <div
             key={index}
             className="flex items-center justify-between p-3 border-b dark:border-dark hover:bg-gray-50 dark:hover:bg-gray-800 smooth-transition"
@@ -69,16 +49,24 @@ const RecentTransactions: React.FC = () => {
               </div>
             </div>
             <div className="text-right">
-              <p className={`font-medium ${transaction.amount.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+              <p
+                className={`font-medium ${
+                  transaction.amount.startsWith('+') ? 'text-green-500' : 'text-red-500'
+                }`}
+              >
                 {transaction.amount}
               </p>
               <p className="text-xs text-gray-500">Saldo: {transaction.balance}</p>
             </div>
           </div>
-        ))}
+        ))
+      ) : (
+        <div className="flex items-center justify-center flex-1 text-gray-500 dark:text-gray-400">
+          <FontAwesomeIcon icon={faInbox} className="text-2xl mr-2" />
+          <p>Nada encontrado ainda</p>
+        </div>
+      )}
       </div>
     </div>
   );
 };
-
-export default RecentTransactions;

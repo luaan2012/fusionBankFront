@@ -1,7 +1,7 @@
 import { type Account } from './../models/account';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { accountApi } from '../services/AccountApi';
+import { accountApi } from '../services/accountApi';
 import { type LoginPayload } from '../homePage/schema/loginSchema';
 import { LevelError, type ErrorApi } from '~/models/response/errorResponse'
 
@@ -12,7 +12,7 @@ interface AccountState {
   loading: boolean;
   error: ErrorApi | null;
   setDarkMode: (darkMode: boolean) => void;
-  updateUser: (credentials: LoginPayload) => void;
+  updateUser: () => void;
   login: (credentials: LoginPayload) => Promise<boolean>;
   logout: () => void;
   // checkToken: () => Promise<boolean>;
@@ -47,7 +47,6 @@ export const useAccountStore = create<AccountState>()(
         set({ loading: true, error: null });
 
         try {
-          console.log(darkMode)
           await accountApi.setModeDark(user.accountId, darkMode);
           set({
             loading: false,
