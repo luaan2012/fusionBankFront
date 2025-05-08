@@ -23,6 +23,13 @@ export const formatToBRL = (value: number | string): string => {
   });
 };
 
+export const formatToBRLInput = (value) => {
+  if (!value) return '';
+  const number = parseFloat(value.replace(',', '.'));
+  if (isNaN(number)) return '';
+  return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
+
 export const translateAccountType = (type: AccountType): string => {
   const translations: Record<string, string> = {
     CheckingAccount: 'Conta Corrente',

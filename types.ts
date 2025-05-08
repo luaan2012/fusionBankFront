@@ -9,7 +9,8 @@ export interface Notification {
   time: string;
   unread: boolean;
   link?: string;
-}export interface Toast {
+}
+export interface Toast {
   id: number;
   message: string;
 }
@@ -61,5 +62,5 @@ export interface ConfirmationDetails {
   total: string;
   destination: string;
   description: string;
-  scheduleDate?: string;
+  scheduleDate?: boolean;
 }

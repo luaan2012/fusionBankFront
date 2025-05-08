@@ -14,6 +14,7 @@ interface AccountState {
   setDarkMode: (darkMode: boolean) => void;
   updateUser: () => void;
   login: (credentials: LoginPayload) => Promise<boolean>;
+  register: (credentials: RegisterRequest) => Promise<boolean>;
   logout: () => void;
   // checkToken: () => Promise<boolean>;
 }
@@ -60,20 +61,31 @@ export const useAccountStore = create<AccountState>()(
         }
       },
       updateUser: async () => {
-        const { user } = get(); // CORREÇÃO: pegar user do estado atual
-        if (!user) {
-          set({ error: { message: 'Usuário não autenticado', levelError: LevelError.high }, loading: false});
-          return;
-        }        
-        set({
-          user: { ...user }, // Atualiza com o novo valor
-        });
-
+        try {
+          const { user } = get(); // CORREÇÃO: pegar user do estado atual
+          const response = await accountApi.getAccount(user.accountId);
+          console.log(response)
+          set({ loading: false, user: response.data });
+        } catch (err: any) {
+          set({ loading: false, error: err.message || 'Falha no login' });
+        }
       },
       login: async credentials => {
         set({ loading: true, error: null });
         try {
           const response = await accountApi.login(credentials);
+          set({ loading: false, token: response.data.token, user: response.data.account });
+          return true;
+        } catch (err: any) {
+          set({ loading: false, error: err.message || 'Falha no login' });
+          return false
+          // throw err;
+        }
+      },
+      register: async credentials => {
+        set({ loading: true, error: null });
+        try {
+          const response = await accountApi.register(credentials);
           set({ loading: false, token: response.data.token, user: response.data.account });
           return true;
         } catch (err: any) {

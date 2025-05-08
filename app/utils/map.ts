@@ -1,8 +1,10 @@
-import { faArrowDown, faArrowUp, faBarcode } from "@fortawesome/free-solid-svg-icons"
+import { faArrowDown, faArrowUp, faBarcode, faCreditCard, faHandHoldingUsd, faPiggyBank, faUniversity } from "@fortawesome/free-solid-svg-icons"
+import type { Bank } from "~/models/bank"
+import { BankType } from "~/models/enum/bankType"
 import { NotificationType } from "~/models/enum/notificationType"
 import type { EventMessage } from "~/models/eventMessage"
 import type { Investment } from "~/models/investment"
-import type { InvestmentHome, LastTransction } from "~/models/maps"
+import type { BankRegister, InvestmentHome, LastTransction } from "~/models/maps"
 
 export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): LastTransction[] {
   if(eventMessages.length <= 0) return [];
@@ -118,5 +120,62 @@ export function mapInvestmentsToDisplay(investments: Investment[]): InvestmentHo
       yield: formatCurrency(yieldValue),
       progressColor,
     };
+  });
+}
+
+export function mapBanksToDisplay(banks: Bank[]): BankRegister[] {
+  if(banks.length <= 0) return [];
+  
+  return banks.map((bank) => {
+    // Formata valores monetários
+    const formatCurrency = (value: number): string =>
+      `R$ ${value.toFixed(2).replace('.', ',')}`;
+
+    switch(bank.bankType) {
+    case BankType.DIGITAL:
+      return {
+        name: bank.name,
+        icon: faUniversity,
+        iconBg: 'bg-blue-100 dark:bg-blue-900',
+        iconColor: 'text-blue-600 dark:text-blue-300',
+        features: bank.bankAdvantages,
+        fee: formatCurrency(bank.maintenanceFee),
+        bankISBP: bank.ispb
+      };
+
+    case BankType.LOAN:
+      return {
+        name: bank.name,
+        icon: faHandHoldingUsd,
+        iconBg: 'bg-yellow-100 dark:bg-yellow-900',
+        iconColor: 'text-yellow-600 dark:text-yellow-300',
+        features: bank.bankAdvantages,
+        fee: formatCurrency(bank.maintenanceFee),
+        bankISBP: bank.ispb
+      };
+
+    case BankType.CARD:
+      return {
+        name: bank.name,
+        icon: faCreditCard,
+        iconBg: 'bg-purple-100 dark:bg-purple-900',
+        iconColor: 'text-purple-600 dark:text-purple-300',
+        features: bank.bankAdvantages,
+        fee: formatCurrency(bank.maintenanceFee),
+        bankISBP: bank.ispb
+      };
+
+    default:
+      // Caso notificationType não seja reconhecido
+      return {
+        name: bank.name,
+        icon: faPiggyBank,
+        iconBg: 'bg-green-100 dark:bg-green-900',
+        iconColor: 'text-green-600 dark:text-green-300',
+        features: bank.bankAdvantages,
+        fee: formatCurrency(bank.maintenanceFee),
+        bankISBP: bank.ispb
+      };
+    }
   });
 }

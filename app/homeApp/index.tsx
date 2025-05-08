@@ -15,7 +15,6 @@ import {
   faChartLine,
   faCreditCard,
 } from '@fortawesome/free-solid-svg-icons';
-import TransferContent from './transfer/Transfer'
 import CardsContent from './cards/CardsContent'
 import InvestmentsContent from './investments/InvestmentsContent'
 import AccountEditPage from './config/AccountEdit'
@@ -26,6 +25,7 @@ import { RecentTransactions } from '~/components/RecentTransactions'
 import Loading from '~/components/Loading'
 import { useInvestmentStore } from '~/context/investmentStore'
 import { InvestmentsDisplay } from '~/components/InvestmentsDisplay'
+import { TransferContent } from './transfer/Transfer'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -35,10 +35,8 @@ export function Index() {
   const [notificationCount, setNotificationCount] = useState<number>(3);
   const [toasts, setToasts] = useState<ToastType[]>([]);
   const [view, setView] = useState<'dashboard' | 'transfer' | 'cards' | 'investments' | 'billets' | 'accountEdit'>('dashboard');
-  const [transferData, setTransferData] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successToast, setSuccessToast] = useState({ isOpen: false, message: '' });
-  const [errorToast, setErrorToast] = useState({ isOpen: false, message: '' });
   const { getEventsHome, event } = useEventStore();
   const { getInvestmentsHome, investment } = useInvestmentStore();
   const { setDarkMode, user, updateUser } = useAccountStore();
@@ -167,26 +165,6 @@ export function Index() {
     setView('cards');
   };
 
-  const handleTransferConfirm = (data: any) => {
-    if (data.error) {
-      setErrorToast({ isOpen: true, message: data.error });
-    } else {
-      setTransferData(data);
-      setIsModalOpen(true);
-    }
-  };
-
-  const handleModalConfirm = () => {
-    setIsModalOpen(false);
-    setSuccessToast({
-      isOpen: true,
-      message: `Seu ${transferData.type.toUpperCase()} foi enviado com sucesso.`,
-    });
-    setTimeout(() => {
-      setView('dashboard');
-    }, 3000);
-  };
-
   return (
     <div className="bg-gray-50 dark:bg-dark-primary smooth-transition">
       <LoadingOverlay isVisible={isLoading} />
@@ -225,7 +203,7 @@ export function Index() {
                 {!investment ? <Loading/> : <InvestmentsDisplay investments={investment}/>}
               </>
             ) : view === 'transfer' ? (
-              <TransferContent onConfirm={handleTransferConfirm} />
+              <TransferContent />
             ) : view === 'cards' ? (
               <CardsContent />
             ) : view === 'investments' ? (
@@ -242,12 +220,7 @@ export function Index() {
       {toasts.map((toast) => (
         <Toast key={toast.id} message={toast.message} />
       ))}
-      <ConfirmationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        transferData={transferData || {}}
-        onConfirm={handleModalConfirm}
-      />
+      
       <SuccessToast
         isOpen={successToast.isOpen}
         message={successToast.message}

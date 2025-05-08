@@ -1,10 +1,6 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faUniversity,
-  faPiggyBank,
-  faCreditCard,
-  faHandHoldingUsd,
   faCheck,
   faArrowRight,
   faArrowLeft,
@@ -13,56 +9,56 @@ import {
   faCameraRetro,
   faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons';
-import { type IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import ProgressSteps from '~/components/ProgressSteps'
-import BankCard from '~/components/BankCard'
+import ProgressSteps from '~/components/ProgressSteps';
+import BankCard from '~/components/BankCard';
+import { useBankStore } from '~/context/bankStore';
+import { mapBanksToDisplay } from '~/utils/map';
+import { useAccountStore } from '~/context/accountStore'
+import { formatToBRL, formatToBRLInput } from 'utils'
+import { useNavigate } from 'react-router'
+import type { Bank } from '~/models/bank'
 
-// Define the Bank type
-interface Bank {
+interface RegisterRequest {
   name: string;
-  icon: IconDefinition;
-  iconBg: string;
-  iconColor: string;
-  features: string[];
-  fee: string;
-}
-
-// Define the FormData type
-interface FormData {
-  fullName: string;
-  documentType: string;
-  cpf: string;
-  cnpj: string;
-  birthDate: string;
-  phone: string;
+  lastName: string;
+  phoneNumber: string;
+  salaryPerMonth: string;
+  accountType: string;
+  bankISBP: string;
+  bankName: string;
+  documentType: 'CPF' | 'CNPJ';
   email: string;
+  document: string;
   password: string;
   confirmPassword: string;
-  enableBiometric: boolean;
-  acceptTerms: boolean;
+  birthDate: string;
 }
 
-// Define the PasswordStrength type
 interface PasswordStrength {
   width: number;
   color: string;
   text: string;
 }
 
-const RegistrationForm = () => {
+export function RegistrationForm() {
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [formData, setFormData] = useState<FormData>({
-    fullName: '',
-    documentType: '',
-    cpf: '',
-    cnpj: '',
-    birthDate: '',
-    phone: '',
+  const { listBanks } = useBankStore();
+  const { register } = useAccountStore();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<RegisterRequest>({
+    name: '',
+    lastName: '',
+    phoneNumber: '',
+    salaryPerMonth: '',
+    accountType: 'CheckingAccount',
+    bankISBP: '',
+    bankName: '',
+    documentType: 'CPF', // Valor padrão
     email: '',
+    document: '',
     password: '',
     confirmPassword: '',
-    enableBiometric: false,
-    acceptTerms: false,
+    birthDate: '',
   });
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
@@ -76,75 +72,84 @@ const RegistrationForm = () => {
   const [smsVerification, setSmsVerification] = useState<boolean>(false);
   const [emailVerification, setEmailVerification] = useState<boolean>(false);
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [banks, setBanks] = useState<Bank[]>([]);
 
-  const banks: Bank[] = [
-    {
-      name: 'Banco Digital',
-      icon: faUniversity,
-      iconBg: 'bg-blue-100 dark:bg-blue-900',
-      iconColor: 'text-blue-600 dark:text-blue-300',
-      features: ['TED grátis ilimitado', 'Cartão sem anuidade', 'Cashback de 1%'],
-      fee: 'R$ 0,00/mês',
-    },
-    {
-      name: 'Banco Invest',
-      icon: faPiggyBank,
-      iconBg: 'bg-green-100 dark:bg-green-900',
-      iconColor: 'text-green-600 dark:text-green-300',
-      features: ['Investimento automático', 'CDB 110% do CDI', 'Assessoria exclusiva'],
-      fee: 'R$ 9,90/mês',
-    },
-    {
-      name: 'Banco Cartões',
-      icon: faCreditCard,
-      iconBg: 'bg-purple-100 dark:bg-purple-900',
-      iconColor: 'text-purple-600 dark:text-purple-300',
-      features: ['Cartão Platinum', 'LoungeKey gratuito', 'Milhas ilimitadas'],
-      fee: 'R$ 49,90/mês',
-    },
-    {
-      name: 'Banco Empréstimos',
-      icon: faHandHoldingUsd,
-      iconBg: 'bg-yellow-100 dark:bg-yellow-900',
-      iconColor: 'text-yellow-600 dark:text-yellow-300',
-      features: ['Taxas a partir de 0,99%', 'Aprovação em 24h', 'Portabilidade de dívidas'],
-      fee: 'R$ 0,00/mês',
-    },
-  ];
+  useEffect( () => {
+    const fetchBanks = async () => {
+      if (banks.length === 0) { // Verifica se a lista está vazia
+        const fetchedBanks = await listBanks();
+        setBanks(fetchedBanks);
+      }
+    };
+
+    fetchBanks();
+  }, []);
+
+  const filteredBanks = banks.filter(bank =>
+    bank.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const banksDisplay = mapBanksToDisplay(filteredBanks).slice(0, 4);
+  
+  const onSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { id, value, type, checked } = e.target as HTMLInputElement;
+    const { id, value, type } = e.target as HTMLInputElement;
     setFormData((prev) => ({
       ...prev,
-      [id]: type === 'checkbox' ? checked : value,
+      [id]: value,
     }));
 
-    if (id === 'cpf') {
+    if (id === 'document' && formData.documentType === 'CPF') {
       let formatted = value.replace(/\D/g, '');
       if (formatted.length > 3) formatted = formatted.substring(0, 3) + '.' + formatted.substring(3);
       if (formatted.length > 7) formatted = formatted.substring(0, 7) + '.' + formatted.substring(7);
       if (formatted.length > 11) formatted = formatted.substring(0, 11) + '-' + formatted.substring(11);
-      setFormData((prev) => ({ ...prev, cpf: formatted.substring(0, 14) }));
+      setFormData((prev) => ({ ...prev, document: formatted.substring(0, 14) }));
       setCpfValid(formatted.length === 14);
     }
 
-    if (id === 'cnpj') {
+    if(id === 'accountType'){
+      setFormData((prev) => ({ ...prev, accountType : value }));
+    }
+
+    if (id === 'salaryPerMonth') {
+      const { id, value } = e.target;
+      // Remove tudo que não é número (R$, pontos, vírgulas, espaços)
+        let cleanedValue = value.replace(/[^\d]/g, ''); // Apenas números
+        let formatted = '';
+
+        if (cleanedValue.length > 0) {
+          // Converte para formato com ponto (ex.: "1234.14")
+          formatted = (parseInt(cleanedValue) / 100).toFixed(2); // Mantém ponto como separador
+        }
+
+        setFormData((prev) => ({ ...prev, salaryPerMonth: formatted }));
+      }
+    
+
+    if (id === 'document' && formData.documentType === 'CNPJ') {
       let formatted = value.replace(/\D/g, '');
       if (formatted.length > 2) formatted = formatted.substring(0, 2) + '.' + formatted.substring(2);
       if (formatted.length > 6) formatted = formatted.substring(0, 6) + '.' + formatted.substring(6);
       if (formatted.length > 10) formatted = formatted.substring(0, 10) + '/' + formatted.substring(10);
       if (formatted.length > 15) formatted = formatted.substring(0, 15) + '-' + formatted.substring(15);
-      setFormData((prev) => ({ ...prev, cnpj: formatted.substring(0, 18) }));
+      setFormData((prev) => ({ ...prev, document: formatted.substring(0, 18) }));
       setCnpjValid(formatted.length === 18);
     }
 
-    if (id === 'phone') {
+    if (id === 'phoneNumber') {
       let formatted = value.replace(/\D/g, '');
       if (formatted.length > 0) formatted = '(' + formatted.substring(0, 2) + ') ' + formatted.substring(2);
       if (formatted.length > 10) formatted = formatted.substring(0, 10) + '-' + formatted.substring(10);
-      setFormData((prev) => ({ ...prev, phone: formatted.substring(0, 15) }));
+      setFormData((prev) => ({ ...prev, phoneNumber: formatted.substring(0, 15) }));
     }
 
     if (id === 'password') {
@@ -183,19 +188,26 @@ const RegistrationForm = () => {
   };
 
   const validateStep1 = (): boolean => {
-    if (!formData.fullName) {
+    if (!formData.name) {
       alert('Por favor, insira seu nome completo.');
       return false;
     }
-    if (!formData.documentType) {
-      alert('Por favor, selecione o tipo de documento.');
+
+    if (!formData.lastName) {
+      alert('Por favor, insira seu sobrenome.');
       return false;
     }
-    if (formData.documentType === 'cpf' && !cpfValid) {
+
+    if (!formData.salaryPerMonth || parseFloat(formData.salaryPerMonth.toString().replace(',', '.')) <= 0) {
+      alert('Por favor, insira um salário mensal válido maior que zero.');
+      return false;
+    }
+
+    if (formData.documentType === 'CPF' && !cpfValid) {
       alert('Por favor, insira um CPF válido.');
       return false;
     }
-    if (formData.documentType === 'cnpj' && !cnpjValid) {
+    if (formData.documentType === 'CNPJ' && !cnpjValid) {
       alert('Por favor, insira um CNPJ válido.');
       return false;
     }
@@ -211,7 +223,7 @@ const RegistrationForm = () => {
       alert('Você deve ter pelo menos 18 anos para criar uma conta.');
       return false;
     }
-    if (formData.phone.length < 15) {
+    if (formData.phoneNumber.length < 15) {
       alert('Por favor, insira um número de celular válido.');
       return false;
     }
@@ -242,23 +254,21 @@ const RegistrationForm = () => {
     return true;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 2 && !selectedBank) {
       alert('Por favor, selecione um banco para continuar.');
       return;
     }
     if (currentStep === 3 && !validateStep3()) return;
-    if (currentStep === 4 && !formData.acceptTerms) {
-      alert('Por favor, aceite os termos e condições para continuar.');
-      return;
-    }
 
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     } else {
-      console.log('Form submitted:', formData);
-      setCurrentStep(5);
+      const newFormData = {...formData, salaryPerMonth: parseFloat(formData.salaryPerMonth.replace(',', '.')).toString()}
+      const succcess = await register(newFormData)
+
+      if(succcess) setCurrentStep(5);
     }
   };
 
@@ -269,12 +279,12 @@ const RegistrationForm = () => {
   };
 
   const handleSendSmsCode = () => {
-    if (formData.phone.length < 15) {
+    if (formData.phoneNumber.length < 15) {
       alert('Por favor, insira um número de celular válido.');
       return;
     }
     setSmsVerification(true);
-    alert(`Código de verificação enviado para ${formData.phone}`);
+    alert(`Código de verificação enviado para ${formData.phoneNumber}`);
   };
 
   const handleVerifySmsCode = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -310,6 +320,10 @@ const RegistrationForm = () => {
     alert('Em um ambiente real, isso abriria a câmera para tirar uma selfie com documento.');
   };
 
+  const handleToAccount = () => {
+    navigate('/app')
+  };
+
   return (
     <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Crie sua conta</h2>
@@ -317,83 +331,131 @@ const RegistrationForm = () => {
       {currentStep === 1 && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nome Completo*
+          <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Nome*
               </label>
               <input
                 type="text"
-                id="fullName"
-                value={formData.fullName}
+                id="name"
+                value={formData.name}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
-                placeholder="Digite seu nome completo"
+                placeholder="Digite seu nome"
               />
             </div>
             <div>
-              <label htmlFor="documentType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tipo de Documento*
+              <label
+                htmlFor="lastName"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Sobrenome*
               </label>
-              <select
-                id="documentType"
-                value={formData.documentType}
+              <input
+                type="text"
+                id="lastName"
+                value={formData.lastName}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">Selecione</option>
-                <option value="cpf">CPF</option>
-                <option value="cnpj">CNPJ</option>
-              </select>
+                placeholder="Digite seu sobrenome"
+              />
             </div>
           </div>
-          {formData.documentType === 'cpf' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                CPF*
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="cpf"
-                  value={formData.cpf}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
-                  placeholder="000.000.000-00"
-                />
-                {cpfValid && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <FontAwesomeIcon icon={faCheck} className="text-green-500" />
-                  </div>
-                )}
-              </div>
-              {formData.cpf && !cpfValid && <p className="text-xs text-red-500 mt-1">CPF inválido</p>}
-            </div>
-          )}
-          {formData.documentType === 'cnpj' && (
+                  <label
+                    htmlFor="accountType"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    Tipo de Conta*
+                  </label>
+                  <select
+                    id="accountType"
+                    value={formData.accountType}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white h-10"
+                  >
+                    <option value="CheckingAccount">Conta Corrente</option>
+                    <option value="SavingsAccount">Conta Poupança</option>
+                    <option value="SalaryAccount">Conta Salario</option>
+                    <option value="BusinessAccount">Conta Empresarial</option>
+                    <option value="JointAccount">Conta Conjunta</option>
+                    <option value="StudentAccount">Conta Estudante</option>
+                  </select>
+                </div>
             <div>
-              <label htmlFor="cnpj" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                CNPJ*
+              <label
+                htmlFor="salaryPerMonth"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Salário Mensal (R$)*
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="cnpj"
-                  value={formData.cnpj}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
-                  placeholder="00.000.000/0000-00"
-                />
-                {cnpjValid && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <FontAwesomeIcon icon={faCheck} className="text-green-500" />
-                  </div>
-                )}
-              </div>
-              {formData.cnpj && !cnpjValid && <p className="text-xs text-red-500 mt-1">CNPJ inválido</p>}
+              <input
+                type="text"
+                id="salaryPerMonth"
+                value={formData.salaryPerMonth ? formatToBRLInput(formData.salaryPerMonth) : ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white h-10"
+                placeholder="Digite seu salário mensal (ex: 2500,00)"
+              />
             </div>
-          )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label
+                  htmlFor="documentType"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Tipo de Documento*
+                </label>
+                <select
+                  id="documentType"
+                  value={formData.documentType}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white h-10"
+                >
+                  <option value="CPF">CPF</option>
+                  <option value="CNPJ">CNPJ</option>
+                </select>
+              </div>
+              <div>
+            <label
+              htmlFor="document"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              {formData.documentType === 'CPF' ? 'CPF*' : 'CNPJ*'}
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                id="document"
+                value={formData.document}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
+                placeholder={formData.documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
+              />
+              {(formData.documentType === 'CPF' ? cpfValid : cnpjValid) && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <FontAwesomeIcon icon={faCheck} className="text-green-500" />
+                </div>
+              )}
+            </div>
+            {formData.document &&
+              !(formData.documentType === 'CPF' ? cpfValid : cnpjValid) && (
+                <p className="text-xs text-red-500 mt-1">
+                  {formData.documentType === 'CPF' ? 'CPF inválido' : 'CNPJ inválido'}
+                </p>
+              )}
+          </div>
+          </div>
           <div>
-            <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="birthDate"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Data de Nascimento*
             </label>
             <input
@@ -403,32 +465,40 @@ const RegistrationForm = () => {
               onChange={handleInputChange}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Você precisa ter pelo menos 18 anos</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Você precisa ter pelo menos 18 anos
+            </p>
           </div>
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="phoneNumber"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Celular*
             </label>
             <div className="relative">
               <input
                 type="tel"
-                id="phone"
-                value={formData.phone}
+                id="phoneNumber"
+                value={formData.phoneNumber}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
                 placeholder="(00) 00000-0000"
               />
-              <button
+              {/* <button
                 onClick={handleSendSmsCode}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white text-sm px-3 py-1 rounded-md font-medium hover:bg-blue-600 transition duration-300"
               >
                 {smsVerification ? 'Reenviar' : 'Enviar'}
-              </button>
+              </button> */}
             </div>
           </div>
-          {smsVerification && (
+          {/* {smsVerification && (
             <div>
-              <label htmlFor="smsCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="smsCode"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Código de Verificação*
               </label>
               <div className="flex">
@@ -446,9 +516,12 @@ const RegistrationForm = () => {
                 </button>
               </div>
             </div>
-          )}
+          )} */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               E-mail*
             </label>
             <div className="relative">
@@ -460,17 +533,20 @@ const RegistrationForm = () => {
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
                 placeholder="Digite seu e-mail"
               />
-              <button
+              {/* <button
                 onClick={handleSendEmailCode}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white text-sm px-3 py-1 rounded-md font-medium hover:bg-blue-600 transition duration-300"
               >
                 {emailVerification ? 'Reenviar' : 'Enviar'}
-              </button>
+              </button> */}
             </div>
           </div>
           {emailVerification && (
             <div>
-              <label htmlFor="emailCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="emailCode"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Código de Verificação*
               </label>
               <div className="flex">
@@ -489,8 +565,11 @@ const RegistrationForm = () => {
               </div>
             </div>
           )}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-﻿
+700">
+            <label
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Validação de Identidade (Opcional)
             </label>
             <div className="flex items-center">
@@ -520,7 +599,10 @@ const RegistrationForm = () => {
       {currentStep === 2 && (
         <div className="space-y-6">
           <div>
-            <label htmlFor="bankSearch" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="bankSearch"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Pesquisar Banco
             </label>
             <div className="relative">
@@ -529,6 +611,9 @@ const RegistrationForm = () => {
                 id="bankSearch"
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md input-field focus:outline-none focus:border-blue-500 dark:focus:border-blue-300 bg-white dark:bg-gray-700 dark:text-white"
                 placeholder="Digite o nome do banco"
+                value={searchTerm}
+                onChange={onSearchChange}
+                aria-label="Pesquisar por nome do banco"
               />
               <FontAwesomeIcon
                 icon={faMagnifyingGlass}
@@ -537,14 +622,27 @@ const RegistrationForm = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {banks.map((bank) => (
-              <BankCard
-                key={bank.name}
-                bank={bank}
-                isSelected={selectedBank === bank.name}
-                onSelect={() => setSelectedBank(bank.name)}
-              />
-            ))}
+            {banksDisplay.length > 0 ? (
+              banksDisplay.map((bank) => (
+                <BankCard
+                  key={bank.name}
+                  bank={bank}
+                  isSelected={selectedBank === bank.name}
+                  onSelect={() => {
+                    setSelectedBank(bank.name);
+                    setFormData((prev) => ({
+                      ...prev,
+                      bankName: bank.name,
+                      bankISBP: bank.bankISBP, // Assumindo que mapBanksToDisplay inclui ispb
+                    }));
+                  }}
+                />
+              ))
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 col-span-2">
+                Nenhum banco encontrado.
+              </p>
+            )}
           </div>
           <div className="flex justify-between mt-6">
             <button
@@ -565,7 +663,10 @@ const RegistrationForm = () => {
       {currentStep === 3 && (
         <div className="space-y-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Crie uma senha*
             </label>
             <div className="relative">
@@ -588,7 +689,7 @@ const RegistrationForm = () => {
               <div className="flex items-center mb-1">
                 <div
                   className={`password-strength ${passwordStrength.color} rounded-full mr-2`}
-                  style={{ width: `${passwordStrength.width}%` }}
+                  style={{ width: `${passwordStrength.width}%`, height: '4px' }}
                 ></div>
                 <span className="text-xs font-medium">{passwordStrength.text}</span>
               </div>
@@ -598,7 +699,10 @@ const RegistrationForm = () => {
             </div>
           </div>
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Confirme sua senha*
             </label>
             <div className="relative">
@@ -611,18 +715,22 @@ const RegistrationForm = () => {
                 placeholder="Digite novamente sua senha"
               />
             </div>
-            {passwordMatchError && <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>}
+            {passwordMatchError && (
+              <p className="text-xs text-red-500 mt-1">As senhas não coincidem</p>
+            )}
           </div>
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <input
                 type="checkbox"
                 id="enableBiometric"
-                checked={formData.enableBiometric}
-                onChange={handleInputChange}
                 className="h-4 w-4 text-blue-500 dark:text-blue-300 focus:ring-blue-500 dark:focus:ring-blue-300 border-gray-300 dark:border-gray-600 rounded"
+                onChange={handleInputChange}
               />
-              <label htmlFor="enableBiometric" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="enableBiometric"
+                className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+              >
                 Habilitar login por biometria (recomendado)
               </label>
             </div>
@@ -648,78 +756,99 @@ const RegistrationForm = () => {
       )}
       {currentStep === 4 && (
         <div className="space-y-6">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white">Confira seus dados</h3>
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Informações Pessoais</h4>
-                <p className="text-gray-800 dark:text-white">{formData.fullName}</p>
-                <p className="text-gray-600 dark:text-gray-300">
-                  {formData.documentType === 'cpf' ? `CPF: ${formData.cpf}` : `CNPJ: ${formData.cnpj}`}
-                </p>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Nascimento: {formData.birthDate && new Date(formData.birthDate).toLocaleDateString('pt-BR')}
-                </p>
-                <p className="text-gray-600 dark:text-gray-300">Celular: {formData.phone}</p>
-                <p className="text-gray-600 dark:text-gray-300">E-mail: {formData.email}</p>
-              </div>
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Conta Bancária</h4>
-                <p className="text-gray-800 dark:text-white">{selectedBank}</p>
-                {banks
-                  .find((b) => b.name === selectedBank)
-                  ?.features.map((feature, index) => (
-                    <p key={index} className="text-gray-600 dark:text-gray-300">
-                      {feature}
-                    </p>
-                  ))}
+          <h3 className="text-lg font-medium text-gray-800 dark:text-white">
+            Confira seus dados
+            </h3>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                    Informações Pessoais
+                  </h4>
+                  <p className="text-gray-800 dark:text-white">{formData.name}</p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {formData.documentType === 'CPF'
+                      ? `CPF: ${formData.document}`
+                      : `CNPJ: ${formData.document}`}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Nascimento:{' '}
+                    {formData.birthDate &&
+                      new Date(formData.birthDate).toLocaleDateString('pt-BR')}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Celular: {formData.phoneNumber}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    E-mail: {formData.email}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+                    Conta Bancária
+                  </h4>
+                  <p className="text-gray-800 dark:text-white">{selectedBank}</p>
+                  {banksDisplay
+                    .find((b) => b.name === selectedBank)
+                    ?.features.map((feature, index) => (
+                      <p key={index} className="text-gray-600 dark:text-gray-300">
+                        {feature.title}
+                      </p>
+                    ))}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-start">
                 <input
                   id="acceptTerms"
                   type="checkbox"
-                  checked={formData.acceptTerms}
-                  onChange={handleInputChange}
                   className="h-4 w-4 text-blue-500 dark:text-blue-300 focus:ring-blue-500 dark:focus:ring-blue-300 border-gray-300 dark:border-gray-600 rounded"
+                  onChange={handleInputChange}
                 />
-              </div>
-              <div className="ml-3 text-sm">
-                <label htmlFor="acceptTerms" className="font-medium text-gray-700 dark:text-gray-300">
-                  Eu li e concordo com os{' '}
-                  <a href="#" className="text-blue-500 dark:text-blue-300 hover:underline">
-                    Termos de Uso
-                  </a>{' '}
-                  e{' '}
-                  <a href="#" className="text-blue-500 dark:text-blue-300 hover:underline">
-                    Política de Privacidade
-                  </a>{' '}
-                  do Banco Digital.
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Ao marcar esta opção, você concorda com o processamento dos seus dados pessoais conforme a LGPD.
-                </p>
+                <div className="ml-3 text-sm">
+                  <label
+                    htmlFor="acceptTerms"
+                    className="font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Eu li e concordo com os{' '}
+                    <a
+                      href="#"
+                      className="text-blue-500 dark:text-blue-300 hover:underline"
+                    >
+                      Termos de Uso
+                    </a>{' '}
+                    e{' '}
+                    <a
+                      href="#"
+                      className="text-blue-500 dark:text-blue-300 hover:underline"
+                    >
+                      Política de Privacidade
+                    </a>{' '}
+                    do Banco Digital.
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Ao marcar esta opção, você concorda com o processamento dos seus
+                    dados pessoais conforme a LGPD.
+                  </p>
+                </div>
               </div>
             </div>
+            <div className="flex justify-between mt-6">
+              <button
+                onClick={handleBackStep}
+                className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Voltar
+              </button>
+              <button
+                onClick={handleNextStep}
+                className="px-6 py-2 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600 transition duration-300"
+              >
+                Criar Conta <FontAwesomeIcon icon={faCheck} className="ml-2" />
+              </button>
+            </div>
           </div>
-          <div className="flex justify-between mt-6">
-            <button
-              onClick={handleBackStep}
-              className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Voltar
-            </button>
-            <button
-              onClick={handleNextStep}
-              className="px-6 py-2 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600 transition duration-300"
-            >
-              Criar Conta <FontAwesomeIcon icon={faCheck} className="ml-2" />
-            </button>
-          </div>
-        </div>
       )}
       {currentStep === 5 && (
         <div className="text-center py-8">
@@ -731,12 +860,15 @@ const RegistrationForm = () => {
               <div className="icon-fix"></div>
             </div>
           </div>
-          <h3 className="text-xl font-medium text-gray-800 dark:text-white mt-8">Conta criada com sucesso!</h3>
+          <h3 className="text-xl font-medium text-gray-800 dark:text-white mt-8">
+            Conta criada com sucesso!
+          </h3>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Bem-vindo ao Banco Digital. Sua conta está sendo verificada e em breve você receberá um e-mail com os próximos passos.
+            Bem-vindo ao Banco Digital. Sua conta está sendo verificada e em breve
+            você receberá um e-mail com os próximos passos.
           </p>
           <button
-            onClick={() => alert('Redirecionando para o painel...')}
+            onClick={() => handleToAccount()}
             className="px-6 py-2 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600 transition duration-300"
           >
             Acessar minha conta <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
@@ -745,6 +877,4 @@ const RegistrationForm = () => {
       )}
     </div>
   );
-};
-
-export default RegistrationForm;
+}

@@ -1,7 +1,7 @@
 export enum TransferType{
-  PIX,
-  TED,
-  DOC,
-  BOLETO,
-  DEPOSITO
+  PIX = "PIX",
+  TED = "TED",
+  DOC = "DOC",
+  BOLETO = "BOLETO",
+  DEPOSITO = "DEPOSITO"
 }

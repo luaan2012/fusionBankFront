@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { type ConfirmationDetails } from '../../types';
+import type { ConfirmationDetails } from 'types'
 
 interface ConfirmationModalProps {
   show: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  details: ConfirmationDetails;
+  reset: () => void
+  details: ConfirmationDetails | null;
 }
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ show, onClose, onConfirm, details }) => {
+export function ConfirmationModalTransfer ({ show, onClose, onConfirm, details }: ConfirmationModalProps) {
   const [code, setCode] = useState(['', '', '', '', '', '']);
 
   const handleCodeChange = (index: number, value: string) => {
@@ -132,5 +133,3 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ show, onClose, on
     </div>
   );
 };
-
-export default ConfirmationModal;

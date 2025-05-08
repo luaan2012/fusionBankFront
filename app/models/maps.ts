@@ -1,3 +1,4 @@
+import type { BankAdvantages } from "./bank"
 import type { InvestmentType } from "./enum/investmentType"
 
 export interface LastTransction{
@@ -19,4 +20,14 @@ export interface InvestmentHome{
   applied: string,
   yield: string,
   progressColor: string,
+}
+
+export interface BankRegister {
+    name: string,
+    icon: any,
+    iconBg: string,
+    iconColor: string,
+    features: BankAdvantages[],
+    fee: string
+    bankISBP: string
 }

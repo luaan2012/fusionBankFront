@@ -1,31 +1,31 @@
-// import { type Account } from './../models/account';
-// import { create } from 'zustand';
-// import { persist, createJSONStorage } from 'zustand/middleware';
-// import { LevelError, type ErrorApi } from '~/models/response/errorResponse'
+import { create } from 'zustand';
+import type { TransferFormData } from '~/homeApp/schema/transferScheme'
+import { type ErrorApi } from '~/models/response/errorResponse'
+import { transferApi } from '~/services/transferApi'
 
-// // Tipagem do estado de autenticação
-// interface TransferState {
-//   user: Account | null;
-//   loading: boolean;
-//   error: ErrorApi | null
-//   updateUser: () => void;
-// }
-// // Criação da store com persistência
-// export const useTransferStore = create<TransferState>()(
-//   set => ({
-//       user: null,
-//       loading: false,
-//       error: null,
-//       updateUser: async () => {
-//         const { user } = get(); // CORREÇÃO: pegar user do estado atual
-//         if (!user) {
-//           set({ error: { message: 'Usuário não autenticado', levelError: LevelError.high }, loading: false});
-//           return;
-//         }        
-//         set({
-//           user: { ...user }, // Atualiza com o novo valor
-//         });
-
-//       }
-//     })
-// );
+// Tipagem do estado de autenticação
+interface TransferState {
+  message: string;
+  loading: boolean;
+  error: ErrorApi | null
+  createTransfer: (transfer: TransferFormData) => Promise<boolean>;
+}
+// Criação da store com persistência
+export const useTransferStore = create<TransferState>()(
+  set => ({
+      message: null,
+      loading: false,
+      error: null,
+      createTransfer: async (transfer: TransferFormData) => {
+        try {
+          set({ loading: true, error: null });
+          const response = await transferApi.createTransfer(transfer);
+          set({ loading: false, message: response.data });
+          return true;
+        } catch (err: any) {
+          set({ loading: false, error: err.message || 'Falha ao realizar a transferência' });
+          return false
+        }
+      }
+    })
+);

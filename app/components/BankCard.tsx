@@ -3,19 +3,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import {
   faCheck
 } from '@fortawesome/free-solid-svg-icons';
-// Define the Bank type
-interface Bank {
-  name: string;
-  icon: IconDefinition;
-  iconBg: string;
-  iconColor: string;
-  features: string[];
-  fee: string;
-}
+import type { BankRegister } from "~/models/maps"
 
-// Define the props type for BankCard
 interface BankCardProps {
-  bank: Bank;
+  bank: BankRegister;
   isSelected: boolean;
   onSelect: () => void;
 }
@@ -37,7 +28,7 @@ const BankCard = ({ bank, isSelected, onSelect } : BankCardProps) => {
       <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
         {bank.features.map((feature, index) => (
           <p key={index} className="mb-1">
-            <FontAwesomeIcon icon={faCheck} className="fas fa-check-circle text-green-500 mr-1"></FontAwesomeIcon> {feature}
+            <FontAwesomeIcon icon={faCheck} className="fas fa-check-circle text-green-500 mr-1"></FontAwesomeIcon> {feature.title}
           </p>
         ))}
       </div>
