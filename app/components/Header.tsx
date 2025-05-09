@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faUniversity, faSun, faMoon, faBell, faUser, faCog, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { defaultMessage, getInitials } from '../../utils';
 import type { Account } from '~/models/account';
+import { useAccountStore } from '~/context/accountStore'
+import { useNavigate } from 'react-router'
 
 interface HeaderProps {
   user: Account | null;
@@ -24,14 +26,16 @@ const Header: React.FC<HeaderProps> = ({
   isNotificationCenterOpen,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { logout } = useAccountStore()
+  const navigate = useNavigate()
 
   const handleDropdownToggle = () => {
     setIsDropdownOpen((prev) => !prev);
   };
 
   const handleLogout = () => {
-    // Placeholder for logout logic (e.g., clear auth token, redirect)
-    console.log('Logout clicked');
+    logout()
+    navigate('/')
     setIsDropdownOpen(false);
   };
 

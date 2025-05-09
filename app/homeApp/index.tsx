@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import NotificationCenter from '../components/NotificationCenter';
 import LoadingOverlay from '../components/LoadingOverlay';
 import QuickActions from '../components/QuickActions';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
-import ConfirmationModal from '../components/ConfirmationModel';
 import SuccessToast from '../components/SuccessToast';
 import { type Notification, type Toast as ToastType } from '../../types';
 import {
@@ -37,10 +36,9 @@ export function Index() {
   const {view, setView} = useAppStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successToast, setSuccessToast] = useState({ isOpen: false, message: '' });
-  const { getEventsHome, event, loading: eventLoading } = useEventStore();
-  const { getInvestmentsHome, investment, loading: investmentLoading } = useInvestmentStore();
-  const { setDarkMode, user, updateUser } = useAccountStore();
-  
+  const { getEventsHome, event, loading: eventLoading, isAlready: isAlreadyEvent } = useEventStore();
+  const { getInvestmentsHome, investment, loading: investmentLoading, isAlready: isAlreadyInvestment} = useInvestmentStore();
+  const { setDarkMode, user } = useAccountStore();
   
   useEffect(() => {
     if (user?.darkMode) {
@@ -53,31 +51,15 @@ export function Index() {
   }, [user?.darkMode]);
 
   useEffect(() => {
-    if(!event && user){
+    if(event.length === 0 && user && !isAlreadyEvent) {
       getEventsHome(user.accountId, 3)
     }
 
-    if(!investment && user){
+    if(investment.length === 0 && user && !isAlreadyInvestment) {
       getInvestmentsHome(user.accountId, 3)
     }
-  }, [event, investment]);
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     if (Math.random() > 0.1) {
-  //       setNotificationCount((prev) => prev + 1);
-  //       const newToast: ToastType = {
-  //         id: Date.now(),
-  //         message: 'Nova notificação recebida',
-  //       };
-  //       setToasts((prev) => [...prev, newToast]);
-  //       setTimeout(() => {
-  //         setToasts((prev) => prev.filter((toast) => toast.id !== newToast.id));
-  //       }, 3300);
-  //     }
-  //   }, 3000);
-  //   return () => clearInterval(interval);
-  // }, []);
+  }, [event, investment, user]);
 
   const toggleDarkMode = () => {
    setDarkMode(!user?.darkMode)

@@ -29,7 +29,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
       case NotificationType.TRANSFER_MADE:
         return {
           icon: faArrowDown,
-          iconColor: 'text-red-500',
+          iconColor: 'text-red-800',
           bg: 'bg-red-100',
           title: event.title,
           description: `${event.transferType} enviado para ${event.userReceive} • ${formattedDate}`,
@@ -40,7 +40,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
       case NotificationType.TRANSFER_RECEIVE:
         return {
           icon: faArrowUp,
-          iconColor: 'text-green-500',
+          iconColor: 'text-green-800',
           bg: 'bg-green-100',
           title: event.title,
           description: `${event.transferType} recebido de ${event.userOwner} • ${formattedDate}`,
@@ -51,7 +51,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
       case NotificationType.DEPOSIT:
         return {
           icon: faBarcode,
-          iconColor: 'text-blue-500',
+          iconColor: 'text-blue-800',
           bg: 'bg-blue-100',
           title: event.title,
           description: `${event.service} • ${formattedDate}`,

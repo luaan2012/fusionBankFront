@@ -7,6 +7,7 @@ import { type ErrorApi } from '~/models/response/errorResponse'
 interface EventState {
   event: EventMessage[];
   loading: boolean;
+  isAlready: boolean
   error: ErrorApi | null
   getEventsHome: (accountId: string, limit: number) => void;
 }
@@ -16,12 +17,13 @@ export const useEventStore = create<EventState>()(
       event: [],
       loading: false,
       error: null,
+      isAlready: false,
       getEventsHome: async (accountId: string, limit: number) => {
         if (get().loading) return; 
         set({ loading: true, error: null });
         try {
           const response = await eventApi.listEvent(accountId, limit);
-          set({ loading: false, event: response.data });
+          set({ loading: false, event: response.data, isAlready: true});
         } catch (err: any) {
           set({ loading: false, error: err.message || 'Falha ao carregar ultimos eventos' });
         }

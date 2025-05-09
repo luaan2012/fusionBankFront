@@ -7,6 +7,7 @@ import { investmentApi } from '~/services/investmentApi'
 interface InvestmentState {
   investment: Investment[];
   loading: boolean;
+  isAlready: boolean;
   error: ErrorApi | null
   getInvestmentsHome: (accountId: string, limit: number) => void;
 }
@@ -16,12 +17,13 @@ export const useInvestmentStore = create<InvestmentState>()(
       investment: [],
       loading: false,
       error: null,
+      isAlready: false,
       getInvestmentsHome: async (accountId: string, limit: number) => {
         if (get().loading) return; 
         set({ loading: true, error: null });
         try {
           const response = await investmentApi.listInvestmentHome(accountId, limit);
-          set({ loading: false, investment: response.data });
+          set({ loading: false, investment: response.data, isAlready: true });
         } catch (err: any) {
           set({ loading: false, error: err.message || 'Falha ao carregar ultimos Investmentos' });
         }

@@ -8,10 +8,10 @@ interface TabNavigationProps {
 }
 
 const tabs = [
-  { id: 'deposit', label: 'Depósito', icon: 'arrow-right-to-bracket' },
-  { id: 'boleto', label: 'Pagamento de Boleto', icon: 'barcode' },
-  { id: 'generate', label: 'Gerar Boleto', icon: 'file-invoice' },
-] as const;
+  { id: 'deposit', label: 'Depósito', icon: faArrowRightToBracket },
+  { id: 'boleto', label: 'Pagamento de Boleto', icon: faBarcode },
+  { id: 'generate', label: 'Gerar Boleto', icon: faFileInvoice },
+];
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab }) => {
   return (
@@ -30,7 +30,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab }
             aria-selected={activeTab === tab.id}
             aria-controls={`tabpanel-${tab.id}`}
           >
-            <FontAwesomeIcon icon={['fas', tab.icon]} className="mr-2" />
+            <FontAwesomeIcon icon={tab.icon} className="mr-2" />
             {tab.label}
           </button>
         ))}

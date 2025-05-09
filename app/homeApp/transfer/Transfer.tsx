@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUniversity, faHistory, faQrcode, faBolt, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import TransferCard from '~/components/TransferCard';
-import { transferSchema, type PixFormErrors, type TedDocFormErrors, type TransferFormData } from '../schema/transferScheme';
+import { transferSchema,  type TransferFormData } from '../schema/transferScheme';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { useTransferStore } from '~/context/transferStore';
@@ -187,7 +187,7 @@ export function TransferContent() {
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conta Corrente</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Ag. {user.agency} • C/C {formatNumberAccount(user.accountNumber)}
+                    Ag. {user?.agency} • C/C {formatNumberAccount(user?.accountNumber)}
                   </p>
                 </div>
               </div>
