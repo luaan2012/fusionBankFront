@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
 import NotificationCenter from '../components/NotificationCenter';
 import LoadingOverlay from '../components/LoadingOverlay';
 import QuickActions from '../components/QuickActions';
-import AccountSummary from '../components/AccountSummary';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModel';
@@ -26,19 +24,21 @@ import Loading from '~/components/Loading'
 import { useInvestmentStore } from '~/context/investmentStore'
 import { InvestmentsDisplay } from '~/components/InvestmentsDisplay'
 import { TransferContent } from './transfer/Transfer'
+import { useAppStore } from '~/context/appStore'
+import { Sidebar } from '~/components/Sidebar'
+import { AccountSummary } from '~/components/AccountSummary'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationCount, setNotificationCount] = useState<number>(3);
   const [toasts, setToasts] = useState<ToastType[]>([]);
-  const [view, setView] = useState<'dashboard' | 'transfer' | 'cards' | 'investments' | 'billets' | 'accountEdit'>('dashboard');
+  const {view, setView} = useAppStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successToast, setSuccessToast] = useState({ isOpen: false, message: '' });
-  const { getEventsHome, event } = useEventStore();
-  const { getInvestmentsHome, investment } = useInvestmentStore();
+  const { getEventsHome, event, loading: eventLoading } = useEventStore();
+  const { getInvestmentsHome, investment, loading: investmentLoading } = useInvestmentStore();
   const { setDarkMode, user, updateUser } = useAccountStore();
   
   
@@ -50,11 +50,6 @@ export function Index() {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-
-    if(!event && user){
-      getEventsHome(user.accountId, 3)
-    }
-
   }, [user?.darkMode]);
 
   useEffect(() => {
@@ -86,7 +81,6 @@ export function Index() {
 
   const toggleDarkMode = () => {
    setDarkMode(!user?.darkMode)
-   updateUser();
   };
 
   const toggleMobileMenu = () => {
@@ -98,80 +92,48 @@ export function Index() {
     if (!notifications.length) {
       setNotifications([
         {
-          id: 1,
+          id: '1',
           icon: faMoneyBillTransfer,
           iconColor: 'text-blue-500',
           title: 'PIX recebido',
           description: 'Você recebeu R$ 250,00 de Carlos Silva',
           time: '2 minutos atrás',
           unread: true,
+          type: 'account'
         },
         {
-          id: 2,
+          id: '2',
           icon: faCreditCard,
           iconColor: 'text-purple-500',
           title: 'Cartão virtual gerado',
           description: 'Seu cartão virtual terminado em 1234 foi criado',
           time: '1 hora atrás',
           unread: true,
+          type: 'security'
         },
         {
-          id: 3,
+          id: '3',
           icon: faChartLine,
           iconColor: 'text-green-500',
           title: 'Rendimento disponível',
           description: 'Seu CDB rendeu R$ 45,32 este mês',
           time: 'Ontem',
           unread: false,
+          type: 'security'
         },
       ]);
     }
   };
 
-  const showLoading = () => {
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1500);
-  };
-
-  const logout = () => {
-    showLoading();
-    setTimeout(() => {
-      console.log('Redirect to login');
-    }, 1500);
-  };
-
-  const handleTransferClick = () => {
-    setView('transfer');
-  };
-
-  const handleDashboardClick = () => {
-    setView('dashboard');
-  };
-
-  const handleInvestmentsClick = () => {
-    setView('investments');
-  };
-
-  const handleBilletsClick = () => {
-    setView('billets');
-  };
-
-  const handleAccountClick = () => {
-    setView('accountEdit');
-  };
-
-  const handleCardsClick = () => {
-    console.log('Navigating to cards view');
-    setView('cards');
-  };
-
   return (
     <div className="bg-gray-50 dark:bg-dark-primary smooth-transition">
-      <LoadingOverlay isVisible={isLoading} />
+      <LoadingOverlay isVisible={eventLoading} />
       <NotificationCenter
         isOpen={isNotificationCenterOpen}
         notifications={notifications}
         toggleNotificationCenter={toggleNotificationCenter}
+        markAsRead={null}
+        clearNotifications={null}
       />
       <Header
         user={user}
@@ -180,18 +142,12 @@ export function Index() {
         toggleNotificationCenter={toggleNotificationCenter}
         notificationCount={notificationCount}
         isDarkMode={user?.darkMode || false}
+        isNotificationCenterOpen={isNotificationCenterOpen}
       />
       <main className="flex-grow container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
           <Sidebar
             user={user}
-            notificationCount={notificationCount}
-            onTransferClick={handleTransferClick}
-            onDashboardClick={handleDashboardClick}
-            onCardsClick={handleCardsClick}
-            investmentClick={handleInvestmentsClick}
-            billetsClick={handleBilletsClick}
-            accountEditClick={handleAccountClick}
             view={view} // Pass the current view to Sidebar
           />
           <div className="flex-grow">
@@ -199,8 +155,8 @@ export function Index() {
               <>
                 <QuickActions />
                 <AccountSummary user={user}/>
-                {!event ? <Loading/> : <RecentTransactions lastTransactions={event}/>}
-                {!investment ? <Loading/> : <InvestmentsDisplay investments={investment}/>}
+                {eventLoading ? <Loading/> : <RecentTransactions lastTransactions={event}/>}
+                {investmentLoading ? <Loading/> : <InvestmentsDisplay investments={investment}/>}
               </>
             ) : view === 'transfer' ? (
               <TransferContent />
@@ -208,7 +164,7 @@ export function Index() {
               <CardsContent />
             ) : view === 'investments' ? (
               <InvestmentsContent />
-            ) : view === 'billets' ? (
+            ) : view === 'deposit' ? (
               <BilletsContent />
             ): (
               <AccountEditPage />

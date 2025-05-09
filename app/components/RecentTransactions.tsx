@@ -23,49 +23,60 @@ export function RecentTransactions ({lastTransactions}: RecentTransactionProps) 
   const transactions = mapEventMessagesToTransactions(lastTransactions);
 
   return (
-    <div className="bg-white dark:bg-dark-secondary rounded-lg shadow mb-6 p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-light">Últimas Transações</h2>
-        <a href="#" className="text-primary-light hover:text-primary-dark text-sm">
+    <div className="bg-white dark:bg-slate-950 rounded-xl shadow-lg mb-6 p-6 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Últimas Transações</h2>
+        <a
+          href="#"
+          className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-colors duration-200"
+        >
           Ver extrato completo
         </a>
       </div>
       <div className="space-y-4">
-      {transactions.length > 0 ? (
-        transactions.map((transaction, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between p-3 border-b dark:border-dark hover:bg-gray-50 dark:hover:bg-gray-800 smooth-transition"
-          >
-            <div className="flex items-center space-x-3">
-              <div
-                className={`w-10 h-10 rounded-full ${transaction.bg} dark:bg-opacity-20 flex items-center justify-center ${transaction.iconColor} dark:${transaction.iconColor.replace('500', '300')}`}
-              >
-                <FontAwesomeIcon icon={transaction.icon} />
+        {transactions.length > 0 ? (
+          transactions.map((transaction, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg transition-all duration-200"
+            >
+              <div className="flex items-center space-x-4">
+                <div
+                  className={`w-12 h-12 rounded-full ${transaction.bg} dark:bg-opacity-30 flex items-center justify-center ${transaction.iconColor} dark:${transaction.iconColor.replace('500', '300')} transition-transform duration-200 hover:scale-110`}
+                >
+                  <FontAwesomeIcon icon={transaction.icon} className="text-xl" />
+                </div>
+                <div>
+                  <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                    {transaction.title}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {transaction.description}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-800 dark:text-light font-medium">{transaction.title}</p>
-                <p className="text-xs text-gray-500">{transaction.description}</p>
+              <div className="text-right">
+                <p
+                  className={`text-base font-semibold ${
+                    transaction.amount.startsWith('+')
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }`}
+                >
+                  {transaction.amount}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Saldo: {transaction.balance}
+                </p>
               </div>
             </div>
-            <div className="text-right">
-              <p
-                className={`font-medium ${
-                  transaction.amount.startsWith('+') ? 'text-green-500' : 'text-red-500'
-                }`}
-              >
-                {transaction.amount}
-              </p>
-              <p className="text-xs text-gray-500">Saldo: {transaction.balance}</p>
-            </div>
+          ))
+        ) : (
+          <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
+            <FontAwesomeIcon icon={faInbox} className="text-3xl mr-3" />
+            <p className="text-base font-medium">Nada encontrado ainda</p>
           </div>
-        ))
-      ) : (
-        <div className="flex items-center justify-center flex-1 text-gray-500 dark:text-gray-400">
-          <FontAwesomeIcon icon={faInbox} className="text-2xl mr-2" />
-          <p>Nada encontrado ainda</p>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );

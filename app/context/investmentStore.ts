@@ -5,18 +5,19 @@ import { investmentApi } from '~/services/investmentApi'
 
 // Tipagem do estado de autenticação
 interface InvestmentState {
-  investment: Investment[] | null;
+  investment: Investment[];
   loading: boolean;
   error: ErrorApi | null
   getInvestmentsHome: (accountId: string, limit: number) => void;
 }
 // Criação da store com persistência
 export const useInvestmentStore = create<InvestmentState>()(
-  set => ({
-      investment: null,
+  (set, get) => ({
+      investment: [],
       loading: false,
       error: null,
       getInvestmentsHome: async (accountId: string, limit: number) => {
+        if (get().loading) return; 
         set({ loading: true, error: null });
         try {
           const response = await investmentApi.listInvestmentHome(accountId, limit);

@@ -43,6 +43,81 @@ export const translateAccountType = (type: AccountType): string => {
   return translations[type] || 'Tipo desconhecido';
 };
 
+export const ActionMapper = (type: AccountType): { action: string, buttonColor: string, route: string }[] => {
+  const actionMap: Record<string, { action: string, buttonColor: string, route: string }[]> = {
+    CheckingAccount: [
+      {
+        action: 'Depositar',
+        buttonColor: '#4CAF50', // Verde
+        route: 'deposit'
+      },
+      {
+        action: 'Transferir',
+        buttonColor: '#2196F3', // Azul
+        route: 'transfer'
+      }
+    ],
+    SavingsAccount: [
+      {
+        action: 'Resgatar',
+        buttonColor: '#2196F3', // Azul
+        route: '/'
+      },
+      {
+        action: 'Aplicar Investimento',
+        buttonColor: '#4CAF50', // Verde
+        route: 'investments'
+      }
+    ],
+    SalaryAccount: [
+      {
+        action: 'Ver Extrato',
+        buttonColor: '#FFC107', // Amarelo
+        route: '/'
+      }
+    ],
+    BusinessAccount: [
+      {
+        action: 'Gerenciar Pagamentos',
+        buttonColor: '#9C27B0', // Roxo
+        route: '/business-account/payments'
+      },
+      {
+        action: 'Emitir Fatura',
+        buttonColor: '#FF5722', // Laranja
+        route: '/business-account/invoice'
+      }
+    ],
+    JointAccount: [
+      {
+        action: 'Gerenciar Cotas',
+        buttonColor: '#FF5722', // Laranja
+        route: '/joint-account/shares'
+      },
+      {
+        action: 'Transferir',
+        buttonColor: '#2196F3', // Azul
+        route: '/joint-account/transfer'
+      }
+    ],
+    StudentAccount: [
+      {
+        action: 'Consultar Limite',
+        buttonColor: '#009688', // Ciano
+        route: '/student-account/limit'
+      }
+    ]
+  };
+
+  return actionMap[type] || [
+    {
+      action: 'Ação desconhecida',
+      buttonColor: '#757575', // Cinza
+      route: '/unknown'
+    }
+  ];
+};
+
 export const defaultMessage = {
   loading: "Carregando...",
   balance: 0

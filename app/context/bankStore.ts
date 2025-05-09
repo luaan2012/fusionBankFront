@@ -13,23 +13,24 @@ interface BankState {
 
 // Criação da store com persistência
 export const useBankStore = create<BankState>()(
-    set => ({
-      banks: [],
-      loading: false,
-      error: null,
-      listBanks: async () => {
-        set({ loading: true, error: null});
-        try {
-          var banks = await bankApi.listBanks();
-          set({ loading: false, error: null, banks: banks.data });
-          return banks.data;
-        } catch (err: any) {
-          set({
-            loading: false,
-            error: { message: err.response?.data?.message || err.message || 'Erro ao atualizar dark mode', levelError: LevelError.high }
-          });
-          return [];
-        }
+  (set, get) => ({
+    banks: [],
+    loading: false,
+    error: null,
+    listBanks: async () => {
+      if (get().loading) return get().banks; // Prevent concurrent calls
+      set({ loading: true, error: null});
+      try {
+        var banks = await bankApi.listBanks();
+        set({ loading: false, error: null, banks: banks.data });
+        return banks.data;
+      } catch (err: any) {
+        set({
+          loading: false,
+          error: { message: err.response?.data?.message || err.message || 'Erro ao atualizar dark mode', levelError: LevelError.high }
+        });
+        return [];
       }
-    })
+    }
+  })
 );

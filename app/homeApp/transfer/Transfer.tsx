@@ -149,15 +149,18 @@ export function TransferContent() {
 
   return (
     <div className="flex-1">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
+      <div className="bg-white dark:bg-slate-950 rounded-xl shadow-lg p-6 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Nova Transferência</h2>
-          <a href="#" className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Nova Transferência</h2>
+          <a
+            href="#"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center transition-colors duration-200"
+          >
             <FontAwesomeIcon icon={faHistory} className="mr-1" />
             Ver histórico
           </a>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {transferCards.map((card) => (
             <TransferCard
               key={card.type}
@@ -175,31 +178,33 @@ export function TransferContent() {
         </div>
         <form id="transfer-form" onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
-              <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Conta de origem</h3>
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-primary-100 dark:bg-slate-600 flex items-center justify-center mr-3">
-                  <FontAwesomeIcon icon={faUniversity} className="text-primary-600 dark:text-primary-400" />
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5 shadow-sm transition-all duration-200">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Conta de origem</h3>
+              <div className="flex items-center mb-4">
+                <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-4">
+                  <FontAwesomeIcon icon={faUniversity} className="text-blue-600 dark:text-blue-400 text-xl" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-800 dark:text-white">Conta Corrente</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Ag. {user.agency} • C/C {formatNumberAccount(user.accountNumber)}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conta Corrente</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Ag. {user.agency} • C/C {formatNumberAccount(user.accountNumber)}
+                  </p>
                 </div>
               </div>
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">Saldo disponível</p>
-                <p className="text-xl font-bold text-gray-800 dark:text-white">{formatToBRL(user.balance)}</p>
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Saldo disponível</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white">{formatToBRL(user.balance)}</p>
               </div>
             </div>
             <div>
-              <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Conta de destino</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Conta de destino</h3>
               {transferType === 'pix' ? (
                 <div id="pix-form">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Chave PIX
                     </label>
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-3">
                       <Controller
                         name="keyType"
                         control={control}
@@ -210,7 +215,7 @@ export function TransferContent() {
                               field.onChange(e);
                               handleKeyTypeChange(e);
                             }}
-                            className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-20 px-2 h-10.5"
+                            className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-24 px-3 py-2.5 transition-all duration-200"
                           >
                             <option value="cpf">CPF</option>
                             <option value="email">E-mail</option>
@@ -227,7 +232,7 @@ export function TransferContent() {
                             <input
                               {...field}
                               type="text"
-                              className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                              className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                               placeholder={
                                 keyType === 'cpf'
                                   ? '000.000.000-00'
@@ -238,9 +243,9 @@ export function TransferContent() {
                                   : 'Chave aleatória'
                               }
                             />
-                            {(errors as PixFormErrors).keyAccount && (
+                            {(errors as any).keyAccount && (
                               <p className="mt-1 text-xs text-red-600">
-                                {(errors as PixFormErrors).keyAccount.message}
+                                {(errors as any).keyAccount.message}
                               </p>
                             )}
                           </div>
@@ -248,8 +253,8 @@ export function TransferContent() {
                       />
                     </div>
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nome do favorecido
                     </label>
                     <Controller
@@ -259,18 +264,20 @@ export function TransferContent() {
                         <input
                           {...field}
                           type="text"
-                          className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                          className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                           placeholder="Digite o nome completo"
                         />
                       )}
                     />
-                    {errors.nameReceiver && <p className="mt-1 text-xs text-red-600">{errors.nameReceiver.message}</p>}
+                    {errors.nameReceiver && (
+                      <p className="mt-1 text-xs text-red-600">{errors.nameReceiver.message}</p>
+                    )}
                   </div>
                 </div>
               ) : (
                 <div id="ted-doc-form">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Banco
                     </label>
                     <Controller
@@ -279,7 +286,7 @@ export function TransferContent() {
                       render={({ field }) => (
                         <select
                           {...field}
-                          className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                          className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                         >
                           <option value="">Selecione o banco</option>
                           <option value="Banco do Brasil (001)">Banco do Brasil (001)</option>
@@ -290,11 +297,13 @@ export function TransferContent() {
                         </select>
                       )}
                     />
-                    {(errors as TedDocFormErrors).bank && <p className="mt-1 text-xs text-red-600">{(errors as TedDocFormErrors).bank.message}</p>}
+                    {(errors as any).bank && (
+                      <p className="mt-1 text-xs text-red-600">{(errors as any).bank.message}</p>
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-2 gap-4 mb-5">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Agência
                       </label>
                       <Controller
@@ -304,15 +313,17 @@ export function TransferContent() {
                           <input
                             {...field}
                             type="text"
-                            className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                            className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                             placeholder="0000"
                           />
                         )}
                       />
-                      {(errors as TedDocFormErrors).agencyReceiver && <p className="mt-1 text-xs text-red-600">{(errors as TedDocFormErrors).agencyReceiver.message}</p>}
+                      {(errors as any).agencyReceiver && (
+                        <p className="mt-1 text-xs text-red-600">{(errors as any).agencyReceiver.message}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Conta
                       </label>
                       <Controller
@@ -322,16 +333,18 @@ export function TransferContent() {
                           <input
                             {...field}
                             type="text"
-                            className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                            className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                             placeholder="00000-0"
                           />
                         )}
                       />
-                      {(errors as TedDocFormErrors).accountNumberReceiver && <p className="mt-1 text-xs text-red-600">{(errors as TedDocFormErrors).accountNumberReceiver.message}</p>}
+                      {(errors as any).accountNumberReceiver && (
+                        <p className="mt-1 text-xs text-red-600">{(errors as any).accountNumberReceiver.message}</p>
+                      )}
                     </div>
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       CPF/CNPJ do favorecido
                     </label>
                     <Controller
@@ -341,15 +354,17 @@ export function TransferContent() {
                         <input
                           {...field}
                           type="text"
-                          className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                          className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                           placeholder="000.000.000-00"
                         />
                       )}
                     />
-                    {(errors as TedDocFormErrors).documentReceiver && <p className="mt-1 text-xs text-red-600">{(errors as TedDocFormErrors).documentReceiver.message}</p>}
+                    {(errors as any).documentReceiver && (
+                      <p className="mt-1 text-xs text-red-600">{(errors as any).documentReceiver.message}</p>
+                    )}
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <div className="mb-5">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Nome do favorecido
                     </label>
                     <Controller
@@ -359,27 +374,29 @@ export function TransferContent() {
                         <input
                           {...field}
                           type="text"
-                          className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                          className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                           placeholder="Digite o nome completo"
                         />
                       )}
                     />
-                    {errors.nameReceiver && <p className="mt-1 text-xs text-red-600">{errors.nameReceiver.message}</p>}
+                    {errors.nameReceiver && (
+                      <p className="mt-1 text-xs text-red-600">{errors.nameReceiver.message}</p>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           </div>
-          <div className="mt-6">
-            <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Detalhes da transferência</h3>
+          <div className="mt-8">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Detalhes da transferência</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Valor
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 dark:text-gray-400">R$</span>
+                    <span className="text-gray-500 dark:text-gray-400 text-sm">R$</span>
                   </div>
                   <Controller
                     name="amount"
@@ -390,7 +407,7 @@ export function TransferContent() {
                         type="text"
                         value={formatAmount(field.value)}
                         onChange={(e) => field.onChange(parseAmount(e.target.value))}
-                        className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5"
+                        className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 transition-all duration-200"
                         placeholder="0,00"
                       />
                     )}
@@ -403,16 +420,16 @@ export function TransferContent() {
               </div>
               {transferType !== 'pix' && (
                 <div id="ted-doc-tax">
-                  <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-sm text-gray-600 dark:text-gray-300">Taxa</span>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5 shadow-sm transition-all duration-200">
+                    <div className="flex justify-between mb-3">
+                      <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Taxa</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         R$ {transferType === 'ted' ? '5,00' : '3,00'}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600 dark:text-gray-300">Total</span>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Total</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         R$ {(parseFloat(watch('amount') || '0') + (transferType === 'ted' ? 5 : 3)).toFixed(2).replace('.', ',')}
                       </span>
                     </div>
@@ -420,8 +437,8 @@ export function TransferContent() {
                 </div>
               )}
             </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="mt-5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Descrição (opcional)
               </label>
               <Controller
@@ -431,7 +448,7 @@ export function TransferContent() {
                   <input
                     {...field}
                     type="text"
-                    className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                    className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                     placeholder="Ex: Pagamento de serviços"
                   />
                 )}
@@ -442,7 +459,8 @@ export function TransferContent() {
           <div className="mt-8 flex justify-end">
             <button
               type="submit"
-              className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 transition-colors"
+              className="px-6 py-2.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold rounded-lg text-sm transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              aria-label="Continuar com a transferência"
             >
               Continuar
             </button>

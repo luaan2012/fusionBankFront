@@ -5,18 +5,19 @@ import { type ErrorApi } from '~/models/response/errorResponse'
 
 // Tipagem do estado de autenticação
 interface EventState {
-  event: EventMessage[] | null;
+  event: EventMessage[];
   loading: boolean;
   error: ErrorApi | null
   getEventsHome: (accountId: string, limit: number) => void;
 }
 // Criação da store com persistência
 export const useEventStore = create<EventState>()(
-  set => ({
-      event: null,
+  (set, get) => ({
+      event: [],
       loading: false,
       error: null,
       getEventsHome: async (accountId: string, limit: number) => {
+        if (get().loading) return; 
         set({ loading: true, error: null });
         try {
           const response = await eventApi.listEvent(accountId, limit);

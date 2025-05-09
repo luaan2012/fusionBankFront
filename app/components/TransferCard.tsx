@@ -15,7 +15,7 @@ interface TransferCardProps {
   onSelect: () => void;
 }
 
-const TransferCard: React.FC<TransferCardProps> = ({
+export function TransferCard ({
   type,
   icon,
   color,
@@ -25,36 +25,39 @@ const TransferCard: React.FC<TransferCardProps> = ({
   features,
   isActive,
   onSelect,
-}) => {
+}) {
+  const borderColor = type === 'pix' ? 'blue' : type === 'ted' ? 'indigo' : 'purple';
+
   return (
     <div
       onClick={onSelect}
-      className={`transfer-card bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg p-4 cursor-pointer shadow-sm hover:border-${
-        type === 'pix' ? 'primary' : type === 'ted' ? 'blue' : 'purple'
-      }-300 dark:hover:border-${
-        type === 'pix' ? 'primary' : type === 'ted' ? 'blue' : 'purple'
-      }-500 ${
+      className={`transfer-card bg-white dark:bg-slate-950 rounded-xl p-5 cursor-pointer shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border ${
         isActive
-          ? `border-${
-              type === 'pix' ? 'primary' : type === 'ted' ? 'blue' : 'purple'
-            }-300 dark:border-${
-              type === 'pix' ? 'primary' : type === 'ted' ? 'blue' : 'purple'
-            }-500`
-          : ''
-      }`}
+          ? `border-${borderColor}-500 dark:border-${borderColor}-400`
+          : 'border-gray-200 dark:border-gray-700'
+      } hover:border-${borderColor}-500 dark:hover:border-${borderColor}-400 focus:outline-none focus:ring-2 focus:ring-${borderColor}-500 focus:ring-opacity-50`}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onSelect()}
+      aria-label={`Selecionar transferência ${title}`}
     >
-      <div className="flex items-center mb-3">
-        <div className={`h-10 w-10 rounded-full ${bg} flex items-center justify-center mr-3`}>
-          <FontAwesomeIcon icon={icon} className={color} />
+      <div className="flex items-center mb-4">
+        <div
+          className={`h-12 w-12 rounded-full ${bg} dark:bg-opacity-30 flex items-center justify-center mr-4 transition-transform duration-200 hover:scale-110`}
+        >
+          <FontAwesomeIcon icon={icon} className={`${color} dark:${color.replace('500', '300')} text-xl`} />
         </div>
-        <h3 className="font-medium text-gray-800 dark:text-white">{title}</h3>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{description}</p>
-      <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+      <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 leading-relaxed">{description}</p>
+      <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-2">
         {features.map((feature, index) => (
           <li key={index} className="flex items-center">
-            <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 mr-2" />
-            {feature}
+            <FontAwesomeIcon
+              icon={faCheckCircle}
+              className="text-green-500 dark:text-green-400 mr-2 text-sm"
+            />
+            <span className="font-medium">{feature}</span>
           </li>
         ))}
       </ul>

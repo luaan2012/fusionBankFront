@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { type FileInfo, type BoletoDetails } from '../../types';
-// Importações do Font Awesome
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faKeyboard,
@@ -12,6 +10,7 @@ import {
   faFileImage,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
+import { type FileInfo, type BoletoDetails } from '../../types';
 
 interface BoletoPaymentContentProps {
   setShowConfirmationModal: (show: boolean) => void;
@@ -61,75 +60,59 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
   };
 
   const handlePayBoleto = () => {
+    if (!boletoInfo) {
+      setShowErrorToast('Por favor, valide o boleto antes de confirmar.');
+      return;
+    }
     setShowConfirmationModal(true);
   };
 
   return (
-    <div id="boleto-content" className={method === 'digitar' ? '' : 'hidden'}>
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">Pagamento de Boleto</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div id="boleto-content">
+      <div className="bg-white dark:bg-slate-950 rounded-xl shadow-md p-6 transition-all duration-300 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Pagamento de Boleto</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" role="radiogroup" aria-label="Selecionar método de pagamento">
           {[
             {
               method: 'digitar',
               icon: faKeyboard,
               title: 'Digitar Código',
               description: 'Insira o código de barras ou linha digitável',
+              color: 'blue',
             },
             {
               method: 'qrcode',
               icon: faQrcode,
               title: 'Ler QR Code',
               description: 'Escaneie o QR Code do boleto',
+              color: 'green',
             },
             {
               method: 'upload',
               icon: faFileUpload,
               title: 'Upload de Imagem',
               description: 'Envie uma imagem do boleto',
+              color: 'purple',
             },
           ].map((item) => (
             <div
               key={item.method}
-              className={`boleto-method bg-white dark:bg-slate-700 border ${
+              className={`boleto-method bg-white dark:bg-slate-800 border rounded-xl p-4 cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 ${
                 method === item.method
-                  ? item.method === 'digitar'
-                    ? 'border-primary-300 dark:border-primary-500'
-                    : item.method === 'qrcode'
-                    ? 'border-blue-300 dark:border-blue-500'
-                    : 'border-purple-300 dark:border-purple-500'
-                  : 'border-gray-200 dark:border-slate-600'
-              } rounded-lg p-4 cursor-pointer shadow-sm hover:border-${
-                item.method === 'digitar'
-                  ? 'primary-300 dark:hover:border-primary-500'
-                  : item.method === 'qrcode'
-                  ? 'blue-300 dark:hover:border-blue-500'
-                  : 'purple-300 dark:hover:border-purple-500'
+                  ? `border-${item.color}-300 dark:border-${item.color}-500`
+                  : 'border-gray-200 dark:border-gray-700'
               }`}
               onClick={() => setMethod(item.method as 'digitar' | 'qrcode' | 'upload')}
+              role="radio"
+              aria-checked={method === item.method}
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && setMethod(item.method as 'digitar' | 'qrcode' | 'upload')}
             >
               <div className="flex items-center mb-3">
-                <div
-                  className={`h-10 w-10 rounded-full ${
-                    item.method === 'digitar'
-                      ? 'bg-primary-100 dark:bg-slate-600'
-                      : item.method === 'qrcode'
-                      ? 'bg-blue-100 dark:bg-slate-600'
-                      : 'bg-purple-100 dark:bg-slate-600'
-                  } flex items-center justify-center mr-3`}
-                >
-                  <FontAwesomeIcon
-                    icon={item.icon}
-                    className={`${
-                      item.method === 'digitar'
-                        ? 'text-primary-600 dark:text-primary-400'
-                        : item.method === 'qrcode'
-                        ? 'text-blue-600 dark:text-blue-400'
-                        : 'text-purple-600 dark:text-purple-400'
-                    }`}
-                  />
+                <div className={`h-10 w-10 rounded-full bg-${item.color}-100 dark:bg-${item.color}-900 flex items-center justify-center mr-3`}>
+                  <FontAwesomeIcon icon={item.icon} className={`text-${item.color}-600 dark:text-${item.color}-400 text-lg`} />
                 </div>
-                <h3 className="font-medium text-gray-800 dark:text-white">{item.title}</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{item.title}</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
             </div>
@@ -137,25 +120,24 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
         </div>
         <div id="digitar-form" className={method === 'digitar' ? '' : 'hidden'}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="boleto-code">
               Código de barras ou linha digitável
             </label>
             <input
+              id="boleto-code"
               type="text"
-              className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+              className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
               placeholder="Digite os 44 números do código de barras"
               onChange={(e) => validateBoleto(e.target.value)}
+              aria-label="Código de barras ou linha digitável"
             />
           </div>
           <div className="flex justify-end">
             <button
-              className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 transition-colors"
+              className="px-6 py-2.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
               disabled={isValidating}
-              onClick={() =>
-                validateBoleto(
-                  (document.querySelector('#digitar-form input') as HTMLInputElement)?.value || ''
-                )
-              }
+              onClick={() => validateBoleto((document.querySelector('#digitar-form input') as HTMLInputElement)?.value || '')}
+              aria-label="Validar boleto"
             >
               {isValidating ? (
                 <>
@@ -170,37 +152,43 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
         </div>
         <div id="qrcode-form" className={method === 'qrcode' ? '' : 'hidden'}>
           <div className="flex flex-col items-center">
-            <div className="qr-scanner mb-4">
+            <div className="qr-scanner mb-4 bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
               <FontAwesomeIcon icon={faCamera} className="text-gray-400 text-4xl" />
             </div>
-            <button className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            <button
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200"
+              onClick={() => setMethod('digitar')}
+              aria-label="Digitar código manualmente"
+            >
               Não consegue escanear? Digite o código
             </button>
           </div>
         </div>
         <div id="upload-form" className={method === 'upload' ? '' : 'hidden'}>
           <div
-            className="file-upload rounded-lg p-8 text-center mb-4"
+            className="file-upload rounded-xl p-8 text-center mb-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 transition-all duration-200"
             onDragOver={(e) => {
               e.preventDefault();
-              e.currentTarget.classList.add('dragover');
+              e.currentTarget.classList.add('bg-purple-50', 'dark:bg-purple-900', 'border-purple-500');
             }}
-            onDragLeave={(e) => e.currentTarget.classList.remove('dragover')}
+            onDragLeave={(e) => {
+              e.currentTarget.classList.remove('bg-purple-50', 'dark:bg-purple-900', 'border-purple-500');
+            }}
             onDrop={(e) => {
               e.preventDefault();
-              e.currentTarget.classList.remove('dragover');
+              e.currentTarget.classList.remove('bg-purple-50', 'dark:bg-purple-900', 'border-purple-500');
               if (e.dataTransfer.files.length) handleFileUpload(e.dataTransfer.files[0]);
             }}
+            aria-describedby="boleto-upload-description"
           >
             <div className="flex flex-col items-center justify-center">
               <FontAwesomeIcon icon={faCloudUploadAlt} className="text-3xl text-gray-400 mb-2" />
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
-                Arraste e solte a imagem do boleto aqui
-              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Arraste e solte a imagem do boleto aqui</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">ou</p>
               <label
                 htmlFor="boleto-input"
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg cursor-pointer transition-colors"
+                className="px-4 py-2 bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-600 text-white rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200"
+                aria-label="Selecionar imagem"
               >
                 Selecione a imagem
               </label>
@@ -212,21 +200,28 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
                 onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])}
               />
             </div>
+            <p id="boleto-upload-description" className="sr-only">
+              Arraste e solte ou selecione uma imagem JPG ou PNG com tamanho máximo de 5MB.
+            </p>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">Formatos aceitos: JPG, PNG (máx. 5MB)</p>
           {fileInfo && (
-            <div className="mt-4 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600">
+            <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <FontAwesomeIcon icon={faFileImage} className="text-blue-500 mr-2" />
                   <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-white">{fileInfo.name}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{fileInfo.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {(fileInfo.size / 1024 / 1024).toFixed(1)} MB
                     </p>
                   </div>
                 </div>
-                <button className="text-red-500 hover:text-red-700" onClick={() => setFileInfo(null)}>
+                <button
+                  className="text-red-500 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                  onClick={() => setFileInfo(null)}
+                  aria-label="Remover imagem"
+                >
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
               </div>
@@ -234,8 +229,9 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
           )}
           <div className="flex justify-end mt-4">
             <button
-              className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 transition-colors"
+              className="px-6 py-2.5 bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-600 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
               onClick={() => validateBoleto('sample-code')}
+              aria-label="Validar boleto"
             >
               Validar Boleto
             </button>
@@ -243,51 +239,53 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
         </div>
         {boletoInfo && (
           <div id="boleto-info" className="mt-8">
-            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 shadow-sm">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-white">Conta de Energia Elétrica</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Conta de Energia Elétrica</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-300">{boletoInfo.beneficiary}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Vencimento</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-white">{boletoInfo.dueDate}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{boletoInfo.dueDate}</p>
                 </div>
               </div>
-              <div className="barcode mb-4"></div>
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="barcode mb-4 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Código</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-white">{boletoInfo.code}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{boletoInfo.code}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">Nosso Número</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-white">{boletoInfo.nossoNumero}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{boletoInfo.nossoNumero}</p>
                 </div>
               </div>
-              <div className="border-t border-gray-200 dark:border-slate-600 pt-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                 <div className="flex justify-between mb-2">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Valor</span>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{boletoInfo.amount}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{boletoInfo.amount}</span>
                 </div>
                 {boletoInfo.fees && (
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-gray-600 dark:text-gray-300">Juros/Multa</span>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{boletoInfo.fees}</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{boletoInfo.fees}</span>
                   </div>
                 )}
-                <div className="flex justify-between border-t border-gray-200 dark:border-slate-600 pt-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total</span>
-                  <span className="text-sm font-bold text-gray-800 dark:text-white">{boletoInfo.total}</span>
+                <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-2">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Total</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{boletoInfo.total}</span>
                 </div>
               </div>
             </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <div className="mb-6 mt-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="account-select">
                 Conta para débito
               </label>
               <select
-                className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                id="account-select"
+                className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
+                aria-label="Selecionar conta para débito"
               >
                 <option>Conta Corrente • Saldo: R$ 8.742,36</option>
                 <option>Cartão de Crédito • Vence em 10/08</option>
@@ -297,24 +295,32 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-700"
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
+                  onChange={(e) => {
+                    const scheduleDiv = document.getElementById('schedule-payment');
+                    if (scheduleDiv) scheduleDiv.classList.toggle('hidden', !e.target.checked);
+                  }}
+                  aria-label="Agendar pagamento"
                 />
                 <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Agendar pagamento</span>
               </label>
               <div id="schedule-payment" className="hidden mt-3">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="payment-date">
                   Data para pagamento
                 </label>
                 <input
+                  id="payment-date"
                   type="date"
-                  className="bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
+                  className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
+                  aria-label="Data para pagamento"
                 />
               </div>
             </div>
             <div className="flex justify-end">
               <button
-                className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 transition-colors"
+                className="px-6 py-2.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
                 onClick={handlePayBoleto}
+                aria-label="Confirmar pagamento"
               >
                 Confirmar Pagamento
               </button>

@@ -45,14 +45,13 @@ export const useAccountStore = create<AccountState>()(
           set({ error: { message: 'Usuário não autenticado', levelError: LevelError.high }, loading: false});
           return;
         }
-        set({ loading: true, error: null });
+        set({
+          loading: false,
+          user: { ...user, darkMode },
+        });
 
         try {
           await accountApi.setModeDark(user.accountId, darkMode);
-          set({
-            loading: false,
-            user: { ...user, darkMode }, // Atualiza com o novo valor
-          });
         } catch (err: any) {
           set({
             loading: false,
@@ -64,7 +63,6 @@ export const useAccountStore = create<AccountState>()(
         try {
           const { user } = get(); // CORREÇÃO: pegar user do estado atual
           const response = await accountApi.getAccount(user.accountId);
-          console.log(response)
           set({ loading: false, user: response.data });
         } catch (err: any) {
           set({ loading: false, error: err.message || 'Falha no login' });
@@ -77,7 +75,7 @@ export const useAccountStore = create<AccountState>()(
           set({ loading: false, token: response.data.token, user: response.data.account });
           return true;
         } catch (err: any) {
-          set({ loading: false, error: err.message || 'Falha no login' });
+          set({ loading: false, error: err || { message: 'Falha no login', levelError: LevelError.high } });
           return false
           // throw err;
         }
@@ -89,7 +87,7 @@ export const useAccountStore = create<AccountState>()(
           set({ loading: false, token: response.data.token, user: response.data.account });
           return true;
         } catch (err: any) {
-          set({ loading: false, error: err.message || 'Falha no login' });
+          set({ loading: false, error: err || { message: 'Falha ao cadastrar', levelError: LevelError.high } });
           return false
           // throw err;
         }
@@ -115,6 +113,10 @@ export const useAccountStore = create<AccountState>()(
     {
       name: 'account-storage',
       storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        token: state.token,
+        user: state.user,
+      })
     }
   )
 );

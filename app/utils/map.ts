@@ -7,7 +7,8 @@ import type { Investment } from "~/models/investment"
 import type { BankRegister, InvestmentHome, LastTransction } from "~/models/maps"
 
 export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): LastTransction[] {
-  if(eventMessages.length <= 0) return [];
+  if(eventMessages?.length <= 0) return [];
+  
   return eventMessages.map((event) => {
     const date = typeof event.date === 'string' ? new Date(event.date) : event.date;
 

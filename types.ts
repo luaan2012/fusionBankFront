@@ -1,7 +1,7 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core"
 
 export interface Notification {
-  id: number;
+  id: string;
   icon: IconDefinition;
   iconColor: string;
   title: string;
@@ -9,6 +9,7 @@ export interface Notification {
   time: string;
   unread: boolean;
   link?: string;
+  type?: 'security' | 'transaction' | 'account';
 }
 export interface Toast {
   id: number;
