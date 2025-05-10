@@ -14,6 +14,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@hookform/resolvers": "^5.0.1",
+    "@microsoft/signalr": "^8.0.7",
     "@react-router/node": "^7.5.1",
     "@react-router/serve": "^7.5.1",
     "@types/cleave.js": "^1.4.12",

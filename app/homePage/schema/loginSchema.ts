@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { type FieldErrors } from 'react-hook-form';
+import { validarCNPJ, validarCPF } from '~/utils/validators'
 
 // Esquemas base para cada tipo de login
 const accountSchema = z.object({
@@ -13,12 +14,20 @@ const documentSchema = z.object({
   loginType: z.literal('document'),
   document: z
     .string()
-    .min(1, 'CPF/CNPJ é obrigatório')
+    .min(1, "CNPJ OU CPF é obrigatório")
     .refine(
-      val => /^\d{11}$|^\d{14}$/.test(val.replace(/[^\d]/g, '')),
-      'CPF/CNPJ inválido'
+      (val) => {
+        const digits = val.replace(/[^\d]/g, '');
+        if (digits.length === 11) {
+          return validarCPF(digits);
+        } else if (digits.length === 14) {
+          return validarCNPJ(digits);
+        }
+        return false;
+      },
+      { message: 'CPF ou CNPJ inválido' }
     ),
-    password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
 
 const emailSchema = z.object({
@@ -49,7 +58,7 @@ export type EmailFormErrors = FieldErrors<EmailFormData>;
 
 // Tipo do payload
 export type LoginPayload =
-  | { password: string; accountNumber: string; agency: string }
-  | { password: string; document: string }
-  | { password: string; email: string }
-  | { password: string; loginType: string, loginUser: string };
+  | { password: string; accountNumber: string; agency: string; loginType: 'account' }
+  | { password: string; document: string; loginType: 'document' }
+  | { password: string; email: string; loginType: 'email' }
+  | { password: string; loginType: string; loginUser: string };

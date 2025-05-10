@@ -9,13 +9,21 @@ export const getInitials = (name: string): string => {
     .toUpperCase();
 };
 
+export const CleanString = (str: string)  => {
+  return str.replace(/[.\-/]/g, '');
+}
+
 export const formatNumberAccount = (account: string): string => {
+  if(account === '' || account === null || account === undefined) return '';
+  
   const clean = account.replace(/\D/g, ''); // remove não dígitos
   if (clean.length <= 5) return clean;
   return `${clean.slice(0, clean.length - 1)}-${clean.slice(-1)}`;
 };
 
 export const formatToBRL = (value: number | string): string => {
+  if(value === undefined || value === null || Number.isNaN(value)) return '0';
+
   const numeric = typeof value === 'string' ? parseFloat(value) : value;
   return numeric.toLocaleString('pt-BR', {
     style: 'currency',

@@ -5,6 +5,7 @@ import { NotificationType } from "~/models/enum/notificationType"
 import type { EventMessage } from "~/models/eventMessage"
 import type { Investment } from "~/models/investment"
 import type { BankRegister, InvestmentHome, LastTransction } from "~/models/maps"
+import { formatToBRL } from "./utils"
 
 export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): LastTransction[] {
   if(eventMessages?.length <= 0) return [];
@@ -17,12 +18,6 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
       month: '2-digit',
       year: 'numeric',
     });
-
-    // Formata valores monetários
-    const formatCurrency = (value: number): string =>
-      value >= 0
-        ? `+ R$ ${value.toFixed(2).replace('.', ',')}`
-        : `- R$ ${Math.abs(value).toFixed(2).replace('.', ',')}`;
 
     // Configurações baseadas no notificationType
     switch (event.action as NotificationType) {
@@ -78,10 +73,6 @@ export function mapInvestmentsToDisplay(investments: Investment[]): InvestmentHo
   if(investments.length <= 0) return [];
   
   return investments.map((investment) => {
-    // Formata valores monetários
-    const formatCurrency = (value: number): string =>
-      `R$ ${value.toFixed(2).replace('.', ',')}`;
-
     // Calcula o valor aplicado (soma dos aportes)
     const applied = investment.entries.reduce(
       (sum, entry) => sum + entry.amount,
@@ -115,10 +106,10 @@ export function mapInvestmentsToDisplay(investments: Investment[]): InvestmentHo
       type: investment.investmentType,
       name: `${investment.investmentType} Prefixado ${maturityYear}`,
       rate,
-      value: formatCurrency(investment.totalBalance),
+      value: formatToBRL(investment.totalBalance),
       progress,
-      applied: formatCurrency(applied),
-      yield: formatCurrency(yieldValue),
+      applied: formatToBRL(applied),
+      yield: formatToBRL(yieldValue),
       progressColor,
     };
   });

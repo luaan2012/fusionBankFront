@@ -8,10 +8,11 @@ import {
   faBell,
   faBarcode,
   faCog,
+  faUser,
 } from '@fortawesome/free-solid-svg-icons';
-import { defaultMessage, formatNumberAccount, formatToBRL, getInitials } from '../../utils';
 import type { Account } from '~/models/account'
 import { useAppStore } from '~/context/appStore'
+import { defaultMessage, formatNumberAccount, formatToBRL, getInitials } from '~/utils/utils'
 
 interface SidebarProps {
   user: Account | null;
@@ -35,7 +36,7 @@ export function Sidebar ({user} : SidebarProps) {
       <div className="bg-white dark:bg-slate-950 rounded-xl shadow-lg p-5 mb-6 transition-all duration-300 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
         <div className="flex items-center space-x-4 mb-6">
           <div className="w-14 h-14 rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-center text-white text-lg font-semibold">
-            <span>{getInitials(user?.fullName || defaultMessage.loading)}</span>
+            <span>{user ? getInitials(user?.fullName || defaultMessage.loading) : (<FontAwesomeIcon icon={faUser} className="text-sm animate-spin" />) }</span>
           </div>
           <div>
             <p className="text-base font-semibold text-gray-900 dark:text-gray-100">

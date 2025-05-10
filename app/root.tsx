@@ -7,6 +7,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 import type { Route } from "./+types/root";
+import { ToastProvider } from "./components/ToastContext"
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,7 +19,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <ToastProvider>
         {children}
+        </ToastProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

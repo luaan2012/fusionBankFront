@@ -23,7 +23,7 @@ export const useTransferStore = create<TransferState>()(
           set({ loading: false, message: response.data });
           return true;
         } catch (err: any) {
-          set({ loading: false, error: err.message || 'Falha ao realizar a transferência' });
+          set({ loading: false, error: err || 'Falha ao realizar a transferência' });
           return false
         }
       }

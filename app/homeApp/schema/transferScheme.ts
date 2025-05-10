@@ -26,7 +26,7 @@ export const pixSchema = pixSchemaBase.superRefine((data, ctx) => {
   switch (keyType) {
     case 'cpf': {
       const cleaned = keyAccount.replace(/[^\d]/g, '');
-      if (!/^\d{11}$/.test(cleaned)) {
+      if (!validarCPF(cleaned)) {
         ctx.addIssue({
           path: ['keyAccount'],
           code: z.ZodIssueCode.custom,
@@ -49,7 +49,7 @@ export const pixSchema = pixSchemaBase.superRefine((data, ctx) => {
 
     case 'celular': {
       const cleaned = keyAccount.replace(/[^\d]/g, '');
-      if (!/^\d{10,11}$/.test(cleaned)) {
+      if (!/^\d{11,13}$/.test(cleaned)) {
         ctx.addIssue({
           path: ['keyAccount'],
           code: z.ZodIssueCode.custom,
@@ -60,7 +60,8 @@ export const pixSchema = pixSchemaBase.superRefine((data, ctx) => {
     }
 
     case 'aleatorio': {
-      if (keyAccount.length !== 36) {
+      const cleaned = keyAccount.replace(/[^\d]/g, '');
+      if (cleaned.length !== 24) {
         ctx.addIssue({
           path: ['keyAccount'],
           code: z.ZodIssueCode.custom,
@@ -74,20 +75,27 @@ export const pixSchema = pixSchemaBase.superRefine((data, ctx) => {
 
 export type PixFormData = z.infer<typeof pixSchema>;
 
-
 export const tedDocSchema = z.object({
   transferType: z.enum(['ted', 'doc'], {
     errorMap: () => ({ message: 'Tipo de transferência inválido' }),
   }),
   bank: z.string().min(1, 'Banco é obrigatório'),
-  agencyReceiver: z.string().min(4, 'Agência deve ter pelo menos 4 dígitos'),
-  accountNumberReceiver: z.string().min(8, 'Conta é obrigatória'),
+  agencyNumberReceiver: z.string().min(4, 'Agência deve ter pelo menos 4 dígitos'),
+  accountNumberReceiver: z.string().min(8, 'Conta é obrigatória').max(8, 'Conta é obrigatória'),
   documentReceiver: z
     .string()
     .min(1, 'CPF/CNPJ é obrigatório')
     .refine(
-      (val) => /^\d{11}$|^\d{14}$/.test(val.replace(/[^\d]/g, '')),
-      'CPF/CNPJ inválido'
+      (val) => {
+        const digits = val.replace(/[^\d]/g, '');
+        if (digits.length === 11) {
+          return validarCPF(digits);
+        } else if (digits.length === 14) {
+          return validarCNPJ(digits);
+        }
+        return false;
+      },
+      { message: 'CPF ou CNPJ inválido' }
     ),
   nameReceiver: z.string().min(1, 'Nome do favorecido é obrigatório'),
   amount: z
@@ -96,15 +104,16 @@ export const tedDocSchema = z.object({
     .refine(
       (val) => {
         const numeric = parseFloat(val.replace('.', '').replace(',', '.'));
-        return !isNaN(numeric) && numeric >= 500;
+        return !isNaN(numeric) && numeric >= 1000;
       },
-      { message: 'Valor mínimo: R$ 500,00' }
+      { message: 'Valor mínimo: R$ 1.000,00' }
     ),
   description: z.string().optional(),
 });
 
 export type TedDocFormData = z.infer<typeof tedDocSchema>;
 import { type FieldErrors } from 'react-hook-form';
+import { validarCNPJ, validarCPF } from '~/utils/validators'
 
 export const transferSchema = z.union([pixSchema, tedDocSchema]);
 
@@ -124,7 +133,7 @@ export type TransferPayload =
   | {
       transferType: 'ted' | 'doc';
       bank: string;
-      agencyReceiver: string;
+      agencyNumberReceiver: string;
       accountNumberReceiver: string;
       documentReceiver: string;
       nameReceiver: string;

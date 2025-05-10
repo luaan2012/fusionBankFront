@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faUniversity, faSun, faMoon, faBell, faUser, faCog, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-import { defaultMessage, getInitials } from '../../utils';
+import { defaultMessage, getInitials } from '../utils/utils';
 import type { Account } from '~/models/account';
 import { useAccountStore } from '~/context/accountStore'
 import { useNavigate } from 'react-router'

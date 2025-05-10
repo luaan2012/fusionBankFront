@@ -126,3 +126,24 @@
 .dark .dark\:bg-dark-600 {
   background-color: #4a5568;
 }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+input:-webkit-autofill {
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: inherit !important;
+  box-shadow: 0 0 0px 1000px transparent inset;
+}
+
+.dark input:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px #1f2937 inset; /* bg-gray-800 */
+  -webkit-text-fill-color: #fff !important;
+}

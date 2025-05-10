@@ -6,7 +6,6 @@ import {
   faArrowLeft,
   faEye,
   faEyeSlash,
-  faCameraRetro,
   faMagnifyingGlass,
   faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
@@ -15,10 +14,10 @@ import BankCard from '~/components/BankCard';
 import { useBankStore } from '~/context/bankStore';
 import { mapBanksToDisplay } from '~/utils/map';
 import { useAccountStore } from '~/context/accountStore';
-import { formatToBRLInput } from 'utils';
+import { CleanString, formatToBRLInput } from '../../utils/utils';
 import { useNavigate } from 'react-router';
-import type { Bank } from '~/models/bank';
 import { validarCNPJ, validarCPF } from '~/utils/validators';
+import { useToast } from '~/components/ToastContext'
 
 interface FormError {
   error: boolean;
@@ -50,8 +49,9 @@ interface PasswordStrength {
 export function RegistrationForm() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const { banks, listBanks } = useBankStore();
-  const { register } = useAccountStore();
+  const { register, error } = useAccountStore();
   const navigate = useNavigate();
+  const { openToast } = useToast()
   const [formData, setFormData] = useState<RegisterRequest>({
     name: '',
     lastName: '',
@@ -430,12 +430,21 @@ export function RegistrationForm() {
       setCurrentStep(currentStep + 1);
       setClickNextStep(false);
     } else {
-      const newFormData = { ...formData, salaryPerMonth: parseFloat(formData.salaryPerMonth.replace(',', '.')).toString() };
+      const newFormData = { ...formData, salaryPerMonth: parseFloat(formData.salaryPerMonth.replace(',', '.')).toString(), 
+        document: CleanString(formData.document), phoneNumber: CleanString(formData.document) };
       const success = await register(newFormData);
 
-      if (success) {
-        setCurrentStep(5);
+      if (!success) {
+        openToast({
+          message: error.message || 'Aconteceu um erro ao registrar sua conta!',
+          type: 'error',
+          duration: 4000,
+          position: 'top-right'
+        });
+        return;
       }
+
+      setCurrentStep(5);
     }
   };
 

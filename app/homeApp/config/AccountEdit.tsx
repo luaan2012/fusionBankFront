@@ -11,11 +11,10 @@ import {
   faMoon,
 } from '@fortawesome/free-solid-svg-icons';
 
-// Type definitions
+// Definição de Tipos
 interface Account {
   id: string;
   holderName: string;
-  accountType: 'checking' | 'savings' | 'investment';
   monthlySalary: number;
   email: string;
   phoneNumber: string;
@@ -25,21 +24,12 @@ interface Account {
   city: string;
   state: string;
   zipCode: string;
-  bankName: string;
-  agencyNumber: string;
-  accountNumber: string;
-  accountDigit: string;
-  balance: number;
+  dailySpendingLimit: number;
   status: 'active' | 'inactive';
-  twoFactorEnabled: boolean;
-  transactionLimit: number;
-  emailNotifications: boolean;
-  smsNotifications: boolean;
 }
 
 interface FormErrors {
   holderName?: string;
-  accountType?: string;
   monthlySalary?: string;
   email?: string;
   phoneNumber?: string;
@@ -49,16 +39,11 @@ interface FormErrors {
   city?: string;
   state?: string;
   zipCode?: string;
-  bankName?: string;
-  agencyNumber?: string;
-  accountNumber?: string;
-  accountDigit?: string;
-  balance?: string;
-  transactionLimit?: string;
+  dailySpendingLimit?: string;
 }
 
 const AccountEditPage: React.FC = () => {
-  // Dark mode state
+  // Estado do Modo Escuro
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return (
       localStorage.getItem('theme') === 'dark' ||
@@ -67,17 +52,16 @@ const AccountEditPage: React.FC = () => {
     );
   });
 
-  // Apply dark mode class to root
+  // Aplicar classe de modo escuro ao root
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  // Mock initial account data
+  // Dados iniciais mockados da conta
   const [account, setAccount] = useState<Account>({
     id: '1',
     holderName: 'João Silva',
-    accountType: 'checking',
     monthlySalary: 7500.0,
     email: 'joao.silva@email.com',
     phoneNumber: '(11) 91234-5678',
@@ -87,25 +71,17 @@ const AccountEditPage: React.FC = () => {
     city: 'São Paulo',
     state: 'SP',
     zipCode: '01234-567',
-    bankName: 'Banco do Brasil',
-    agencyNumber: '1234-5',
-    accountNumber: '123456',
-    accountDigit: '7',
-    balance: 5000.0,
+    dailySpendingLimit: 5000.0,
     status: 'active',
-    twoFactorEnabled: true,
-    transactionLimit: 10000.0,
-    emailNotifications: true,
-    smsNotifications: false,
   });
 
-  // Form state
+  // Estado do formulário
   const [formData, setFormData] = useState<Account>({ ...account });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitMessage, setSubmitMessage] = useState<string>('');
 
-  // Handle input changes
+  // Manipulação de mudanças nos inputs
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -115,16 +91,14 @@ const AccountEditPage: React.FC = () => {
       [name]:
         type === 'checkbox'
           ? (e.target as HTMLInputElement).checked
-          : name === 'balance' ||
-            name === 'monthlySalary' ||
-            name === 'transactionLimit'
+          : name === 'monthlySalary' || name === 'dailySpendingLimit'
           ? parseFloat(value) || 0
           : value,
     }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // Handle masked input changes
+  // Manipulação de mudanças nos inputs mascarados
   const handleMaskedInputChange = (name: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -133,14 +107,11 @@ const AccountEditPage: React.FC = () => {
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // Validate form
+  // Validação do formulário
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
     if (!formData.holderName.trim()) {
       newErrors.holderName = 'Nome do titular é obrigatório';
-    }
-    if (!formData.accountType) {
-      newErrors.accountType = 'Tipo de conta é obrigatório';
     }
     if (isNaN(formData.monthlySalary) || formData.monthlySalary < 0) {
       newErrors.monthlySalary = 'Salário mensal deve ser um número não negativo';
@@ -177,37 +148,13 @@ const AccountEditPage: React.FC = () => {
     } else if (!/^\d{5}-\d{3}$/.test(formData.zipCode)) {
       newErrors.zipCode = 'Formato inválido (ex: 01234-567)';
     }
-    if (!formData.bankName.trim()) {
-      newErrors.bankName = 'Nome do banco é obrigatório';
-    }
-    if (!formData.agencyNumber.trim()) {
-      newErrors.agencyNumber = 'Número da agência é obrigatório';
-    } else if (!/^\d{4}-\d$/.test(formData.agencyNumber)) {
-      newErrors.agencyNumber = 'Formato inválido (ex: 1234-5)';
-    }
-    if (!formData.accountNumber.trim()) {
-      newErrors.accountNumber = 'Número da conta é obrigatório';
-    } else if (!/^\d{6}$/.test(formData.accountNumber)) {
-      newErrors.accountNumber = 'Deve ter 6 dígitos';
-    }
-    if (!formData.accountDigit.trim()) {
-      newErrors.accountDigit = 'Dígito da conta é obrigatório';
-    } else if (!/^\d$/.test(formData.accountDigit)) {
-      newErrors.accountDigit = 'Deve ser um único dígito';
-    }
-    if (isNaN(formData.balance) || formData.balance < 0) {
-      newErrors.balance = 'Saldo deve ser um número não negativo';
-    }
-    if (
-      isNaN(formData.transactionLimit) ||
-      formData.transactionLimit < 0
-    ) {
-      newErrors.transactionLimit = 'Limite deve ser um número não negativo';
+    if (isNaN(formData.dailySpendingLimit) || formData.dailySpendingLimit < 0) {
+      newErrors.dailySpendingLimit = 'Limite de gastos deve ser um número não negativo';
     }
     return newErrors;
   };
 
-  // Handle form submission
+  // Submissão do formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -221,7 +168,6 @@ const AccountEditPage: React.FC = () => {
     }
 
     try {
-      // Mock API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
       setAccount({ ...formData });
       setSubmitMessage('Conta atualizada com sucesso!');
@@ -232,19 +178,26 @@ const AccountEditPage: React.FC = () => {
     }
   };
 
-  // Handle cancel
+  // Cancelar alterações
   const handleCancel = () => {
     setFormData({ ...account });
     setErrors({});
     setSubmitMessage('');
   };
 
-  // Handle back
+  // Voltar
   const handleBack = () => {
     setFormData({ ...account });
     setErrors({});
     setSubmitMessage('');
-    // In a real app, navigate to accounts list
+  };
+
+  // Desativar conta
+  const handleDeactivate = () => {
+    if (window.confirm('Tem certeza que deseja desativar esta conta?')) {
+      setFormData((prev) => ({ ...prev, status: 'inactive' }));
+      setSubmitMessage('Conta desativada com sucesso!');
+    }
   };
 
   return (
@@ -256,28 +209,33 @@ const AccountEditPage: React.FC = () => {
               Editar Conta
             </h2>
             <div className="flex items-center space-x-4">
-              <label className="flex items-center cursor-pointer">
-                <span className="sr-only">Alternar modo escuro</span>
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={isDarkMode}
-                    onChange={() => setIsDarkMode(!isDarkMode)}
-                    className="sr-only"
-                  />
-                  <div className="block bg-gray-300 dark:bg-gray-600 w-10 h-5 rounded-full transition-all duration-200"></div>
-                  <div
-                    className={`absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform duration-200 flex items-center justify-center ${
-                      isDarkMode ? 'transform translate-x-5 bg-blue-600' : ''
-                    }`}
-                  >
-                    <FontAwesomeIcon
-                      icon={isDarkMode ? faMoon : faSun}
-                      className="text-xs text-gray-900 dark:text-gray-100"
+              <div className="flex items-center space-x-2">
+                <label className="flex items-center cursor-pointer">
+                  <span className="sr-only">Alternar modo escuro</span>
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={isDarkMode}
+                      onChange={() => setIsDarkMode(!isDarkMode)}
+                      className="sr-only"
                     />
+                    <div className="block bg-gray-300 dark:bg-gray-600 w-10 h-5 rounded-full transition-all duration-200"></div>
+                    <div
+                      className={`absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform duration-200 flex items-center justify-center ${
+                        isDarkMode ? 'transform translate-x-5 bg-blue-600' : ''
+                      }`}
+                    >
+                      <FontAwesomeIcon
+                        icon={isDarkMode ? faMoon : faSun}
+                        className="text-xs text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
                   </div>
-                </div>
-              </label>
+                </label>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {isDarkMode ? 'Modo Escuro' : 'Modo Claro'}
+                </span>
+              </div>
               <button
                 onClick={handleBack}
                 className="flex items-center px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
@@ -295,7 +253,7 @@ const AccountEditPage: React.FC = () => {
             role="form"
             aria-label="Formulário de edição de conta"
           >
-            {/* Personal Information */}
+            {/* Informações Pessoais */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Informações Pessoais
@@ -471,7 +429,7 @@ const AccountEditPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Contact Information */}
+            {/* Informações de Contato */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Informações de Contato
@@ -562,7 +520,7 @@ const AccountEditPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Address Information */}
+            {/* Endereço */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Endereço
@@ -670,33 +628,9 @@ const AccountEditPage: React.FC = () => {
                   >
                     <option value="">Selecione</option>
                     {[
-                      'AC',
-                      'AL',
-                      'AP',
-                      'AM',
-                      'BA',
-                      'CE',
-                      'DF',
-                      'ES',
-                      'GO',
-                      'MA',
-                      'MT',
-                      'MS',
-                      'MG',
-                      'PA',
-                      'PB',
-                      'PR',
-                      'PE',
-                      'PI',
-                      'RJ',
-                      'RN',
-                      'RS',
-                      'RO',
-                      'RR',
-                      'SC',
-                      'SP',
-                      'SE',
-                      'TO',
+                      'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+                      'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+                      'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
                     ].map((uf) => (
                       <option key={uf} value={uf}>
                         {uf}
@@ -765,399 +699,58 @@ const AccountEditPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Account Details */}
+            {/* Limite de Gastos Diários */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Detalhes da Conta
+                Limite de Gastos Diários
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label
-                    htmlFor="bankName"
+                    htmlFor="dailySpendingLimit"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    Nome do Banco
+                    Limite de Gastos Diários (R$)
                   </label>
-                  <input
-                    type="text"
-                    id="bankName"
-                    name="bankName"
-                    value={formData.bankName}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-lg border py-3 px-4 text-sm ${
-                      errors.bankName
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    } text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-                    aria-invalid={!!errors.bankName}
-                    aria-describedby={
-                      errors.bankName ? 'bankName-error' : 'bankName-help'
-                    }
-                  />
+                  <div className="mt-1 flex items-center">
+                    <input
+                      type="range"
+                      id="dailySpendingLimit"
+                      name="dailySpendingLimit"
+                      min="0"
+                      max="10000"
+                      step="100"
+                      value={formData.dailySpendingLimit}
+                      onChange={handleInputChange}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                    />
+                    <span className="ml-4 text-sm text-gray-900 dark:text-gray-100">
+                      R$ {formData.dailySpendingLimit.toFixed(2)}
+                    </span>
+                  </div>
                   <p
-                    id="bankName-help"
+                    id="dailySpendingLimit-help"
                     className="mt-1 text-xs text-gray-500 dark:text-gray-400"
                   >
-                    Ex: Banco do Brasil
+                    Arraste para definir o limite diário de gastos
                   </p>
-                  {errors.bankName && (
+                  {errors.dailySpendingLimit && (
                     <p
-                      id="bankName-error"
+                      id="dailySpendingLimit-error"
                       className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center animate-pulse"
                     >
                       <FontAwesomeIcon
                         icon={faExclamationCircle}
                         className="mr-1"
                       />
-                      {errors.bankName}
+                      {errors.dailySpendingLimit}
                     </p>
                   )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="agencyNumber"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Número da Agência
-                  </label>
-                  <IMaskInput
-                    mask="0000-0"
-                    value={formData.agencyNumber}
-                    onAccept={(value) =>
-                      handleMaskedInputChange('agencyNumber', value)
-                    }
-                    className={`mt-1 block w-full rounded-lg border py-3 px-4 text-sm ${
-                      errors.agencyNumber
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    } text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-                    aria-invalid={!!errors.agencyNumber}
-                    aria-describedby={
-                      errors.agencyNumber
-                        ? 'agencyNumber-error'
-                        : 'agencyNumber-help'
-                    }
-                  />
-                  <p
-                    id="agencyNumber-help"
-                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                  >
-                    Ex: 1234-5
-                  </p>
-                  {errors.agencyNumber && (
-                    <p
-                      id="agencyNumber-error"
-                      className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center animate-pulse"
-                    >
-                      <FontAwesomeIcon
-                        icon={faExclamationCircle}
-                        className="mr-1"
-                      />
-                      {errors.agencyNumber}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="accountNumber"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Número da Conta
-                  </label>
-                  <input
-                    type="text"
-                    id="accountNumber"
-                    name="accountNumber"
-                    value={formData.accountNumber}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-lg border py-3 px-4 text-sm ${
-                      errors.accountNumber
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    } text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-                    aria-invalid={!!errors.accountNumber}
-                    aria-describedby={
-                      errors.accountNumber
-                        ? 'accountNumber-error'
-                        : 'accountNumber-help'
-                    }
-                  />
-                  <p
-                    id="accountNumber-help"
-                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                  >
-                    Ex: 123456
-                  </p>
-                  {errors.accountNumber && (
-                    <p
-                      id="accountNumber-error"
-                      className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center animate-pulse"
-                    >
-                      <FontAwesomeIcon
-                        icon={faExclamationCircle}
-                        className="mr-1"
-                      />
-                      {errors.accountNumber}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="accountDigit"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Dígito da Conta
-                  </label>
-                  <input
-                    type="text"
-                    id="accountDigit"
-                    name="accountDigit"
-                    value={formData.accountDigit}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-lg border py-3 px-4 text-sm ${
-                      errors.accountDigit
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    } text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-                    aria-invalid={!!errors.accountDigit}
-                    aria-describedby={
-                      errors.accountDigit ? 'accountDigit-error' : 'accountDigit-help'
-                    }
-                  />
-                  <p
-                    id="accountDigit-help"
-                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                  >
-                    Ex: 7
-                  </p>
-                  {errors.accountDigit && (
-                    <p
-                      id="accountDigit-error"
-                      className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center animate-pulse"
-                    >
-                      <FontAwesomeIcon
-                        icon={faExclamationCircle}
-                        className="mr-1"
-                      />
-                      {errors.accountDigit}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="accountType"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Tipo de Conta
-                  </label>
-                  <select
-                    id="accountType"
-                    name="accountType"
-                    value={formData.accountType}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-lg border py-3 px-4 text-sm ${
-                      errors.accountType
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    } text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-                    aria-invalid={!!errors.accountType}
-                    aria-describedby={
-                      errors.accountType ? 'accountType-error' : 'accountType-help'
-                    }
-                  >
-                    <option value="">Selecione</option>
-                    <option value="checking">Corrente</option>
-                    <option value="savings">Poupança</option>
-                    <option value="investment">Investimento</option>
-                  </select>
-                  <p
-                    id="accountType-help"
-                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                  >
-                    Tipo de conta bancária
-                  </p>
-                  {errors.accountType && (
-                    <p
-                      id="accountType-error"
-                      className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center animate-pulse"
-                    >
-                      <FontAwesomeIcon
-                        icon={faExclamationCircle}
-                        className="mr-1"
-                      />
-                      {errors.accountType}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="balance"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Saldo (R$)
-                  </label>
-                  <input
-                    type="number"
-                    id="balance"
-                    name="balance"
-                    value={formData.balance}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    className={`mt-1 block w-full rounded-lg border py-3 px-4 text-sm ${
-                      errors.balance
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    } text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-                    aria-invalid={!!errors.balance}
-                    aria-describedby={errors.balance ? 'balance-error' : 'balance-help'}
-                  />
-                  <p
-                    id="balance-help"
-                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                  >
-                    Saldo atual da conta
-                  </p>
-                  {errors.balance && (
-                    <p
-                      id="balance-error"
-                      className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center animate-pulse"
-                    >
-                      <FontAwesomeIcon
-                        icon={faExclamationCircle}
-                        className="mr-1"
-                      />
-                      {errors.balance}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="status"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Status
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-lg border py-3 px-4 text-sm border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    aria-describedby="status-help"
-                  >
-                    <option value="active">Ativa</option>
-                    <option value="inactive">Inativa</option>
-                  </select>
-                  <p
-                    id="status-help"
-                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                  >
-                    Status atual da conta
-                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Security and Preferences */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Segurança e Preferências
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <label
-                    htmlFor="transactionLimit"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Limite de Transação Diária (R$)
-                  </label>
-                  <input
-                    type="number"
-                    id="transactionLimit"
-                    name="transactionLimit"
-                    value={formData.transactionLimit}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    className={`mt-1 block w-full rounded-lg border py-3 px-4 text-sm ${
-                      errors.transactionLimit
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
-                    } text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200`}
-                    aria-invalid={!!errors.transactionLimit}
-                    aria-describedby={
-                      errors.transactionLimit
-                        ? 'transactionLimit-error'
-                        : 'transactionLimit-help'
-                    }
-                  />
-                  <p
-                    id="transactionLimit-help"
-                    className="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                  >
-                    Limite diário para transações
-                  </p>
-                  {errors.transactionLimit && (
-                    <p
-                      id="transactionLimit-error"
-                      className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center animate-pulse"
-                    >
-                      <FontAwesomeIcon
-                        icon={faExclamationCircle}
-                        className="mr-1"
-                      />
-                      {errors.transactionLimit}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="twoFactorEnabled"
-                      checked={formData.twoFactorEnabled}
-                      onChange={handleInputChange}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-                      aria-label="Habilitar autenticação de dois fatores"
-                    />
-                    <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Autenticação de Dois Fatores
-                    </span>
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="emailNotifications"
-                      checked={formData.emailNotifications}
-                      onChange={handleInputChange}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-                      aria-label="Receber notificações por e-mail"
-                    />
-                    <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Notificações por E-mail
-                    </span>
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="smsNotifications"
-                      checked={formData.smsNotifications}
-                      onChange={handleInputChange}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-                      aria-label="Receber notificações por SMS"
-                    />
-                    <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Notificações por SMS
-                    </span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Message */}
+            {/* Mensagem de Submissão */}
             {submitMessage && (
               <div
                 className={`p-4 rounded-xl flex items-center animate-slide-in ${
@@ -1180,7 +773,7 @@ const AccountEditPage: React.FC = () => {
               </div>
             )}
 
-            {/* Buttons */}
+            {/* Botões */}
             <div className="flex flex-col sm:flex-row justify-end space-y-4 sm:space-y-0 sm:space-x-4">
               <button
                 type="button"
@@ -1207,6 +800,16 @@ const AccountEditPage: React.FC = () => {
                   <FontAwesomeIcon icon={faSave} className="mr-2" />
                 )}
                 {isSubmitting ? 'Salvando...' : 'Salvar'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDeactivate}
+                className="px-6 py-2.5 bg-red-600 dark:bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-700 dark:hover:bg-red-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 flex items-center justify-center"
+                disabled={isSubmitting || formData.status === 'inactive'}
+                aria-label="Desativar conta"
+              >
+                <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                Desativar Conta
               </button>
             </div>
           </form>

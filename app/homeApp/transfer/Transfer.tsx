@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUniversity, faHistory, faQrcode, faBolt, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
 import TransferCard from '~/components/TransferCard';
@@ -9,7 +9,11 @@ import { useTransferStore } from '~/context/transferStore';
 import { ConfirmationModalTransfer } from '~/components/ConfirmationModalTransfer'
 import type { ConfirmationDetails } from 'types'
 import { useAccountStore } from '~/context/accountStore'
-import { formatNumberAccount, formatToBRL } from 'utils'
+import { IMaskInput } from 'react-imask'
+import { formatToBRL ,formatNumberAccount, CleanString } from '~/utils/utils'
+import { useToast } from '~/components/ToastContext'
+import SuccessToast from '~/components/SuccessToast'
+import { useBankStore } from '~/context/bankStore'
 
 interface TransferCardData {
   type: 'pix' | 'ted' | 'doc';
@@ -25,10 +29,19 @@ export function TransferContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [details, setDetails] = useState<ConfirmationDetails | null>();
   const [transfer, setTransfer] = useState<TransferFormData | null>();
-  const { createTransfer } = useTransferStore();
+  const { createTransfer, error } = useTransferStore();
   const { user, updateUser} = useAccountStore();
+  const { banks, listBanks} = useBankStore();
   const [transferType, setTransferType] = useState<'pix' | 'ted' | 'doc'>('pix');
   const [keyType, setKeyType] = useState<'cpf' | 'email' | 'celular' | 'aleatorio'>('cpf');
+  const tax = { doc: 5, ted: 10 };
+  const { openToast } = useToast();
+  
+  useEffect(() => {
+    if (banks.length === 0) {
+      listBanks();
+    }
+  }, [banks.length, listBanks]);
 
   const {
     control,
@@ -45,7 +58,7 @@ export function TransferContent() {
       keyAccount: '',
       nameReceiver: '',
       bank: '',
-      agencyReceiver: '',
+      agencyNumberReceiver: '',
       accountNumberReceiver: '',
       documentReceiver: '',
       amount: '',
@@ -74,7 +87,7 @@ export function TransferContent() {
       bg: 'bg-blue-100 dark:bg-slate-600',
       title: 'TED',
       description: 'Transferência eletrônica rápida',
-      features: ['Processada em até 2h', 'Taxa: R$ 5,00', 'Mínimo: R$ 1.000,00'],
+      features: ['Processada em até 2h', 'Taxa: R$ 10,00', 'Mínimo: R$ 1.000,00'],
     },
     {
       type: 'doc',
@@ -83,19 +96,27 @@ export function TransferContent() {
       bg: 'bg-purple-100 dark:bg-slate-600',
       title: 'DOC',
       description: 'Transferência em horário comercial',
-      features: ['Processada em 1 dia útil', 'Taxa: R$ 3,00', 'Mínimo: R$ 500,00'],
+      features: ['Processada em 1 dia útil', 'Taxa: R$ 5,00', 'Mínimo: R$ 1.000,00'],
     },
   ];
 
-  const formatAmount = (value: string) => {
-    let cleanValue = value.replace(/\D/g, '');
-    if (!cleanValue) return '';
-    return (parseInt(cleanValue) / 100).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-  };
+  const formatAmount = (value: string | number): string => {
+  if (!value) return '';
+  // Converte para número, garantindo que seja em reais (não centavos)
+  const numericValue = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : value;
+  if (isNaN(numericValue)) return '';
+  // Formata com 2 casas decimais e separadores de milhar
+  return numericValue.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+};
 
-  const parseAmount = (value: string) => {
-    return value.replace('.', '').replace(',', '.') || '';
-  };
+// Função para parsear o valor formatado para um número (em reais)
+const parseAmount = (value: string): string => {
+  if (!value) return '';
+  // Remove tudo exceto números, ponto e vírgula, e converte para formato numérico
+  const cleanValue = value.replace(/[^\d,.]/g, '').replace(',', '.');
+  return cleanValue;
+};
+
 
   const onSubmit = async (data: TransferFormData) => {
     try {
@@ -108,10 +129,13 @@ export function TransferContent() {
         description: data.description,
       }
 
+      console.log(data)
+
       const resquest: TransferFormData & { accountId: string, accountNumberPayer: string } = {...data,
         ...{
         accountId: user.accountId,
-        accountNumberPayer: user.accountNumber
+        accountNumberPayer: user.accountNumber,
+        keyAccount: data.transferType == 'pix' ? CleanString(data.keyAccount) : '',
       }};
 
       setDetails(details)
@@ -124,10 +148,24 @@ export function TransferContent() {
 
   const handleModalConfirm = async () => {
     const success = await createTransfer(transfer);
-
-    if(success) setIsModalOpen(false);
-
-    updateUser()
+    
+    if(!success){
+      openToast({
+        message: error.message || 'Erro ao tentar fazer a transferencia!',
+        type: 'error',
+        duration: 4000,
+        position: 'top-right'
+      });
+      return
+    } 
+    openToast({
+        message: 'Transferência realizada com sucesso!',
+        type: 'success',
+        duration: 2000,
+        position: 'top-mid'
+      });
+      setIsModalOpen(false);
+      updateUser()
   };
 
   // Atualiza transferType e keyType quando o usuário seleciona um cartão
@@ -229,8 +267,15 @@ export function TransferContent() {
                         control={control}
                         render={({ field }) => (
                           <div className="flex-1">
-                            <input
+                            <IMaskInput
                               {...field}
+                              mask={keyType === 'cpf'
+                                  ? '000.000.000-00'
+                                  : keyType === 'email'
+                                  ? ''
+                                  : keyType === 'celular'
+                                  ? '(00) 0 0000-0000'
+                                  : '0000-0000-0000-0000-0000-0000'}
                               type="text"
                               className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                               placeholder={
@@ -243,15 +288,16 @@ export function TransferContent() {
                                   : 'Chave aleatória'
                               }
                             />
-                            {(errors as any).keyAccount && (
-                              <p className="mt-1 text-xs text-red-600">
-                                {(errors as any).keyAccount.message}
-                              </p>
-                            )}
+                            
                           </div>
                         )}
                       />
                     </div>
+                    {(errors as any).keyAccount && (
+                      <p className="mt-1 text-xs text-red-600">
+                        {(errors as any).keyAccount.message}
+                      </p>
+                    )}
                   </div>
                   <div className="mb-5">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -289,11 +335,9 @@ export function TransferContent() {
                           className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                         >
                           <option value="">Selecione o banco</option>
-                          <option value="Banco do Brasil (001)">Banco do Brasil (001)</option>
-                          <option value="Bradesco (237)">Bradesco (237)</option>
-                          <option value="Caixa Econômica (104)">Caixa Econômica (104)</option>
-                          <option value="Itaú (341)">Itaú (341)</option>
-                          <option value="Santander (033)">Santander (033)</option>
+                          {banks.map((bank) => (
+                            <option key={bank.bankId} value={bank.name}>{bank.name}</option>
+                          ))}
                         </select>
                       )}
                     />
@@ -303,38 +347,45 @@ export function TransferContent() {
                   </div>
                   <div className="grid grid-cols-2 gap-4 mb-5">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor='agencyNumberReceiver' className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Agência
                       </label>
                       <Controller
-                        name="agencyReceiver"
+                        name="agencyNumberReceiver"
                         control={control}
                         render={({ field }) => (
-                          <input
+                          <IMaskInput
                             {...field}
+                            id='agencyNumberReceiver'
                             type="text"
+                            mask={'0000'}
+                            unmask={true}
                             className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                             placeholder="0000"
                           />
                         )}
                       />
-                      {(errors as any).agencyReceiver && (
-                        <p className="mt-1 text-xs text-red-600">{(errors as any).agencyReceiver.message}</p>
+                      {(errors as any).agencyNumberReceiver && (
+                        <p className="mt-1 text-xs text-red-600">{(errors as any).agencyNumberReceiver.message}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label htmlFor='accountNumberReceiver' className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Conta
                       </label>
                       <Controller
                         name="accountNumberReceiver"
                         control={control}
                         render={({ field }) => (
-                          <input
-                            {...field}
+                          <IMaskInput
                             type="text"
+                            id='accountNumberReceiver'
+                            mask="0000000-0"
+                            unmask={true}
+                            value={field.value || ''} // Garante que o valor inicial seja uma string vazia
+                            onAccept={(value) => field.onChange(value)}
                             className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
-                            placeholder="00000-0"
+                            placeholder="0000000-0"
                           />
                         )}
                       />
@@ -351,9 +402,21 @@ export function TransferContent() {
                       name="documentReceiver"
                       control={control}
                       render={({ field }) => (
-                        <input
-                          {...field}
-                          type="text"
+                    <IMaskInput
+                      type="text"
+                      id="documentReceiver"
+                      mask={[
+                        {
+                          mask: '000.000.000-00', // Máscara para CPF
+                          maxLength: 11,
+                        },
+                        {
+                          mask: '00.000.000/0000-00', // Máscara para CNPJ
+                        },
+                      ]}
+                      unmask={true} // Retorna apenas os dígitos
+                      value={field.value || ''} // Garante que o valor inicial seja uma string vazia
+                      onAccept={(value) => field.onChange(value)}
                           className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 transition-all duration-200"
                           placeholder="000.000.000-00"
                         />
@@ -402,11 +465,23 @@ export function TransferContent() {
                     name="amount"
                     control={control}
                     render={({ field }) => (
-                      <input
+                      <IMaskInput
                         {...field}
                         type="text"
-                        value={formatAmount(field.value)}
-                        onChange={(e) => field.onChange(parseAmount(e.target.value))}
+                        mask="num"
+                        blocks={{
+                          num: {
+                            mask: Number,
+                            thousandsSeparator: '.',
+                            radix: ',',
+                            scale: 2,
+                            normalizeZeros: true,
+                            padFractionalZeros: true,
+                          },
+                        }}
+                        unmask={true} // Retorna o valor limpo (ex.: "1234.56")
+                        value={field.value || ''} // Garante que o valor inicial seja string
+                        onAccept={(value) => field.onChange(value)}
                         className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 transition-all duration-200"
                         placeholder="0,00"
                       />
@@ -415,7 +490,7 @@ export function TransferContent() {
                 </div>
                 {errors.amount && <p className="mt-1 text-xs text-red-600">{errors.amount.message}</p>}
                 <p id="min-value" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Valor mínimo: {transferType === 'pix' ? 'R$ 1,00' : transferType === 'ted' ? 'R$ 1.000,00' : 'R$ 500,00'}
+                  Valor mínimo: 'R$ 1.000,00'
                 </p>
               </div>
               {transferType !== 'pix' && (
@@ -424,13 +499,15 @@ export function TransferContent() {
                     <div className="flex justify-between mb-3">
                       <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Taxa</span>
                       <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        R$ {transferType === 'ted' ? '5,00' : '3,00'}
+                        {transferType === 'ted' ? formatToBRL(tax.ted) : formatToBRL(tax.doc)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Total</span>
                       <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        R$ {(parseFloat(watch('amount') || '0') + (transferType === 'ted' ? 5 : 3)).toFixed(2).replace('.', ',')}
+                        {formatToBRL(
+                          (parseFloat(parseAmount(watch('amount')) || '0') + (transferType === 'ted' ? tax.ted : tax.doc)).toFixed(2)
+                        )}
                       </span>
                     </div>
                   </div>

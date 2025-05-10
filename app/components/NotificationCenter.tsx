@@ -8,11 +8,11 @@ import {
   faBell,
   faCheck,
 } from '@fortawesome/free-solid-svg-icons';
-import type { Notification } from '../../types';
+import type { EventMessage } from '~/models/eventMessage'
 
 interface NotificationCenterProps {
   isOpen: boolean;
-  notifications: Notification[];
+  notifications: EventMessage[];
   toggleNotificationCenter: () => void;
   markAsRead: (id: string) => void;
   clearNotifications: () => void;
@@ -61,7 +61,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
   return (
     <div
       ref={panelRef}
-      className={`fixed top-16 right-2 w-full sm:w-96 bg-white dark:bg-slate-950 rounded-xl shadow-lg z-40 transition-all duration-200 ${
+      className={`fixed top-16 right-2 w-full sm:w-96 bg-white dark:bg-slate-950 rounded-xl shadow-lg z-[150] transition-all duration-200 ${
         isOpen ? 'animate-slide-in' : 'hidden'
       } bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-slate-950`}
       role="dialog"
@@ -91,12 +91,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         ) : (
           <div className="notification-list">
             {notifications.map((notification) => {
-              const { icon, color } = getNotificationIcon(notification.type);
+              const { icon, color } = getNotificationIcon(notification.action);
               return (
                 <div
-                  key={notification.id}
+                  key={notification.eventId}
                   className={`p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 ${
-                    notification.unread ? 'bg-blue-100 dark:bg-blue-900' : ''
+                    !notification.read ? 'bg-blue-100 dark:bg-blue-900' : ''
                   } rounded-lg mx-2 my-1`}
                 >
                   <div className="flex items-start space-x-3">
@@ -110,16 +110,16 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         {notification.title}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {notification.description}
+                        {notification.details}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {notification.time}
+                        {new Date(notification.date).toLocaleString()}
                       </p>
                     </div>
-                    {notification.unread && (
+                    {!notification.read && (
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => markAsRead(notification.id)}
+                          onClick={() => markAsRead(notification.eventId)}
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                           aria-label={`Marcar notificação "${notification.title}" como lida`}
                         >

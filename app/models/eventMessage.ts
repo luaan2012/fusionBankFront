@@ -27,5 +27,6 @@ import type { TransferType } from "./enum/transferType"
   details: string
   title: string
   service: ServiceType
+  read: boolean
  }
  

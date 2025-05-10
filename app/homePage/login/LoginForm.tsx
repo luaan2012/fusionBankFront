@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWallet, faIdCard, faEnvelope, faSignInAlt, faFingerprint, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { faGoogle, faApple } from '@fortawesome/free-brands-svg-icons';
-import { loginSchema, type LoginFormData, type AccountFormErrors, type DocumentFormErrors, type EmailFormErrors, type LoginPayload } from '../schema/loginSchema'
-import { useForm } from 'react-hook-form';
+import { loginSchema, type LoginFormData, type AccountFormErrors, type DocumentFormErrors, type EmailFormErrors, type LoginPayload } from '../schema/loginSchema';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router'
-import { useAccountStore } from '~/context/accountStore'
+import { useNavigate } from 'react-router';
+import { useAccountStore } from '~/context/accountStore';
+import { IMaskInput } from 'react-imask';
+import { useToast } from '~/components/ToastContext'
 
 interface LoginFormProps {
   switchToRegister: () => void;
@@ -16,7 +18,8 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
   const [loginType, setLoginType] = useState<'account' | 'document' | 'email'>('account');
   const [showPassword, setShowPassword] = useState(false);
   const { loading, error, login } = useAccountStore();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { openToast } = useToast()
 
   // Configuração do React Hook Form
   const {
@@ -25,6 +28,7 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
     formState: { errors },
     setValue,
     resetField,
+    control,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -57,27 +61,32 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
     const loginPayload: LoginPayload = {
       loginUser,
       password: data.password,
-      loginType: data.loginType,
+      loginType: data.loginType === 'document' ? 'cpfcnpj' : data.loginType,
     };
 
-    var loginEfetuado = await login(loginPayload);
+    const loginEfetuado = await login(loginPayload);
 
-    if(loginEfetuado) navigate("/app")
+    if(!loginEfetuado){
+      openToast({
+        message: error.message || 'Aconteceu um erro ao tentar acessar sua conta!',
+        type: 'error',
+        duration: 4000,
+        position: 'top-right'
+      })
+      return;
+    }
+
+    navigate('/app');
   };
 
   // Função de biometria (mock)
   const handleBiometric = () => {
     alert('Biometria solicitada. Em um ambiente real, isso acionaria a API de biometria do dispositivo.');
-  }; 
+  };
 
   return (
     <div className="w-full max-w-xl bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
       <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Acesse sua conta</h2>
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md">
-          {error.message}
-        </div>
-      )}
       <form onSubmit={handleSubmit(onSubmit)}>
         <input type="hidden" {...register('loginType')} value={loginType} />
         <div className="mb-6">
@@ -119,37 +128,53 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
           {loginType === 'account' && (
             <div className="space-y-4">
               <div>
-                <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Número da Conta
-                </label>
-                <input
-                  type="text"
-                  id="accountNumber"
-                  {...register('accountNumber')}
-                  className={`w-full px-4 py-2 border ${
-                    (errors as AccountFormErrors).accountNumber ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                  } rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white`}
-                  placeholder="Digite o número da conta"
-                />
-                {(errors as AccountFormErrors).accountNumber && (
-                  <p className="mt-1 text-sm text-red-500 dark:text-red-400">{(errors as AccountFormErrors)?.accountNumber?.message}</p>
-                )}
-              </div>
-              <div>
                 <label htmlFor="agencyNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Agência
                 </label>
-                <input
-                  type="text"
-                  id="agencyNumber"
-                  {...register('agency')}
-                  className={`w-full px-4 py-2 border ${
-                    (errors as AccountFormErrors).agency ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                  } rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white`}
-                  placeholder="Digite o número da agência"
-                />
+                <Controller
+                  name="agency"
+                  control={control}
+                  render={({ field }) => (
+                    <IMaskInput
+                      type="text"
+                      id="agency"
+                      mask={'0000'}
+                      unmask={true}
+                      value={field.value || ''} // Garante que o valor inicial seja uma string vazia
+                      onAccept={(value) => field.onChange(value)}
+                      className={`w-full px-4 py-2 border ${
+                        (errors as AccountFormErrors).agency ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      } rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white`}
+                      placeholder="Digite o número da agência"
+                    />
+                  )} />
                 {(errors as AccountFormErrors).agency && (
                   <p className="mt-1 text-sm text-red-500 dark:text-red-400">{(errors as AccountFormErrors)?.agency?.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Número da Conta
+                </label>
+                <Controller
+                  name="accountNumber"
+                  control={control}
+                  render={({ field }) => (
+                    <IMaskInput
+                      type="text"
+                      id="accountNumber"
+                      mask="0000000-0"
+                      unmask={true}
+                      value={field.value || ''} // Garante que o valor inicial seja uma string vazia
+                      onAccept={(value) => field.onChange(value)}
+                      className={`w-full px-4 py-2 border ${
+                        (errors as AccountFormErrors).accountNumber ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      } rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white`}
+                      placeholder="Digite o número da conta"
+                    />
+                  )}/>
+                {(errors as AccountFormErrors).accountNumber && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-400">{(errors as AccountFormErrors)?.accountNumber?.message}</p>
                 )}
               </div>
             </div>
@@ -160,14 +185,31 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
                 <label htmlFor="documentNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   CPF/CNPJ
                 </label>
-                <input
-                  type="text"
-                  id="documentNumber"
-                  {...register('document')}
-                  className={`w-full px-4 py-2 border ${
-                    (errors as DocumentFormErrors).document ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                  } rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white`}
-                  placeholder="Digite seu CPF ou CNPJ"
+                <Controller
+                  name="document"
+                  control={control}
+                  render={({ field }) => (
+                    <IMaskInput
+                      type="text"
+                      id="documentNumber"
+                      mask={[
+                        {
+                          mask: '000.000.000-00', // Máscara para CPF
+                          maxLength: 11,
+                        },
+                        {
+                          mask: '00.000.000/0000-00', // Máscara para CNPJ
+                        },
+                      ]}
+                      unmask={true} // Retorna apenas os dígitos
+                      value={field.value || ''} // Garante que o valor inicial seja uma string vazia
+                      onAccept={(value) => field.onChange(value)} // Atualiza o valor no react-hook-form
+                      className={`w-full px-4 py-2 border ${
+                        (errors as DocumentFormErrors).document ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                      } rounded-md focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white`}
+                      placeholder="Digite seu CPF ou CNPJ"
+                    />
+                  )}
                 />
                 {(errors as DocumentFormErrors).document && (
                   <p className="mt-1 text-sm text-red-500 dark:text-red-400">{(errors as DocumentFormErrors)?.document?.message}</p>
@@ -259,29 +301,6 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
           </button>
         </p>
       </div>
-      {/* <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <button
-          type="button"
-          className="w-full py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300"
-        >
-          <FontAwesomeIcon icon={faGoogle} className="mr-2" /> Entrar com Google
-        </button>
-        <button
-          type="button"
-          className="w-full py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 mt-3"
-        >
-          <FontAwesomeIcon icon={faApple} className="mr-2" /> Entrar com Apple
-        </button>
-      </div> */}
-      {/* <div className="mt-6 text-center">
-        <button
-          type="button"
-          onClick={handleBiometric}
-          className="text-sm text-blue-500 dark:text-blue-500 font-medium hover:underline"
-        >
-          <FontAwesomeIcon icon={faFingerprint} className="mr-1" /> Usar biometria
-        </button>
-      </div> */}
     </div>
   );
 };
