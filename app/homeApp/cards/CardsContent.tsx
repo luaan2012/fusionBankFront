@@ -1,62 +1,32 @@
-import React, { useState } from 'react';
-import type { Card } from 'types'
-import CardDashboard from '~/components/CardDashboard'
+import React, { useEffect, useState } from 'react';
+import { CardDashboard } from '~/components/CardDashboard'
 import CardManagementTabs from '~/components/CardManagementTabs'
 import RequestCardModal from '~/components/RequestCardModal'
 import SuccessNotification from '~/components/SuccessNotifications'
+import { useAccountStore } from '~/context/accountStore'
+import { useCreditCardStore } from '~/context/creditCardStore'
 
 const CardsContent: React.FC = () => {
-  const [cards, setCards] = useState<Card[]>([
-    {
-      id: 1,
-      type: 'physical',
-      brand: 'VISA Platinum',
-      number: '•••• •••• •••• 4242',
-      holder: 'João Silva',
-      expiry: '09/25',
-      cvv: '•••',
-      availableLimit: 'R$ 4.250,00',
-      isBlocked: false,
-    },
-    {
-      id: 2,
-      type: 'virtual',
-      brand: 'MASTERCARD',
-      number: '•••• •••• •••• 5678',
-      holder: 'João Silva',
-      expiry: '12/23',
-      cvv: '•••',
-      availableLimit: 'R$ 1.500,00',
-    },
-  ]);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [successNotification, setSuccessNotification] = useState({
-    isOpen: false,
-    message: '',
-  });
+  const [successNotification, setSuccessNotification] = useState({isOpen: false,message: ''});
+  const { requestCreditCard, creditCards, loading, getCreditCardsById } = useCreditCardStore()
+  const requestNewCard = () => requestCreditCard(user?.accountId)
+  const { user } = useAccountStore()
 
-  const handleBlockCard = (cardId: number) => {
-    setCards((prev) =>
-      prev.map((card) =>
-        card.id === cardId ? { ...card, isBlocked: !card.isBlocked } : card
-      )
-    );
-    setSuccessNotification({
-      isOpen: true,
-      message: `Seu cartão foi ${
-        cards.find((c) => c.id === cardId)?.isBlocked ? 'desbloqueado' : 'bloqueado'
-      } com sucesso.`,
-    });
-  };
+  useEffect(() => {
+    if(creditCards.length === 0 && user?.accountId) {
+      getCreditCardsById(user?.accountId)
+    }
+  }, [creditCards.length])
 
-  const handleShowCvv = (cardId: number) => {
-    setCards((prev) =>
-      prev.map((card) =>
-        card.id === cardId
-          ? { ...card, cvv: card.cvv === '•••' ? '123' : '•••' }
-          : card
-      )
-    );
+  const handleShowCvv = (cardId: string) => {
+    // setCards((prev) =>
+    //   prev.map((card) =>
+    //     card.id === cardId
+    //       ? { ...card, cvv: card.cvv === '•••' ? '123' : '•••' }
+    //       : card
+    //   )
+    // );
   };
 
   const handleGenerateNewCard = () => {
@@ -78,6 +48,14 @@ const CardsContent: React.FC = () => {
     });
   };
 
+  const handleBlockCard = (accountId: string) => {
+    // Implement adjust limit modal logic here
+    setSuccessNotification({
+      isOpen: true,
+      message: 'Seu pedido de ajuste de limite foi enviado para análise.',
+    });
+  };
+
   const handleTempBlock = () => {
     setSuccessNotification({
       isOpen: true,
@@ -88,11 +66,12 @@ const CardsContent: React.FC = () => {
   return (
     <div>
       <CardDashboard
-        cards={cards}
-        onBlockCard={() => handleBlockCard(cards[0].id)}
-        onShowCvv={() => handleShowCvv(cards[1].id)}
+        cards={creditCards}
+        loading={loading}
+        onBlockCard={() => handleBlockCard(creditCards[0].id)}
+        onShowCvv={() => handleShowCvv(creditCards[1].id)}
         onGenerateNewCard={handleGenerateNewCard}
-        onRequestNewCard={handleRequestNewCard}
+        onRequestNewCard={requestNewCard}
       />
       <CardManagementTabs
         onAdjustLimit={handleAdjustLimit}

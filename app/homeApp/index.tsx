@@ -19,6 +19,8 @@ import { AccountSummary } from '~/components/AccountSummary'
 import type { EventMessage } from '~/models/eventMessage'
 import { useSignalR } from '~/services/useSignalR'
 import Notification from '~/components/Notification'
+import { NotificationType } from '~/models/enum/notificationType'
+import { useCreditCardStore } from '~/context/creditCardStore'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -28,12 +30,17 @@ export function Index() {
   const { getEventsHome, event, loading: eventLoading, isAlready: isAlreadyEvent } = useEventStore();
   const { getInvestmentsHome, investment, loading: investmentLoading, isAlready: isAlreadyInvestment} = useInvestmentStore();
   const { setDarkMode, user, loading: accountLoading} = useAccountStore();
+  const { getCreditCardsById } = useCreditCardStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-   const eventUrl = import.meta.env.VITE_API_URL_EVENT
-   
+  const eventUrl = import.meta.env.VITE_API_URL_EVENT
+
   useSignalR(eventUrl + 'notification', user?.accountId, (notification: EventMessage) => {
     setNotifications((prev) => [notification, ...prev]);
     setToastMessage(notification.title);
+
+    if (notification?.action === NotificationType.CREDITCARD_RESPONSED) {
+      getCreditCardsById(user?.accountId);
+    }
   });
 
   useEffect(() => {
@@ -128,7 +135,7 @@ export function Index() {
       </main>
       <Footer />
       
-      <Notification message={toastMessage}/>
+      <Notification key={toastMessage} message={toastMessage}/>
     </div>
   );
 }

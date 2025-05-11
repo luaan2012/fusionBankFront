@@ -1,117 +1,174 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEllipsisV, faLock, faUnlock, faQrcode, faEye, faEyeSlash, faSyncAlt } from '@fortawesome/free-solid-svg-icons';
-import type { Card } from '../../types';
+import {
+  faLock,
+  faUnlock,
+  faEye,
+  faEyeSlash,
+  faTrash,
+  faCreditCard,
+} from '@fortawesome/free-solid-svg-icons';
+import {
+  faCcVisa,
+  faCcMastercard,
+  faCcAmex,
+} from '@fortawesome/free-brands-svg-icons';
+import type { CreditCard } from '~/models/creditCard';
+import { formatCardNumber, formatDateBR, formatToBRL } from '~/utils/utils';
 
 interface CardItemProps {
-  card: Card;
+  card: CreditCard;
   onBlockCard: () => void;
   onShowCvv: () => void;
-  onGenerateNewCard: () => void;
+  onDeleteCard: () => void;
 }
 
-const CardItem: React.FC<CardItemProps> = ({ card, onBlockCard, onShowCvv, onGenerateNewCard }) => {
-  const isVirtual = card.type === 'virtual';
-  const bgClass = isVirtual ? 'bg-purple-600 dark:bg-purple-500' : 'bg-blue-600 dark:bg-blue-500';
+// Map card brands to FontAwesome icons
+const brandIcons: { [key: string]: any } = {
+  Visa: faCcVisa,
+  Mastercard: faCcMastercard,
+  'American Express': faCcAmex,
+  Discover: faCreditCard,
+  Hipercard: faCreditCard,
+  // Add other brands as needed
+};
+
+const CardItem: React.FC<CardItemProps> = ({
+  card,
+  onBlockCard,
+  onShowCvv,
+  onDeleteCard,
+}) => {
+  const bgClass = card.creditCardVirtual
+    ? 'bg-gradient-to-br from-purple-800 via-indigo-700 to-purple-600 dark:from-purple-700 dark:via-indigo-600 dark:to-purple-500'
+    : 'bg-gradient-to-br from-blue-800 via-cyan-700 to-blue-600 dark:from-blue-700 dark:via-cyan-600 dark:to-blue-500';
+
+  // Brand-specific background gradient
+  const logoBgGradient = (() => {
+    switch (card.creditCardType.toLowerCase()) {
+      case 'visa':
+        return 'bg-gradient-to-br from-[#1A1F71] to-[#2A3B8F]';
+      case 'mastercard':
+        return 'bg-gradient-to-br from-[#CC0000] to-[#E63900]';
+      case 'american express':
+        return 'bg-gradient-to-br from-[#016FD0] to-[#0284F0]';
+      case 'discover':
+        return 'bg-gradient-to-br from-[#F48120] to-[#F4A620]';
+      case 'hipercard':
+        return 'bg-gradient-to-br from-[#4B0082] to-[#6B00B2]';
+      default:
+        return 'bg-gradient-to-br from-gray-500 to-gray-600';
+    }
+  })();
+
+  // Add overlay for fallback icons
+  const isFallback = ['Discover', 'Hipercard'].includes(card.creditCardType);
+  const overlayClass = isFallback ? 'bg-gradient-to-br from-white/10 to-transparent' : '';
+
+  // Card brand logo
+  const brandLogo = (
+    <div
+      className="w-16 h-9 rounded-md flex items-center justify-center bg-transparent border border-white/30 shadow-brand-logo transition-all duration-300 hover:scale-105"
+      aria-label={`Logotipo da bandeira ${card.creditCardType}`}
+    >
+      <FontAwesomeIcon
+        icon={faCcVisa}
+        className="text-white/95 text-2xl scale-110"
+      />
+    </div>
+  );
 
   return (
-    <div className="bg-white dark:bg-slate-950 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-      <div className={`${bgClass} p-6 text-white`}>
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <p className="text-sm font-medium opacity-90">
-              {isVirtual ? 'Cartão Virtual' : 'Cartão Principal'}
-            </p>
-            <h3 className="text-base font-semibold">{card.brand}</h3>
+    <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-card-hover hover:scale-[1.02] focus-within:ring-4 focus-within:ring-blue-500/50 max-w-sm">
+      {/* Inner Glow Border */}
+      <div className="absolute inset-0 m-0.5 rounded-3xl bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+      {/* Card Header */}
+      <div className={`${bgClass} p-5 text-white relative overflow-hidden shimmer`}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.2),transparent_50%)] opacity-70" />
+        <div className="absolute inset-0 backdrop-blur-sm bg-white/5" />
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-3">
+            <div>
+              <p className="text-xs font-semibold text-white/90 tracking-wider uppercase drop-shadow-sm">
+                {card.creditCardVirtual ? 'Cartão Virtual' : 'Cartão Físico'}
+              </p>
+              <h3 className="text-xl font-extrabold tracking-tight text-white drop-shadow-md">{card.creditCardType}</h3>
+            </div>
           </div>
+
+          {/* Card Number with Brand Logo on Left */}
+          <div className="mt-3 flex items-center">
+            <div className="mr-3">{brandLogo}</div>
+            <div className="text-base font-mono tracking-[0.1em] text-white/95 drop-shadow-sm">
+              <p>{formatCardNumber(card.creditCardNumber)}</p>
+            </div>
+          </div>
+
+          {/* Card Details */}
+          <div className="mt-5 grid grid-cols-3 gap-4 text-xs">
+            <div>
+              <p className="text-[10px] font-medium text-white/80 uppercase tracking-wide">Titular</p>
+              <p className="font-semibold text-white/95">{card.creditCardName}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-medium text-white/80 uppercase tracking-wide">Expira em</p>
+              <p className="font-semibold text-white/95">{formatDateBR(card.creditCardValidity)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-medium text-white/80 uppercase tracking-wide">CVV</p>
+              <p className="font-semibold text-white/95">{card.creditCardCode}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Card Footer */}
+     <div className="p-4 bg-gradient-to-t from-gray-100 to-gray-50 dark:from-slate-800 dark:to-slate-700 border-t border-white/10 dark:border-gray-700/50">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        {/* Available Limit */}
+        <div>
+          <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wide">Limite disponível</p>
+          <p className="text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white drop-shadow-sm">
+            {formatToBRL(card.creditCardLimit)}
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          {/* Show/Hide CVV */}
           <button
-            className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-all duration-200"
-            aria-label="Mais opções"
+            onClick={onShowCvv}
+            className="w-full sm:w-auto px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-500 dark:from-purple-500 dark:to-indigo-400 text-white rounded-md text-xs font-medium flex items-center justify-center space-x-2 hover:from-purple-700 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+            aria-label={card.creditCardCode === '•••' ? 'Mostrar CVV' : 'Ocultar CVV'}
           >
-            <FontAwesomeIcon icon={faEllipsisV} className="text-white" />
+            <FontAwesomeIcon icon={card.creditCardCode === '•••' ? faEye : faEyeSlash} className="w-4 h-4" />
+            <span className="hidden sm:inline">{card.creditCardCode === '•••' ? 'Ver CVV' : 'Ocultar'}</span>
           </button>
-        </div>
-        <div className="mt-4 flex items-center">
-          <div
-            className={`w-12 h-8 rounded-md mr-4 flex items-center justify-center ${
-              isVirtual ? 'bg-purple-400 dark:bg-purple-300' : 'bg-gradient-to-r from-yellow-400 to-yellow-600'
-            }`}
-          >
-            {isVirtual && <FontAwesomeIcon icon={faSyncAlt} className="text-white text-sm" />}
-          </div>
-          <div className="text-sm font-mono">
-            <p>{card.number}</p>
-          </div>
-        </div>
-        <div className="mt-6 flex justify-between items-center text-sm">
-          <div>
-            <p className="text-xs opacity-80">Titular</p>
-            <p className="font-medium">{card.holder}</p>
-          </div>
-          <div>
-            <p className="text-xs opacity-80">Expira em</p>
-            <p className="font-medium">{card.expiry}</p>
-          </div>
-          <div>
-            <p className="text-xs opacity-80">CVV</p>
-            <p className="font-medium">{card.cvv}</p>
-          </div>
+
+          {/* Delete or Block */}
+          {card.creditCardVirtual ? (
+            <button
+              onClick={onDeleteCard}
+              className="w-full sm:w-auto px-3 py-1.5 bg-gradient-to-r from-red-600 to-pink-500 dark:from-red-500 dark:to-pink-400 text-white rounded-md text-xs font-medium flex items-center justify-center space-x-2 hover:from-red-700 hover:to-pink-600 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              aria-label="Excluir cartão virtual"
+            >
+              <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
+              <span className="hidden sm:inline">Excluir</span>
+            </button>
+          ) : (
+            <button
+              onClick={onBlockCard}
+              className="w-full sm:w-auto px-3 py-1.5 bg-gradient-to-r from-red-600 to-pink-500 dark:from-red-500 dark:to-pink-400 text-white rounded-md text-xs font-medium flex items-center justify-center space-x-2 hover:from-red-700 hover:to-pink-600 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
+              aria-label={card.creditCardIsBlocked ? 'Desbloquear cartão' : 'Bloquear cartão'}
+            >
+              <FontAwesomeIcon icon={card.creditCardIsBlocked ? faUnlock : faLock} className="w-4 h-4" />
+              <span className="hidden sm:inline">{card.creditCardIsBlocked ? 'Desbloquear' : 'Bloquear'}</span>
+            </button>
+          )}
         </div>
       </div>
-      <div className="p-5 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Limite disponível</p>
-            <p className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              {card.availableLimit}
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            {isVirtual ? (
-              <>
-                <button
-                  onClick={onShowCvv}
-                  className="px-4 py-2 bg-purple-600 dark:bg-purple-500 hover:bg-purple-700 dark:hover:bg-purple-600 text-white rounded-lg text-sm font-medium flex items-center transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
-                  aria-label={card.cvv === '•••' ? 'Mostrar CVV' : 'Ocultar CVV'}
-                >
-                  <FontAwesomeIcon
-                    icon={card.cvv === '•••' ? faEye : faEyeSlash}
-                    className="mr-2"
-                  />
-                  {card.cvv === '•••' ? 'Ver CVV' : 'Ocultar CVV'}
-                </button>
-                <button
-                  onClick={onGenerateNewCard}
-                  className="p-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
-                  aria-label="Gerar novo cartão virtual"
-                >
-                  <FontAwesomeIcon icon={faSyncAlt} className="text-gray-600 dark:text-gray-300" />
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={onBlockCard}
-                  className="px-4 py-2 bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg text-sm font-medium flex items-center transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                  aria-label={card.isBlocked ? 'Desbloquear cartão' : 'Bloquear cartão'}
-                >
-                  <FontAwesomeIcon
-                    icon={card.isBlocked ? faUnlock : faLock}
-                    className="mr-2"
-                  />
-                  {card.isBlocked ? 'Desbloquear' : 'Bloquear'}
-                </button>
-                <button
-                  className="p-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
-                  aria-label="Ver QR Code"
-                >
-                  <FontAwesomeIcon icon={faQrcode} className="text-gray-600 dark:text-gray-300" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+    </div>
     </div>
   );
 };

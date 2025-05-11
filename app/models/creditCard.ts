@@ -10,11 +10,12 @@ export interface CreditCard {
   creditCardLimit: number;
   creditCardUsed: number;
   creditCardAvaliable: number; // calculado no back-end, mas aqui como propriedade direta
-  creditCardValidity: string; // DateTime → string (ISO 8601)
-
+  creditCardValidity: Date; // DateTime → string (ISO 8601)
   creditCardType: CreditCardType;
   creditCardFlag: CreditCardFlag;
+  creditCardVirtual: boolean;
   creditCardTried: boolean;
+  creditCardIsBlocked: boolean;
   creditCardTriedTimes: number;
-  creditCardNextAttempt: string; // DateTime → string
+  creditCardNextAttempt: string;
 }

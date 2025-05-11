@@ -130,3 +130,15 @@ export const defaultMessage = {
   loading: "Carregando...",
   balance: 0
 }
+
+export function formatDateBR(date: Date | string): string {
+  const d = new Date(date);
+  return d.toLocaleDateString('pt-BR');
+}
+
+export function formatCardNumber(cardNumber: string): string {
+  return cardNumber
+    .replace(/\D/g, '') // Remove não-dígitos
+    .replace(/(.{4})/g, '$1 ') // Insere espaço a cada 4 dígitos
+    .trim();
+}
