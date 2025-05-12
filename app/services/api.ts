@@ -58,25 +58,17 @@ async function post<T, D>(url: string, data: D, config?: AxiosRequestConfig): Pr
 
 async function put<T, D>(url: string, data: D, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
   try {
-    const response: ApiResponse<T> = await api.put(url, data, config);
-    return {
-      data: response.data,
-      error: response.error,
-      success: response.success,
-    };
-  } catch (error) {
+    const response: AxyosResponse<T> = await api.put(url, data, config);
+    return response.data;
+  } catch (error: any) {
     throw handleError(error);
   }
 }
 
 async function deleted<T, D>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
   try {
-    const response: ApiResponse<T> = await api.delete(url, config);
-    return {
-      data: response.data,
-      error: response.error,
-      success: response.success,
-    };
+    const response: AxyosResponse<T> = await api.delete(url, config);
+    return response.data;
   } catch (error) {
     throw handleError(error);
   }

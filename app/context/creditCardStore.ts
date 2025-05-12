@@ -5,43 +5,74 @@ import { creditCardApi } from '~/services/creditCardApi'
 
 // Tipagem do estado de autenticação
 interface CreditCardState {
-  creditCards: CreditCard[];
+  creditCard: CreditCard;
   loading: boolean;
-  error: ErrorApi | null;
-  requestCreditCard: (account: string) => void;
+  error: ErrorApi;
+  requestCreditCard: (account: string, limit: number) => Promise<boolean>;
+  requestVirtualCreditCard: (account: string) => Promise<boolean>;
   getCreditCardsById: (account: string) => void;
+  virtualCreditCardDelete: (account: string) => Promise<boolean>;
+  creditCardToggleBlocked: (account: string, isBlocked: boolean) => Promise<boolean>;
 }
 
 // Criação da store com persistência
 export const useCreditCardStore = create<CreditCardState>()(
   (set, get) => ({
-    creditCards: [],
+    creditCard: null,
     loading: false,
     error: null,
-    requestCreditCard: async (account: string) => {
-      if (get().loading) return get().creditCards;
+    requestCreditCard: async (account: string, limit: number) => {
       set({ loading: true, error: null});
       try {
-        await creditCardApi.requestCreditCard(account);
+        await creditCardApi.requestCreditCard(account, limit);
         set({ loading: false, error: null });
-      } catch (err: any) {
-        set({
-          loading: false,
-          error: { message: err.response?.data?.message || err.message || 'Erro ao requisitar um novo cartao', levelError: LevelError.high }
-        });
+        return true
+      } catch (err: any) { 
+        set({ loading: false, error: err || { message: 'Erro na solicitacao', levelError: LevelError.high } });
+        return false
+      }
+    },
+    requestVirtualCreditCard: async (account: string) => {
+      set({ loading: true, error: null});
+      try {
+        const virtualCreditCard = await creditCardApi.requestVirtualCreditCard(account);
+        set({ loading: false, error: null, creditCard:  virtualCreditCard.data});
+        return true
+      } catch (err: any) { 
+        set({ loading: false, error: err || { message: 'Erro na solicitacao', levelError: LevelError.high } });
+        return false
+      }
+    },
+    virtualCreditCardDelete: async (account: string) => {
+      set({ loading: true, error: null});
+      try {
+        const virtualCreditCard = await creditCardApi.virtualCreditCardDelete(account);
+        set({ loading: false, error: null, creditCard:  virtualCreditCard.data});
+        return true
+      } catch (err: any) { 
+        set({ loading: false, error: err || { message: 'Erro na solicitacao', levelError: LevelError.high } });
+        return false
+      }
+    },
+    creditCardToggleBlocked: async (account: string, isBlocked: boolean) => {
+      set({ loading: true, error: null});
+      try {
+        const virtualCreditCard = await creditCardApi.creditcardToggleBlocked(account, isBlocked);
+        set({ loading: false, error: null, creditCard:  virtualCreditCard.data});
+        return true
+      } catch (err: any) { 
+        set({ loading: false, error: err || { message: 'Erro na solicitacao', levelError: LevelError.high } });
+        return false
       }
     },
     getCreditCardsById: async (account: string) => {
-      if (get().loading) return get().creditCards;
+      if (get().loading) return get().creditCard;
       set({ loading: true, error: null});
       try {
-        var CreditCards = await creditCardApi.getCreditCardsById(account);
-        set({ loading: false, error: null, creditCards: CreditCards.data });
+        var creditCard = await creditCardApi.getCreditCardsById(account);
+        set({ loading: false, error: null, creditCard: creditCard.data });
       } catch (err: any) {
-        set({
-          loading: false,
-          error: { message: err.response?.data?.message || err.message || 'Erro ao listar cartoes', levelError: LevelError.high }
-        });
+        set({ loading: false, error: err || { message: 'erro ao consultar seus cartoes', levelError: LevelError.high } });
       }
     }
   })

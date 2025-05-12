@@ -136,9 +136,9 @@ export function formatDateBR(date: Date | string): string {
   return d.toLocaleDateString('pt-BR');
 }
 
-export function formatCardNumber(cardNumber: string): string {
-  return cardNumber
-    .replace(/\D/g, '') // Remove não-dígitos
-    .replace(/(.{4})/g, '$1 ') // Insere espaço a cada 4 dígitos
-    .trim();
+export function formatCardNumber(cardNumber: string | undefined): string {
+  if (!cardNumber) {
+    return '**** **** **** ****'; // Valor padrão para evitar erros
+  }
+  return cardNumber.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1 $2 $3 $4');
 }

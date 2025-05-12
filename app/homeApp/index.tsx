@@ -25,17 +25,16 @@ import { useCreditCardStore } from '~/context/creditCardStore'
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
-  const [notifications, setNotifications] = useState<EventMessage[]>([]);
   const {view} = useAppStore();
-  const { getEventsHome, event, loading: eventLoading, isAlready: isAlreadyEvent } = useEventStore();
+  const { getEventTransactions, listEvents, updateEvents, lastTransactions, events, loading: eventLoading, isAlready: isAlreadyEvent } = useEventStore();
   const { getInvestmentsHome, investment, loading: investmentLoading, isAlready: isAlreadyInvestment} = useInvestmentStore();
   const { setDarkMode, user, loading: accountLoading} = useAccountStore();
-  const { getCreditCardsById } = useCreditCardStore();
+  const { getCreditCardsById, creditCard } = useCreditCardStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const eventUrl = import.meta.env.VITE_API_URL_EVENT
 
   useSignalR(eventUrl + 'notification', user?.accountId, (notification: EventMessage) => {
-    setNotifications((prev) => [notification, ...prev]);
+    updateEvents(notification);
     setToastMessage(notification.title);
 
     if (notification?.action === NotificationType.CREDITCARD_RESPONSED) {
@@ -64,18 +63,29 @@ export function Index() {
   }, [user?.darkMode]);
 
   useEffect(() => {
-    if(event.length === 0 && user && !isAlreadyEvent) {
-      getEventsHome(user.accountId, 3)
+    console.log(events)
+    if(events.length === 0 && user) {
+      listEvents(user.accountId, 20)
+    }
+  }, [events, user])
+
+  useEffect(() => {
+    if(lastTransactions.length === 0 && user && !isAlreadyEvent) {
+      getEventTransactions(user.accountId, 3)
     }
 
     if(investment.length === 0 && user && !isAlreadyInvestment) {
       getInvestmentsHome(user.accountId, 3)
     }
 
-  }, [event, investment, user]);
+    if(!creditCard && user){
+      getCreditCardsById(user.accountId)
+    }
+
+  }, [lastTransactions, investment, user, creditCard]);
 
   const toggleDarkMode = () => {
-   setDarkMode(!user?.darkMode)
+    setDarkMode(!user?.darkMode)
   };
 
   const toggleMobileMenu = () => {
@@ -91,7 +101,7 @@ export function Index() {
       {/* <LoadingOverlay isVisible={eventLoading} /> */}
       <NotificationCenter
         isOpen={isNotificationCenterOpen}
-        notifications={notifications}
+        notifications={events}
         toggleNotificationCenter={toggleNotificationCenter}
         markAsRead={null}
         clearNotifications={null}
@@ -101,7 +111,7 @@ export function Index() {
         toggleMobileMenu={toggleMobileMenu}
         toggleDarkMode={toggleDarkMode}
         toggleNotificationCenter={toggleNotificationCenter}
-        notificationCount={notifications.length}
+        notificationCount={events.length}
         isDarkMode={user?.darkMode || false}
         isNotificationCenterOpen={isNotificationCenterOpen}
       />
@@ -115,8 +125,8 @@ export function Index() {
             {view === 'dashboard' ? (
               <>
                 <QuickActions />
-                <AccountSummary user={user} loadingUser={accountLoading} investment={investment} loadingCard={false} loadingInvestment={investmentLoading} card={[]} />
-                <RecentTransactions lastTransactions={event} loading={eventLoading}/>
+                <AccountSummary user={user} loadingUser={accountLoading} investment={investment} loadingCard={false} loadingInvestment={investmentLoading} card={creditCard} />
+                <RecentTransactions lastTransactions={lastTransactions} loading={eventLoading}/>
                 <InvestmentsDisplay investments={investment} loading={investmentLoading}/>
               </>
             ) : view === 'transfer' ? (

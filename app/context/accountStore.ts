@@ -53,10 +53,7 @@ export const useAccountStore = create<AccountState>()(
         try {
           await accountApi.setModeDark(user.accountId, darkMode);
         } catch (err: any) {
-          set({
-            loading: false,
-            error: { message: err.response?.data?.message || err.message || 'Erro ao atualizar dark mode', levelError: LevelError.high },
-          });
+          set({ loading: false, error: err || { message: 'Falha no login', levelError: LevelError.high } });
         }
       },
       updateUser: async () => {

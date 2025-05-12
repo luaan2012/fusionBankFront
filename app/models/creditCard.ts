@@ -1,5 +1,5 @@
-import type { CreditCardType } from "cleave.js/options/creditCard"
 import type { CreditCardFlag } from "./enum/creditCardFlag"
+import type { CreditCardType } from "./enum/creditCardType"
 
 export interface CreditCard {
   id: string; // Guid → string
@@ -9,13 +9,21 @@ export interface CreditCard {
   creditCardCode: string;
   creditCardLimit: number;
   creditCardUsed: number;
-  creditCardAvaliable: number; // calculado no back-end, mas aqui como propriedade direta
-  creditCardValidity: Date; // DateTime → string (ISO 8601)
+  creditCardAvaliable: number;
+  creditCardValidity: Date; 
   creditCardType: CreditCardType;
   creditCardFlag: CreditCardFlag;
   creditCardVirtual: boolean;
   creditCardTried: boolean;
-  creditCardIsBlocked: boolean;
+  creditCardBlocked: boolean;
   creditCardTriedTimes: number;
   creditCardNextAttempt: string;
+  virtualCreditCards: VirtualCreditCard[];
+}
+
+export interface VirtualCreditCard {
+  id: string;
+  creditCardNumber: string;
+  creditCardName: string;
+  creditCardCode: string;
 }

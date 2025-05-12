@@ -129,8 +129,6 @@ const parseAmount = (value: string): string => {
         description: data.description,
       }
 
-      console.log(data)
-
       const resquest: TransferFormData & { accountId: string, accountNumberPayer: string } = {...data,
         ...{
         accountId: user.accountId,
@@ -142,7 +140,6 @@ const parseAmount = (value: string): string => {
       setTransfer(resquest)
       setIsModalOpen(true);
     } catch (error) {
-      console.error('Transfer failed:', error);
     }
   };
 

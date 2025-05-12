@@ -6,16 +6,16 @@ import {
   faPiggyBank,
   faExclamationCircle,
 } from '@fortawesome/free-solid-svg-icons';
-import { ActionMapper, formatNumberAccount, formatToBRL, translateAccountType } from '../utils/utils';
+import { ActionMapper, formatDateBR, formatNumberAccount, formatToBRL, translateAccountType } from '../utils/utils';
 import { useAppStore } from '~/context/appStore';
 import type { Account } from '~/models/account';
 import type { Investment } from '~/models/investment';
-import type { Card } from 'types';
+import type { CreditCard } from '~/models/creditCard'
 
 interface AccountSummaryProps {
   user: Account | null;
   investment: Investment[];
-  card: Card[];
+  card: CreditCard;
   loadingUser: boolean;
   loadingInvestment: boolean;
   loadingCard: boolean;
@@ -32,12 +32,6 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
   const budget = {
     spent: 1800.0,
     limit: 5000.0,
-  };
-
-  // Mock credit card overview
-  const creditCard = {
-    balance: 1200.0,
-    dueDate: '2025-05-25',
   };
 
   // Função para renderizar mensagem de "Nada encontrado"
@@ -216,7 +210,7 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
             <div className="flex justify-center items-center h-32">
               <FontAwesomeIcon icon={faSpinner} className="text-2xl text-gray-500 animate-spin" aria-label="Carregando cartão de crédito" />
             </div>
-          ) : card.length === 0 ? (
+          ) : !card ? (
             renderEmptyState('Nenhum cartão de crédito encontrado')
           ) : (
             <div>
@@ -224,10 +218,10 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
                 <FontAwesomeIcon icon={faCreditCard} className="text-2xl text-blue-600 dark:text-blue-400 mr-2" />
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Saldo atual: <span className="text-red-600 dark:text-red-400">{formatToBRL(creditCard.balance)}</span>
+                    Fatura atual: <span className="text-red-600 dark:text-red-400">{formatToBRL(card.creditCardUsed)}</span>
                   </p>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Vencimento: {creditCard.dueDate}
+                    Vencimento: {formatDateBR(card.creditCardValidity)}
                   </p>
                 </div>
               </div>

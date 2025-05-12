@@ -2,38 +2,65 @@ import React, { useEffect, useState } from 'react';
 import { CardDashboard } from '~/components/CardDashboard'
 import CardManagementTabs from '~/components/CardManagementTabs'
 import RequestCardModal from '~/components/RequestCardModal'
-import SuccessNotification from '~/components/SuccessNotifications'
+import { useToast } from '~/components/ToastContext'
 import { useAccountStore } from '~/context/accountStore'
 import { useCreditCardStore } from '~/context/creditCardStore'
 
 const CardsContent: React.FC = () => {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [successNotification, setSuccessNotification] = useState({isOpen: false,message: ''});
-  const { requestCreditCard, creditCards, loading, getCreditCardsById } = useCreditCardStore()
-  const requestNewCard = () => requestCreditCard(user?.accountId)
+  const { requestCreditCard, creditCard, loading, getCreditCardsById, 
+    requestVirtualCreditCard, creditCardToggleBlocked, virtualCreditCardDelete } = useCreditCardStore()
   const { user } = useAccountStore()
-
-  useEffect(() => {
-    if(creditCards.length === 0 && user?.accountId) {
-      getCreditCardsById(user?.accountId)
-    }
-  }, [creditCards.length])
-
-  const handleShowCvv = (cardId: string) => {
-    // setCards((prev) =>
-    //   prev.map((card) =>
-    //     card.id === cardId
-    //       ? { ...card, cvv: card.cvv === '•••' ? '123' : '•••' }
-    //       : card
-    //   )
-    // );
+  const { openToast } = useToast()
+  const showToast = (
+    type: 'success' | 'error',
+    message: string,
+    position: 'top-right' = 'top-right',
+    duration: number = 3000
+  ) => {
+    openToast({ type, message, position, duration });
   };
 
+const handleConfirm = async (cardType: 'virtual' | 'credit' | 'debit', limit: number) => {
+  setIsRequestModalOpen(false);
+
+  if (cardType === 'virtual' && !creditCard) {
+    showToast('error', 'Para solicitar um cartão virtual, você precisa de um cartão de crédito físico');
+    return;
+  }
+
+  if (cardType === 'virtual') {
+    const success = await requestVirtualCreditCard(creditCard.id);
+    const errorMessage = useCreditCardStore.getState()?.error?.message;
+
+    showToast(
+      success ? 'success' : 'error',
+      success ? 'Solicitação de cartão virtual concluída.' : errorMessage
+    );
+    return;
+  }
+
+  if (cardType === 'debit') {
+    showToast('success', 'Solicitação de cartão de débito realizada com sucesso');
+    return;
+  }
+
+  const success = await requestCreditCard(user?.accountId, limit);
+  const errorMessage = useCreditCardStore.getState()?.error?.message;
+
+  showToast(
+    success ? 'success' : 'error',
+    success ? 'Solicitação de cartão enviada.' : errorMessage
+  );
+};
+
+  useEffect(() => {
+    if(!creditCard && user?.accountId) {
+      getCreditCardsById(user?.accountId)
+    }
+  }, [creditCard])
+
   const handleGenerateNewCard = () => {
-    setSuccessNotification({
-      isOpen: true,
-      message: 'Um novo cartão virtual foi gerado com sucesso!',
-    });
   };
 
   const handleRequestNewCard = () => {
@@ -41,37 +68,60 @@ const CardsContent: React.FC = () => {
   };
 
   const handleAdjustLimit = () => {
-    // Implement adjust limit modal logic here
-    setSuccessNotification({
-      isOpen: true,
-      message: 'Seu pedido de ajuste de limite foi enviado para análise.',
-    });
+
   };
 
-  const handleBlockCard = (accountId: string) => {
-    // Implement adjust limit modal logic here
-    setSuccessNotification({
-      isOpen: true,
-      message: 'Seu pedido de ajuste de limite foi enviado para análise.',
-    });
+  const handleBlockCard = async (accountId: string, isBlocked: boolean) => {
+    const success = await creditCardToggleBlocked(accountId, isBlocked)
+    if(!success) {
+      openToast({
+        type: 'error',
+        message: 'Erro ao bloquear cartao',
+        position: 'top-right',
+        duration: 3000
+        })
+        return;
+    }
+
+    openToast({
+      type: 'success',
+      message: 'Cartao bloqueado.',
+      position: 'top-right',
+      duration: 3000
+      })
+  };
+
+  const handleOnDelete = async (id: string) => {
+    const success = await virtualCreditCardDelete(id)
+    if(!success) {
+      openToast({
+        type: 'error',
+        message: 'Erro ao excluir cartao',
+        position: 'top-right',
+        duration: 3000
+        })
+        return;
+    }
+
+    openToast({
+      type: 'success',
+      message: 'Cartao excluido.',
+      position: 'top-right',
+      duration: 3000
+      })
   };
 
   const handleTempBlock = () => {
-    setSuccessNotification({
-      isOpen: true,
-      message: 'Bloqueio temporário ativado. Seu cartão ficará bloqueado por 24 horas.',
-    });
   };
 
   return (
     <div>
       <CardDashboard
-        cards={creditCards}
+        card={creditCard}
         loading={loading}
-        onBlockCard={() => handleBlockCard(creditCards[0].id)}
-        onShowCvv={() => handleShowCvv(creditCards[1].id)}
-        onGenerateNewCard={handleGenerateNewCard}
-        onRequestNewCard={requestNewCard}
+        onBlockCard={handleBlockCard}
+        onDelete={handleOnDelete}
+        onRequestNewCard={handleRequestNewCard}
       />
       <CardManagementTabs
         onAdjustLimit={handleAdjustLimit}
@@ -80,20 +130,7 @@ const CardsContent: React.FC = () => {
       <RequestCardModal
         isOpen={isRequestModalOpen}
         onClose={() => setIsRequestModalOpen(false)}
-        onConfirm={() => {
-          setIsRequestModalOpen(false);
-          setSuccessNotification({
-            isOpen: true,
-            message: 'Seu cartão foi solicitado com sucesso!',
-          });
-        }}
-      />
-      <SuccessNotification
-        isOpen={successNotification.isOpen}
-        message={successNotification.message}
-        onClose={() =>
-          setSuccessNotification({ isOpen: false, message: '' })
-        }
+        onConfirm={handleConfirm}
       />
     </div>
   );
