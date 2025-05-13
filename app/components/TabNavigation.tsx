@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRightToBracket, faBarcode, faFileInvoice } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRightToBracket, faBarcode } from '@fortawesome/free-solid-svg-icons';
 
 interface TabNavigationProps {
   activeTab: string;
@@ -10,7 +10,6 @@ interface TabNavigationProps {
 const tabs = [
   { id: 'deposit', label: 'Depósito', icon: faArrowRightToBracket },
   { id: 'boleto', label: 'Pagamento de Boleto', icon: faBarcode },
-  { id: 'generate', label: 'Gerar Boleto', icon: faFileInvoice },
 ];
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, setActiveTab }) => {

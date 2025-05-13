@@ -1,45 +1,194 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBarcode, faFileUpload, faCheckCircle, faUniversity, faCloudUploadAlt, faFilePdf, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { type FileInfo } from '../../types';
+import { faBarcode, faMoneyBillWave, faUniversity, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { IMaskInput } from 'react-imask';
+import { useAccountStore } from '~/context/accountStore';
+import { useToast } from '~/components/ToastContext';
+import { ConfirmationModalDeposit } from './DepositModal';
+import { depositSchema, type DepositFormData } from '~/homeApp/schema/depositBilletsScheme';
+import { usePaymentStore } from '~/context/paymentStore';
+import type { ResponseStore } from 'types';
+import { useBankStore } from '~/context/bankStore';
 
 interface DepositContentProps {
-  setShowBoletoModal: (show: boolean) => void;
-  setShowSuccessModal: (show: boolean) => void;
-  setShowErrorToast: (message: string) => void;
+  setShowBoletoModal: (response: ResponseStore) => void;
+  setShowSuccessModal: (response: ResponseStore) => void;
+  setShowErrorToast: (response: ResponseStore) => void;
 }
 
-const DepositContent: React.FC<DepositContentProps> = ({
-  setShowBoletoModal,
-  setShowSuccessModal,
-  setShowErrorToast,
-}) => {
-  const [depositType, setDepositType] = useState<'boleto' | 'comprovante'>('boleto');
-  const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
+interface ConfirmationDetails {
+  amount: string;
+  description?: string;
+  destination?: string;
+  billetType?: string;
+}
 
-  const handleFileUpload = (file: File) => {
-    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    if (!validTypes.includes(file.type)) {
-      setShowErrorToast('Tipo de arquivo inválido. Use JPG, PNG ou PDF.');
-      return;
+interface DepositCardData {
+  type: 'direct' | 'boleto';
+  icon: typeof faMoneyBillWave | typeof faBarcode;
+  color: string;
+  bg: string;
+  title: string;
+  description: string;
+  features: string[];
+}
+
+export function DepositContent({ setShowBoletoModal, setShowSuccessModal, setShowErrorToast }: DepositContentProps) {
+  const [depositType, setDepositType] = useState<'direct' | 'boleto'>('direct');
+  const [boletoType, setBoletoType] = useState<'DEPOSIT' | 'expense'>('DEPOSIT');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [details, setDetails] = useState<ConfirmationDetails | null>(null);
+  const [depositData, setDepositData] = useState<DepositFormData | null>(null);
+  const { directDeposit, generateBillet } = usePaymentStore();
+  const { banks, listBanks } = useBankStore();
+  const { user } = useAccountStore();
+  const { openToast } = useToast();
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch,
+  } = useForm<DepositFormData>({
+    resolver: zodResolver(depositSchema),
+    defaultValues: {
+      depositType: 'direct',
+      billetType: 'DEPOSIT',
+      amount: '',
+      description: '',
+      nameReceiver: '',
+      documentReceiver: '',
+      ispb: '',
+      agencyNumberReceiver: '',
+      accountNumberReceiver: '',
+    },
+    mode: 'onChange',
+  });
+
+  const watchedDepositType = watch('depositType');
+  const watchedBilletType = watch('billetType');
+
+  useEffect(() => {
+    if (banks.length === 0 && user) {
+      listBanks();
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setShowErrorToast('Arquivo muito grande. Tamanho máximo: 5MB.');
-      return;
+  }, [banks, listBanks, user]);
+
+  useEffect(() => {
+    setValue('depositType', depositType);
+    setValue('billetType', boletoType === 'DEPOSIT' ? 'DEPOSIT' : 'SHOPPING');
+    if (depositType === 'direct' || boletoType !== 'DEPOSIT') {
+      setValue('nameReceiver', '');
+      setValue('documentReceiver', '');
+      setValue('ispb', '');
+      setValue('agencyNumberReceiver', '');
+      setValue('accountNumberReceiver', '');
     }
-    setFileInfo({ name: file.name, size: file.size, type: file.type });
+  }, [depositType, boletoType, setValue]);
+
+  const depositCards: DepositCardData[] = [
+    {
+      type: 'direct',
+      icon: faMoneyBillWave,
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-100 dark:bg-blue-900',
+      title: 'Depósito Direto',
+      description: 'Deposite diretamente na sua conta sem débito',
+      features: ['Crédito imediato', 'Sem taxas', 'Valor mínimo: R$ 10,00'],
+    },
+    {
+      type: 'boleto',
+      icon: faBarcode,
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-100 dark:bg-blue-900',
+      title: 'Boleto de Depósito',
+      description: 'Gere um boleto para depósito ou pagamento',
+      features: ['Validade: 3 dias úteis', 'Sem custo', 'Crédito em até 1 dia útil'],
+    },
+  ];
+
+  const handleCardSelect = (type: 'direct' | 'boleto') => {
+    setDepositType(type);
+    setBoletoType('DEPOSIT');
+    setValue('depositType', type);
+    setValue('billetType', 'DEPOSIT');
   };
 
-  const handleGenerateBoleto = () => {
-    setShowBoletoModal(true);
+  const handleBoletoTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newBoletoType = e.target.value as 'DEPOSIT' | 'expense';
+    setBoletoType(newBoletoType);
+    setValue('billetType', newBoletoType === 'DEPOSIT' ? 'DEPOSIT' : 'SHOPPING');
   };
 
-  const handleSubmitComprovante = () => {
-    if (!fileInfo) {
-      setShowErrorToast('Por favor, envie um comprovante.');
+  const onSubmit = async (data: DepositFormData) => {
+    console.log('Form Data:', data);
+    try {
+      const details: ConfirmationDetails = {
+        amount: data.amount,
+        description: data.description,
+        destination: data.depositType === 'boleto' && data.billetType === 'DEPOSIT' ? data.nameReceiver : undefined,
+        billetType: data.depositType === 'boleto' && data.billetType !== 'DEPOSIT' ? data.billetType : undefined,
+      };
+
+      const request: DepositFormData & { accountId: string; isDeposit: boolean } = {
+        ...data,
+        accountId: user.accountId,
+        isDeposit: watchedDepositType === 'boleto' && watchedBilletType === 'DEPOSIT',
+      };
+
+      setDetails(details);
+      setDepositData(request);
+      setIsModalOpen(true);
+    } catch (error) {
+      setShowErrorToast({ message: 'Erro ao preparar depósito.', success: false });
+      console.error('Submission error:', error);
+    }
+  };
+
+  const handleModalConfirm = async () => {
+    if (!depositData) return;
+    let response;
+
+    console.log('Submitting Deposit Data:', depositData);
+
+    if (depositType === 'direct') {
+      response = await directDeposit(depositData);
+    } else {
+      response = await generateBillet(depositData);
+    }
+
+    if (!response.success) {
+      openToast({
+        message: response?.message || 'Erro ao criar depósito!',
+        type: 'error',
+        duration: 4000,
+        position: 'top-right',
+      });
       return;
     }
-    setShowSuccessModal(true);
+
+    if (depositType === 'direct') {
+      setShowSuccessModal({ message: response.message, success: response.success });
+    } else {
+      setShowBoletoModal({ message: response.message, success: response.success });
+    }
+
+    setIsModalOpen(false);
+    reset({
+      depositType: 'direct',
+      billetType: 'DEPOSIT',
+      amount: '',
+      description: '',
+      nameReceiver: '',
+      documentReceiver: '',
+      ispb: '',
+      agencyNumberReceiver: '',
+      accountNumberReceiver: '',
+    });
   };
 
   return (
@@ -47,22 +196,7 @@ const DepositContent: React.FC<DepositContentProps> = ({
       <div className="bg-white dark:bg-slate-950 rounded-xl shadow-md p-6 transition-all duration-300 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Realizar Depósito</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" role="radiogroup" aria-label="Selecionar tipo de depósito">
-          {[
-            {
-              type: 'boleto',
-              icon: faBarcode,
-              title: 'Boleto de Depósito',
-              description: 'Gere um boleto para depósito em qualquer banco',
-              details: ['Validade: 3 dias úteis', 'Sem custo', 'Crédito em até 1 dia útil após pagamento'],
-            },
-            {
-              type: 'comprovante',
-              icon: faFileUpload,
-              title: 'Comprovante',
-              description: 'Envie o comprovante de depósito realizado em outro banco',
-              details: ['Formatos: JPG, PNG ou PDF', 'Tamanho máximo: 5MB', 'Crédito em até 2 dias úteis após análise'],
-            },
-          ].map((card) => (
+          {depositCards.map((card) => (
             <div
               key={card.type}
               className={`deposit-card bg-white dark:bg-slate-800 border rounded-xl p-4 cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 ${
@@ -70,21 +204,21 @@ const DepositContent: React.FC<DepositContentProps> = ({
                   ? 'border-blue-300 dark:border-blue-500'
                   : 'border-gray-200 dark:border-gray-700'
               }`}
-              onClick={() => setDepositType(card.type as 'boleto' | 'comprovante')}
+              onClick={() => handleCardSelect(card.type)}
               role="radio"
               aria-checked={depositType === card.type}
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setDepositType(card.type as 'boleto' | 'comprovante')}
+              onKeyDown={(e) => e.key === 'Enter' && handleCardSelect(card.type)}
             >
               <div className="flex items-center mb-3">
                 <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
-                  <FontAwesomeIcon icon={card.icon} className="text-blue-600 dark:text-blue-400 text-lg" />
+                  <FontAwesomeIcon icon={card.icon} className={card.color} />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">{card.title}</h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{card.description}</p>
               <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                {card.details.map((detail, index) => (
+                {card.features.map((detail, index) => (
                   <li key={index} className="flex items-center">
                     <FontAwesomeIcon icon={faCheckCircle} className="text-green-500 mr-2" />
                     {detail}
@@ -94,7 +228,7 @@ const DepositContent: React.FC<DepositContentProps> = ({
             </div>
           ))}
         </div>
-        <div id="boleto-deposit-form" className={depositType === 'boleto' ? '' : 'hidden'}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Conta de destino</h3>
@@ -104,183 +238,323 @@ const DepositContent: React.FC<DepositContentProps> = ({
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conta Corrente</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Ag. 1234 • C/C 56789-0</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Ag. {user?.agency} • C/C {user?.accountNumber}</p>
                 </div>
               </div>
               <div className="mt-4">
                 <p className="text-sm text-gray-600 dark:text-gray-300">Titular</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">João da Silva</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.fullName}</p>
               </div>
             </div>
             <div>
               <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Detalhes do depósito</h3>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="boleto-amount">
-                  Valor
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="deposit-amount">
+                  Valor <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 pr-1 flex items-center pointer-events-none">
                     <span className="text-gray-500 dark:text-gray-400">R$</span>
                   </div>
-                  <input
-                    id="boleto-amount"
-                    type="text"
-                    className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-3 transition-all duration-200"
-                    placeholder="0,00"
-                    aria-label="Valor do depósito"
+                  <Controller
+                    name="amount"
+                    control={control}
+                    render={({ field }) => (
+                      <IMaskInput
+                        {...field}
+                        id="deposit-amount"
+                        type="text"
+                        mask="num"
+                        blocks={{
+                          num: {
+                            mask: Number,
+                            thousandsSeparator: '.',
+                            radix: ',',
+                            scale: 2,
+                            normalizeZeros: true,
+                            padFractionalZeros: true,
+                          },
+                        }}
+                        unmask={true}
+                        value={field.value || ''}
+                        onAccept={(value) => field.onChange(value)}
+                        className={`bg-gray-50 dark:bg-gray-800 border ${
+                          errors.amount ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                        } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 py-3 transition-all duration-200`}
+                        placeholder="0,00"
+                        aria-label="Valor do depósito"
+                        aria-required="true"
+                      />
+                    )}
                   />
                 </div>
+                {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount.message}</p>}
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Valor mínimo: R$ 10,00</p>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="boleto-description">
-                  Descrição (opcional)
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="deposit-description">
+                  Descrição
                 </label>
-                <input
-                  id="boleto-description"
-                  type="text"
-                  className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
-                  placeholder="Ex: Depósito para investimentos"
-                  aria-label="Descrição do depósito"
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      id="deposit-description"
+                      type="text"
+                      className={`bg-gray-50 dark:bg-gray-800 border pl-2.5 ${
+                        errors.description ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                      } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200`}
+                      placeholder="Ex: Depósito para investimentos"
+                      aria-label="Descrição do depósito"
+                    />
+                  )}
                 />
+                {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description.message}</p>}
               </div>
+              {watchedDepositType === 'boleto' && (
+                <>
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="boleto-type">
+                      Tipo de Boleto <span className="text-red-500">*</span>
+                    </label>
+                    <Controller
+                      name="billetType"
+                      control={control}
+                      render={({ field }) => (
+                        <select
+                          {...field}
+                          id="boleto-type"
+                          value={boletoType === 'DEPOSIT' ? 'DEPOSIT' : 'expense'}
+                          onChange={(e) => {
+                            const value = e.target.value as 'DEPOSIT' | 'expense';
+                            field.onChange(value === 'DEPOSIT' ? 'DEPOSIT' : 'SHOPPING');
+                            handleBoletoTypeChange(e);
+                          }}
+                          className="bg-gray-50 dark:bg-gray-800 border pl-2.5 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
+                          aria-label="Selecionar tipo de boleto"
+                          aria-required="true"
+                        >
+                          <option value="DEPOSIT">Depósito para outra pessoa</option>
+                          <option value="expense">Boleto para gasto</option>
+                        </select>
+                      )}
+                    />
+                    {errors.billetType && <p className="mt-1 text-xs text-red-500">{errors.billetType.message}</p>}
+                  </div>
+                  {watchedBilletType !== 'DEPOSIT' && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="billetType">
+                        Categoria de Gasto <span className="text-red-500">*</span>
+                      </label>
+                      <Controller
+                        name="billetType"
+                        control={control}
+                        render={({ field }) => (
+                          <select
+                            {...field}
+                            id="billetType"
+                            className={`bg-gray-50 dark:bg-gray-800 border pl-2.5 ${
+                              errors.billetType ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                            } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200`}
+                            aria-label="Selecionar categoria de gasto"
+                            aria-required="true"
+                          >
+                            <option value="">Selecione uma categoria</option>
+                            <option value="TRAVEL">Viagem</option>
+                            <option value="SHOPPING">Compras</option>
+                            <option value="FOOD">Alimentação</option>
+                            <option value="LEISURE">Lazer</option>
+                            <option value="HEALTH">Saúde</option>
+                            <option value="OTHER">Outros</option>
+                          </select>
+                        )}
+                      />
+                      {errors.billetType && <p className="mt-1 text-xs text-red-500">{errors.billetType.message}</p>}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
-          <div className="mt-8 flex justify-end">
-            <button
-              className="px-6 py-2.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-              onClick={handleGenerateBoleto}
-              aria-label="Gerar boleto de depósito"
-            >
-              Gerar Boleto
-            </button>
-          </div>
-        </div>
-        <div id="comprovante-deposit-form" className={depositType === 'comprovante' ? '' : 'hidden'}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Conta de destino</h3>
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
-                  <FontAwesomeIcon icon={faUniversity} className="text-blue-600 dark:text-blue-400 text-lg" />
+          {watchedDepositType === 'boleto' && watchedBilletType === 'DEPOSIT' && (
+            <div className="mt-6">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Dados do Recebedor</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="receiver-name">
+                    Nome <span className="text-red-500">*</span>
+                  </label>
+                  <Controller
+                    name="nameReceiver"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        id="receiver-name"
+                        type="text"
+                        className={`bg-gray-50 dark:bg-gray-800 border pl-2.5 ${
+                          errors.nameReceiver ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                        } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200`}
+                        placeholder="Nome completo"
+                        aria-label="Nome do recebedor"
+                        aria-required="true"
+                      />
+                    )}
+                  />
+                  {errors.nameReceiver && <p className="mt-1 text-xs text-red-500">{errors.nameReceiver.message}</p>}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conta Corrente</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Ag. 1234 • C/C 56789-0</p>
-                </div>
-              </div>
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">Titular</p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">João da Silva</p>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Enviar comprovante</h3>
-              <div
-                className="file-upload rounded-xl p-8 text-center mb-4 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 transition-all duration-200"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.add('bg-blue-50', 'dark:bg-blue-900', 'border-blue-500');
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.classList.remove('bg-blue-50', 'dark:bg-blue-900', 'border-blue-500');
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.classList.remove('bg-blue-50', 'dark:bg-blue-900', 'border-blue-500');
-                  if (e.dataTransfer.files.length) handleFileUpload(e.dataTransfer.files[0]);
-                }}
-                aria-describedby="file-upload-description"
-              >
-                <div className="flex flex-col items-center justify-center">
-                  <FontAwesomeIcon icon={faCloudUploadAlt} className="text-3xl text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Arraste e solte o arquivo aqui</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">ou</p>
-                  <label
-                    htmlFor="file-input"
-                    className="px-4 py-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200"
-                    aria-label="Selecionar arquivo"
-                  >
-                    Selecione o arquivo
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="receiver-cpf-cnpj">
+                    CPF/CNPJ <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="file-input"
-                    type="file"
-                    className="hidden"
-                    accept="image/*,.pdf"
-                    onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])}
+                  <Controller
+                    name="documentReceiver"
+                    control={control}
+                    render={({ field }) => (
+                      <IMaskInput
+                        {...field}
+                        id="receiver-cpf-cnpj"
+                        type="text"
+                        mask={[{ mask: '000.000.000-00', maxLength: 11 }, { mask: '00.000.000/0000-00' }]}
+                        unmask={true}
+                        value={field.value || ''}
+                        onAccept={(value) => field.onChange(value)}
+                        className={`bg-gray-50 dark:bg-gray-800 border pl-2.5 ${
+                          errors.documentReceiver ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                        } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200`}
+                        placeholder="CPF ou CNPJ"
+                        aria-label="CPF ou CNPJ do recebedor"
+                        aria-required="true"
+                      />
+                    )}
                   />
+                  {errors.documentReceiver && (
+                    <p className="mt-1 text-xs text-red-500">{errors.documentReceiver.message}</p>
+                  )}
                 </div>
-                <p id="file-upload-description" className="sr-only">
-                  Arraste e solte ou selecione um arquivo JPG, PNG ou PDF com tamanho máximo de 5MB.
-                </p>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Formatos aceitos: JPG, PNG ou PDF (máx. 5MB)</p>
-              {fileInfo && (
-                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FontAwesomeIcon icon={faFilePdf} className="text-red-500 mr-2" />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{fileInfo.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {(fileInfo.size / 1024 / 1024).toFixed(1)} MB
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      className="text-red-500 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                      onClick={() => setFileInfo(null)}
-                      aria-label="Remover arquivo"
-                    >
-                      <FontAwesomeIcon icon={faTimes} />
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="comprovante-amount">
-                  Valor do depósito
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 dark:text-gray-400">R$</span>
-                  </div>
-                  <input
-                    id="comprovante-amount"
-                    type="text"
-                    className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-3 transition-all duration-200"
-                    placeholder="0,00"
-                    aria-label="Valor do depósito"
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="receiver-ispb">
+                    Banco <span className="text-red-500">*</span>
+                  </label>
+                  <Controller
+                    name="ispb"
+                    control={control}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        id="receiver-ispb"
+                        className={`bg-gray-50 dark:bg-gray-800 border pl-2.5 ${
+                          errors.ispb ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                        } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200`}
+                        aria-label="Banco do recebedor"
+                        aria-required="true"
+                      >
+                        <option value="">Selecione um banco</option>
+                        {banks.map((bank) => (
+                          <option key={bank.ispb} value={bank.ispb}>
+                            {bank.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   />
+                  {errors.ispb && <p className="mt-1 text-xs text-red-500">{errors.ispb.message}</p>}
                 </div>
-              </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="deposit-date">
-                  Data do depósito
-                </label>
-                <input
-                  id="deposit-date"
-                  type="date"
-                  className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
-                  aria-label="Data do depósito"
-                />
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="receiver-agency">
+                    Agência <span className="text-red-500">*</span>
+                  </label>
+                  <Controller
+                    name="agencyNumberReceiver"
+                    control={control}
+                    render={({ field }) => (
+                      <IMaskInput
+                        {...field}
+                        id="receiver-agency"
+                        type="text"
+                        mask="0000"
+                        unmask={true}
+                        value={field.value || ''}
+                        onAccept={(value) => field.onChange(value)}
+                        className={`bg-gray-50 dark:bg-gray-800 border pl-2.5 ${
+                          errors.agencyNumberReceiver ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                        } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200`}
+                        placeholder="Número da agência"
+                        aria-label="Agência do recebedor"
+                        aria-required="true"
+                      />
+                    )}
+                  />
+                  {errors.agencyNumberReceiver && (
+                    <p className="mt-1 text-xs text-red-500">{errors.agencyNumberReceiver.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2" htmlFor="receiver-account">
+                    Conta <span className="text-red-500">*</span>
+                  </label>
+                  <Controller
+                    name="accountNumberReceiver"
+                    control={control}
+                    render={({ field }) => (
+                      <IMaskInput
+                        {...field}
+                        id="receiver-account"
+                        type="text"
+                        mask="0000000-0"
+                        unmask={true}
+                        value={field.value || ''}
+                        onAccept={(value) => field.onChange(value)}
+                        className={`bg-gray-50 dark:bg-gray-800 border pl-2.5 ${
+                          errors.accountNumberReceiver ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                        } text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200`}
+                        placeholder="Número da conta"
+                        aria-label="Conta do recebedor"
+                        aria-required="true"
+                      />
+                    )}
+                  />
+                  {errors.accountNumberReceiver && (
+                    <p className="mt-1 text-xs text-red-500">{errors.accountNumberReceiver.message}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
           <div className="mt-8 flex justify-end">
             <button
+              type="submit"
               className="px-6 py-2.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-              onClick={handleSubmitComprovante}
-              aria-label="Enviar comprovante"
+              aria-label={depositType === 'direct' ? 'Confirmar depósito direto' : 'Gerar boleto'}
             >
-              Enviar Comprovante
+              Continuar
             </button>
           </div>
-        </div>
+        </form>
       </div>
+      <ConfirmationModalDeposit
+        show={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        details={details}
+        onConfirm={handleModalConfirm}
+        reset={() =>
+          reset({
+            depositType: 'direct',
+            billetType: 'DEPOSIT',
+            amount: '',
+            description: '',
+            nameReceiver: '',
+            documentReceiver: '',
+            ispb: '',
+            agencyNumberReceiver: '',
+            accountNumberReceiver: '',
+          })
+        }
+      />
     </div>
   );
-};
+}
 
 export default DepositContent;

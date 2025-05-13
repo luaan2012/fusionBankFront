@@ -6,7 +6,6 @@ import Footer from '../components/Footer';
 import CardsContent from './cards/CardsContent'
 import InvestmentsContent from './investments/InvestmentsContent'
 import AccountEditPage from './config/AccountEdit'
-import { BilletsContent } from './billets/BilletsContent'
 import { useAccountStore } from '~/context/accountStore'
 import { useEventStore } from '~/context/eventStore'
 import { RecentTransactions } from '~/components/RecentTransactions'
@@ -21,6 +20,7 @@ import { useSignalR } from '~/services/useSignalR'
 import Notification from '~/components/Notification'
 import { NotificationType } from '~/models/enum/notificationType'
 import { useCreditCardStore } from '~/context/creditCardStore'
+import { DepositBillets } from './depositBillets/DepositBillets'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -28,7 +28,7 @@ export function Index() {
   const {view} = useAppStore();
   const { getEventTransactions, listEvents, updateEvents, lastTransactions, events, loading: eventLoading, isAlready: isAlreadyEvent } = useEventStore();
   const { getInvestmentsHome, investment, loading: investmentLoading, isAlready: isAlreadyInvestment} = useInvestmentStore();
-  const { setDarkMode, user, loading: accountLoading} = useAccountStore();
+  const { setDarkMode, user, loading: accountLoading, updateUser} = useAccountStore();
   const { getCreditCardsById, creditCard } = useCreditCardStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const eventUrl = import.meta.env.VITE_API_URL_EVENT
@@ -39,6 +39,10 @@ export function Index() {
 
     if (notification?.action === NotificationType.CREDITCARD_RESPONSED) {
       getCreditCardsById(user?.accountId);
+    }
+
+    if(notification?.action === NotificationType.DEPOSIT) {
+      updateUser();
     }
   });
 
@@ -63,7 +67,6 @@ export function Index() {
   }, [user?.darkMode]);
 
   useEffect(() => {
-    console.log(events)
     if(events.length === 0 && user) {
       listEvents(user.accountId, 20)
     }
@@ -136,7 +139,7 @@ export function Index() {
             ) : view === 'investments' ? (
               <InvestmentsContent />
             ) : view === 'deposit' ? (
-              <BilletsContent />
+              <DepositBillets />
             ): (
               <AccountEditPage />
             )}

@@ -343,18 +343,13 @@ body {
     100% { box-shadow: inset 0px 0px 0px 30px #10b981; }
 }
 
-@keyframes shimmer {
-0% { transform: translateX(-100%); }
-100% { transform: translateX(100%); }
+input:-webkit-autofill {
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: inherit !important;
+  box-shadow: 0 0 0px 1000px transparent inset;
 }
-.shimmer::before {
-content: '';
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-transform: translateX(-100%);
-animation: shimmer 3s infinite;
-pointer-events: none}
+
+.dark input:-webkit-autofill {
+  box-shadow: 0 0 0px 1000px #1f2937 inset; /* bg-gray-800 */
+  -webkit-text-fill-color: #fff !important;
+}

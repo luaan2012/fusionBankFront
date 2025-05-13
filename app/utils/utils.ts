@@ -142,3 +142,37 @@ export function formatCardNumber(cardNumber: string | undefined): string {
   }
   return cardNumber.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1 $2 $3 $4');
 }
+
+export function formatarBoleto(linhaDigitavel: string): string {
+  const somenteNumeros = linhaDigitavel.replace(/\D/g, '');
+
+  if (somenteNumeros.length !== 47 && somenteNumeros.length !== 48) {
+    return linhaDigitavel; // Retorna como está se o tamanho for inesperado
+  }
+
+  if (somenteNumeros.length === 47) {
+    // Boleto bancário
+    return [
+      somenteNumeros.slice(0, 5),
+      somenteNumeros.slice(5, 10),
+      somenteNumeros.slice(10, 15),
+      somenteNumeros.slice(15, 21),
+      somenteNumeros.slice(21, 26),
+      somenteNumeros.slice(26, 32),
+      somenteNumeros.slice(32, 33),
+      somenteNumeros.slice(33, 47),
+    ].join(' ');
+  }
+
+  if (somenteNumeros.length === 48) {
+    // Boleto de concessionária
+    return [
+      somenteNumeros.slice(0, 12),
+      somenteNumeros.slice(12, 24),
+      somenteNumeros.slice(24, 36),
+      somenteNumeros.slice(36, 48),
+    ].join(' ');
+  }
+
+  return linhaDigitavel;
+}

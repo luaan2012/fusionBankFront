@@ -6,6 +6,7 @@ import type { EventMessage } from "~/models/eventMessage"
 import type { Investment } from "~/models/investment"
 import type { BankRegister, InvestmentHome, LastTransction } from "~/models/maps"
 import { formatToBRL } from "./utils"
+import { BilletType } from "~/models/response/billetResponse"
 
 export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): LastTransction[] {
   if(eventMessages?.length <= 0) return [];
@@ -170,4 +171,25 @@ export function mapBanksToDisplay(banks: Bank[]): BankRegister[] {
       };
     }
   });
+}
+
+export const BilletTypeToString = (type: BilletType): string => {
+  switch(type) {
+    case BilletType.DEPOSIT:
+      return 'Depósito';
+    case BilletType.ENTERTEIMANT:
+      return 'Entreternimento';
+    case BilletType.FOOD:
+      return 'Alimentação';
+    case BilletType.HEALTH:
+      return 'Saúde';
+    case BilletType.OTHER:
+      return 'Outros';
+    case BilletType.TRAVEL:
+      return 'Viagens';
+    case BilletType.LEISURE:
+      return 'Lazer';
+    case BilletType.SHOPPING:
+      return 'Compras';
+  }
 }

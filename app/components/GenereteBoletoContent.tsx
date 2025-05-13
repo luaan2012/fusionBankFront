@@ -1,40 +1,51 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faUniversity } from '@fortawesome/free-solid-svg-icons';
 
-const GenerateBoletoContent: React.FC = () => {
-  const [saveAsModel, setSaveAsModel] = useState(false);
+interface GenerateBoletoContentProps {
+  setShowBoletoModal: (show: boolean) => void;
+  setShowErrorToast: (message: string) => void;
+}
+
+const GenerateBoletoContent: React.FC<GenerateBoletoContentProps> = ({
+  setShowBoletoModal,
+  setShowErrorToast,
+}) => {
+  const [amount, setAmount] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+
+  const handleGenerateBoleto = () => {
+    if (!amount || parseFloat(amount) < 10) {
+      setShowErrorToast('O valor mínimo para depósito é R$ 10,00.');
+      return;
+    }
+    // Simula geração de boleto para depósito sem débito
+    setShowBoletoModal(true);
+  };
 
   return (
-    <div id="generate-content">
+    <div id="generate-boleto-content">
       <div className="bg-white dark:bg-slate-950 rounded-xl shadow-md p-6 transition-all duration-300 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Gerar Boleto</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Conta de destino</h3>
+            <div className="flex items-center">
+              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
+                <FontAwesomeIcon icon={faUniversity} className="text-blue-600 dark:text-blue-400 text-lg" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Conta Corrente</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Ag. 1234 • C/C 56789-0</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300">Titular</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">João da Silva</p>
+            </div>
+          </div>
           <div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="beneficiary">
-                Beneficiário
-              </label>
-              <input
-                id="beneficiary"
-                type="text"
-                className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
-                placeholder="Nome ou empresa"
-                aria-label="Nome do beneficiário"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="cpf-cnpj">
-                CPF/CNPJ
-              </label>
-              <input
-                id="cpf-cnpj"
-                type="text"
-                className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
-                placeholder="000.000.000-00"
-                aria-label="CPF ou CNPJ do beneficiário"
-              />
-            </div>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">Detalhes do boleto</h3>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="boleto-amount">
                 Valor
@@ -46,68 +57,35 @@ const GenerateBoletoContent: React.FC = () => {
                 <input
                   id="boleto-amount"
                   type="text"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
                   className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 py-3 transition-all duration-200"
                   placeholder="0,00"
                   aria-label="Valor do boleto"
                 />
               </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Valor mínimo: R$ 10,00</p>
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="due-date">
-                Data de vencimento
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="boleto-description">
+                Descrição (opcional)
               </label>
               <input
-                id="due-date"
-                type="date"
+                id="boleto-description"
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
-                aria-label="Data de vencimento do boleto"
+                placeholder="Ex: Depósito para investimentos"
+                aria-label="Descrição do boleto"
               />
             </div>
           </div>
-          <div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">
-                Descrição
-              </label>
-              <textarea
-                id="description"
-                className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
-                rows={3}
-                placeholder="Ex: Pagamento de serviços prestados"
-                aria-label="Descrição do boleto"
-              ></textarea>
-            </div>
-            <div className="mb-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-                  checked={saveAsModel}
-                  onChange={(e) => setSaveAsModel(e.target.checked)}
-                  aria-label="Salvar como modelo para reutilização"
-                />
-                <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Salvar como modelo para reutilização</span>
-              </label>
-            </div>
-            {saveAsModel && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="model-name">
-                  Nome do modelo (opcional)
-                </label>
-                <input
-                  id="model-name"
-                  type="text"
-                  className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
-                  placeholder="Ex: Mensalidade Academia"
-                  aria-label="Nome do modelo"
-                />
-              </div>
-            )}
-          </div>
         </div>
-        <div className="flex justify-end mt-6">
+        <div className="mt-8 flex justify-end">
           <button
             className="px-6 py-2.5 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            onClick={handleGenerateBoleto}
             aria-label="Gerar boleto"
           >
             Gerar Boleto

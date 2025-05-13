@@ -65,3 +65,8 @@ export interface ConfirmationDetails {
   description: string;
   scheduleDate?: boolean;
 }
+
+export interface ResponseStore {
+  message: string,
+  success: boolean
+}
