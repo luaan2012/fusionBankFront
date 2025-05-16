@@ -28,12 +28,6 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
   const investmentTotal = investment.reduce((acc, curr) => acc + curr.totalBalance, 0);
   const paidOffTotal = investment.reduce((acc, curr) => acc + curr.paidOff, 0);
 
-  // Mock budget tracker
-  const budget = {
-    spent: 1800.0,
-    limit: 5000.0,
-  };
-
   // Função para renderizar mensagem de "Nada encontrado"
   const renderEmptyState = (message: string) => (
     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400 animate-fade-in">
@@ -55,9 +49,9 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
         <button
           onClick={() => setView('accountEdit')}
           className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-colors duration-200 cursor-pointer"
-          aria-label="Ver detalhes da conta"
+          aria-label="Configurar conta"
         >
-          Ver detalhes
+          Configurar
         </button>
       </div>
 
@@ -172,19 +166,19 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
               <div
                 className="bg-yellow-600 h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${(budget.spent / budget.limit) * 100}%` }}
+                style={{ width: `${(user?.expenseDay / user?.expensePerDay) * 100}%` }}
               ></div>
             </div>
             <div className="flex justify-between mt-1">
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                Gasto: {formatToBRL(budget.spent)}
+                Gasto: {formatToBRL(user?.expenseDay)}
               </p>
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                Limite: {formatToBRL(budget.limit)}
+                Limite: {formatToBRL(user?.expensePerDay)}
               </p>
             </div>
             <span className="sr-only">
-              Progresso: {(budget.spent / budget.limit) * 100}% do orçamento utilizado
+              Progresso: {(user?.expenseDay / user?.expensePerDay) * 100}% do orçamento utilizado
             </span>
           </div>
           <button
@@ -218,10 +212,10 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
                 <FontAwesomeIcon icon={faCreditCard} className="text-2xl text-blue-600 dark:text-blue-400 mr-2" />
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Fatura atual: <span className="text-red-600 dark:text-red-400">{formatToBRL(card.creditCardUsed)}</span>
+                    Fatura atual: <span className="text-red-600 dark:text-red-400">{formatToBRL(card.currentInvoiceAmount)}</span>
                   </p>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Vencimento: {formatDateBR(card.creditCardValidity)}
+                    Vencimento: {formatDateBR(card.invoices.find(d => d.isOpen).periodEnd)}
                   </p>
                 </div>
               </div>

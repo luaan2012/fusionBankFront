@@ -4,6 +4,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { accountApi } from '../services/accountApi';
 import { type LoginPayload } from '../homePage/schema/loginSchema';
 import { LevelError, type ErrorApi } from '~/models/response/errorResponse'
+import type { AccountRequest } from 'types'
+import type { RegisterKeyPix } from '~/models/request/registerKeyPix'
 
 // Tipagem do estado de autenticação
 interface AccountState {
@@ -15,6 +17,9 @@ interface AccountState {
   updateUser: () => void;
   login: (credentials: LoginPayload) => Promise<boolean>;
   register: (credentials: RegisterRequest) => Promise<boolean>;
+  editAccount: (accountId: string, credentials: AccountRequest) => Promise<boolean>;
+  registerKey: (request: RegisterKeyPix) => Promise<boolean>;
+  deleteKey: () => Promise<boolean>;
   logout: () => void;
   // checkToken: () => Promise<boolean>;
 }
@@ -65,6 +70,17 @@ export const useAccountStore = create<AccountState>()(
           set({ loading: false, error: err.message || 'Falha no login' });
         }
       },
+      registerKey: async (request: RegisterKeyPix) => {
+        try {
+          const { user } = get(); // CORREÇÃO: pegar user do estado atual
+          const response = await accountApi.registerKey(request);
+          set({ loading: false, user: {...user, keyAccount: request.keyPix} });
+          return true
+        } catch (err: any) {
+          set({ loading: false, error: err.message || 'Falha ao tentar cadastrar sua chave pix' });
+          return false
+        }
+      },
       login: async credentials => {
         set({ loading: true, error: null });
         try {
@@ -82,6 +98,31 @@ export const useAccountStore = create<AccountState>()(
         try {
           const response = await accountApi.register(credentials);
           set({ loading: false, token: response.data.token, user: response.data.account });
+          return true;
+        } catch (err: any) {
+          set({ loading: false, error: err || { message: 'Falha ao cadastrar', levelError: LevelError.high } });
+          return false
+          // throw err;
+        }
+      },
+      editAccount: async (accountId: string, accountRequest: AccountRequest) => {
+        set({ loading: true, error: null });
+        try {
+          const response = await accountApi.editAccount(accountId, accountRequest);
+          set({ loading: false, user: response.data });
+          return true;
+        } catch (err: any) {
+          set({ loading: false, error: err || { message: 'Falha ao cadastrar', levelError: LevelError.high } });
+          return false
+          // throw err;
+        }
+      },
+      deleteKey: async () => {
+        const { user } = get();
+        set({ loading: true, error: null });
+        try {
+          await accountApi.deleteKey(user.accountId);
+          set({ loading: false, user: {...user, keyAccount: ''} });
           return true;
         } catch (err: any) {
           set({ loading: false, error: err || { message: 'Falha ao cadastrar', levelError: LevelError.high } });

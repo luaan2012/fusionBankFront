@@ -124,6 +124,7 @@ const handleConfirm = async (cardType: 'virtual' | 'credit' | 'debit', limit: nu
         onRequestNewCard={handleRequestNewCard}
       />
       <CardManagementTabs
+        card={creditCard}
         onAdjustLimit={handleAdjustLimit}
         onTempBlock={handleTempBlock}
       />

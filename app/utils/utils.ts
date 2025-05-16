@@ -31,6 +31,13 @@ export const formatToBRL = (value: number | string): string => {
   });
 };
 
+export const formatToBRL2 = (value: number): string => {
+  return (value || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 export const formatToBRLInput = (value) => {
   if (!value) return '';
   const number = parseFloat(value.replace(',', '.'));
@@ -176,3 +183,31 @@ export function formatarBoleto(linhaDigitavel: string): string {
 
   return linhaDigitavel;
 }
+
+export const formatDateToInput = (isoDate: Date) => {
+  if (!isoDate) return '';
+  return new Date(isoDate).toISOString().split('T')[0];
+};
+
+export const isValidBirthDate = (birthDate: string, minAge: number = 18): boolean => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  const age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birth.getDate())
+  ) {
+    return age - 1 >= minAge;
+  }
+  return age >= minAge;
+};
+
+export const formatAmount = (value: string | number): string => {
+  if (!value) return '';
+  // Converte para número, garantindo que seja em reais (não centavos)
+  const numericValue = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : value;
+  if (isNaN(numericValue)) return '';
+  // Formata com 2 casas decimais e separadores de milhar
+  return numericValue.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+};

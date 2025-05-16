@@ -100,15 +100,6 @@ export function TransferContent() {
     },
   ];
 
-  const formatAmount = (value: string | number): string => {
-  if (!value) return '';
-  // Converte para número, garantindo que seja em reais (não centavos)
-  const numericValue = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : value;
-  if (isNaN(numericValue)) return '';
-  // Formata com 2 casas decimais e separadores de milhar
-  return numericValue.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-};
-
 // Função para parsear o valor formatado para um número (em reais)
 const parseAmount = (value: string): string => {
   if (!value) return '';
@@ -486,9 +477,10 @@ const parseAmount = (value: string): string => {
                   />
                 </div>
                 {errors.amount && <p className="mt-1 text-xs text-red-600">{errors.amount.message}</p>}
-                <p id="min-value" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {transferType !== 'pix' && (
+                  <p id="min-value" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Valor mínimo: 'R$ 1.000,00'
-                </p>
+                </p>)}
               </div>
               {transferType !== 'pix' && (
                 <div id="ted-doc-tax">

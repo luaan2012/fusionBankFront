@@ -1,4 +1,5 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core"
+import type { StatusAccount } from "~/models/enum/statusAccount"
 
 export interface Notification {
   id: string;
@@ -69,4 +70,17 @@ export interface ConfirmationDetails {
 export interface ResponseStore {
   message: string,
   success: boolean
+}
+
+export interface AccountRequest {
+  name: string;
+  lastName: string;
+  salaryPerMonth: string;
+  email: string;
+  phoneNumber: string;
+  document: string;
+  birthDate: string;
+  expensePerDay: number;
+  darkMode: boolean;
+  status: StatusAccount;
 }

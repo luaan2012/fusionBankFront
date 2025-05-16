@@ -47,20 +47,19 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
       case NotificationType.DEPOSIT:
         return {
           icon: faBarcode,
-          iconColor: 'text-blue-800',
-          bg: 'bg-blue-100',
+          iconColor: 'text-blue-600 dark:text-gray-100',
+          bg: 'bg-blue-100 dark:bg-blue-900',
           title: event.title,
           description: `${event.service} • ${formattedDate}`,
           amount: event.amount,
           balance: 0// Negativo para transferência enviada
         };
-
       default:
         // Caso notificationType não seja reconhecido
         return {
           icon: faBarcode,
-          iconColor: 'text-gray-500',
-          bg: 'bg-gray-100',
+          iconColor: 'text-blue-600 dark:text-gray-100',
+          bg: 'bg-blue-100 dark:bg-blue-900',
           title: event.title,
           description: `Detalhes: ${event.details} • ${formattedDate}`,
           amount: event.amount,

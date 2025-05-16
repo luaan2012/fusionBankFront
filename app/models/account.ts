@@ -13,16 +13,27 @@ export interface Account {
   accountNumber: string;
   agency: string;
   balance: number; // decimal → number
+  expenseDay: number;
   transferLimit: number;
   salaryPerMonth: number;
   creditCards: CreditCard[];
-
   accountType: AccountType;
   status: StatusAccount;
   documentType: DocumentType;
-
   document: string;
   email: string;
   password: string;
   darkMode: boolean;
+  phoneNumber: string;
+  birthDate: Date;
+  expensePerDay: number;
+  keyTypePix: TypeKeyPix
+}
+
+export enum TypeKeyPix {
+  CPF = 'CPF',
+  CNPJ = 'CNPJ',
+  EMAIL = 'EMAIL',
+  PHONE = 'PHONE',
+  RANDOM = 'RANDOM'
 }

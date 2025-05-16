@@ -8,6 +8,8 @@ import { useAccountStore } from '~/context/accountStore'
 import { useCreditCardStore } from '~/context/creditCardStore'
 import { BilletTypeToString } from '~/utils/map'
 import { IMaskInput } from 'react-imask'
+import type { DepositBillet } from '~/models/request/depositBilletRequest'
+import { useToast } from './ToastContext'
 
 interface BoletoPaymentContentProps {
   setShowSuccessModal: (response: ResponseStore) => void;
@@ -20,10 +22,11 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
 }) => {
   const [boletoCode, setBoletoCode] = useState<string>('');
   const [boletoInfo, setBoletoInfo] = useState<BoletoDetails | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'account' | 'credit'>('account');
-  const { getBillet, loading, billet: billetInfo } = usePaymentStore();
+  const [paymentMethod, setPaymentMethod] = useState<'DEBIT' | 'CREDIT'>('DEBIT');
+  const { getBillet, loading, depositBillet, billet: billetInfo } = usePaymentStore();
   const { user } = useAccountStore();
   const { creditCard } = useCreditCardStore();
+  const { openToast } = useToast();
 
   const validateBoleto = async (code: string) => {
     if (!code || code.length < 44) {
@@ -51,17 +54,25 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
     });
   };
 
-  const handlePayBoleto = () => {
+  const handlePayBoleto = async () => {
     if (!boletoInfo) {
       setShowErrorToast({message: 'Por favor, valide o boleto antes de confirmar.', success: false});
       return;
     }
 
-    if (boletoInfo.beneficiary.includes('João da Silva') && paymentMethod === 'credit') {
+    if (boletoInfo.beneficiary.includes('João da Silva') && paymentMethod === 'CREDIT') {
       setShowErrorToast({message: 'Não é possível pagar depósito na própria conta com cartão de crédito.', success: false});
       return;
     }
-    setShowSuccessModal({message: 'Boleto Gerado.', success: true});
+
+    const response = await depositBillet({code: billetInfo.codeGenerate, paymentType: paymentMethod} as DepositBillet)
+    const state = usePaymentStore.getState()
+    openToast({
+      type: response ? 'success' : 'error',
+      message: response ? state.message : state.error.message,
+      position: 'top-right',
+      duration: 5000,
+    })
   };
 
   return (
@@ -145,7 +156,7 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
               <select
                 id="payment-method"
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value as 'account' | 'credit')}
+                onChange={(e) => setPaymentMethod(e.target.value as 'DEBIT' | 'CREDIT')}
                 className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-100 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full py-3 transition-all duration-200"
                 aria-label="Selecionar método de pagamento"
               >

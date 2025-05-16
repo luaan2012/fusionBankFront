@@ -1,37 +1,109 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShoppingBag, faGasPump, faUtensils, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import type { CreditCard, Expense } from '~/models/creditCard';
+import { formatToBRL } from '~/utils/utils'
+import { BilletType } from '~/models/response/billetResponse'
 
-const TransactionsContent: React.FC = () => {
-  const transactions = [
-    {
-      icon: faShoppingBag,
-      title: 'Amazon.com',
-      category: 'Compras online',
-      amount: '- R$ 89,90',
-      time: 'Ontem, 14:32',
-      iconColor: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900',
-    },
-    {
-      icon: faGasPump,
-      title: 'Posto Shell',
-      category: 'Combustível',
-      amount: '- R$ 150,00',
-      time: '12/06, 09:15',
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900',
-    },
-    {
-      icon: faUtensils,
-      title: 'Restaurante Sabor',
-      category: 'Alimentação',
-      amount: '- R$ 75,50',
-      time: '10/06, 20:45',
-      iconColor: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-100 dark:bg-purple-900',
-    },
-  ];
+interface TransactionContentProps {
+  card: CreditCard;
+}
+
+interface Transaction {
+  icon: any;
+  title: string;
+  category: string;
+  amount: string;
+  time: string;
+  iconColor: string;
+  bgColor: string;
+}
+
+const TransactionsContent: React.FC<TransactionContentProps> = ({ card }) => {
+  const [showAll, setShowAll] = useState(false);
+
+  // Helper function to map expenses to transactions
+  const mapExpensesToTransactions = (expenses: Expense[]): Transaction[] => {
+    return expenses.map((expense) => {
+      // Determine icon, category, and colors based on description or other logic
+      let icon = faShoppingBag;
+      let category = 'Outros';
+      let iconColor = 'text-gray-600 dark:text-gray-400';
+      let bgColor = 'bg-gray-100 dark:bg-gray-900';
+
+      // Example logic to categorize based on description
+      if (expense.category === BilletType.SHOPPING) {
+        icon = faShoppingBag;
+        category = 'Compras online';
+        iconColor = 'text-green-600 dark:text-green-400';
+        bgColor = 'bg-green-100 dark:bg-green-900';
+      } else if (expense.category === BilletType.ENTERTEIMANT) {
+        icon = faGasPump;
+        category = 'Combustível';
+        iconColor = 'text-blue-600 dark:text-blue-400';
+        bgColor = 'bg-blue-100 dark:bg-blue-900';
+      } else if (expense.category === BilletType.FOOD) {
+        icon = faUtensils;
+        category = 'Alimentação';
+        iconColor = 'text-purple-600 dark:text-purple-400';
+        bgColor = 'bg-purple-100 dark:bg-purple-900';
+      }else if (expense.category === BilletType.HEALTH) {
+        icon = faUtensils;
+        category = 'Alimentação';
+        iconColor = 'text-purple-600 dark:text-purple-400';
+        bgColor = 'bg-purple-100 dark:bg-purple-900';
+      }else if (expense.category === BilletType.LEISURE) {
+        icon = faUtensils;
+        category = 'Alimentação';
+        iconColor = 'text-purple-600 dark:text-purple-400';
+        bgColor = 'bg-purple-100 dark:bg-purple-900';
+      }else if (expense.category === BilletType.TRAVEL) {
+        icon = faUtensils;
+        category = 'Alimentação';
+        iconColor = 'text-purple-600 dark:text-purple-400';
+        bgColor = 'bg-purple-100 dark:bg-purple-900';
+      }else if (expense.category === BilletType.DEPOSIT) {
+        icon = faUtensils;
+        category = 'Alimentação';
+        iconColor = 'text-purple-600 dark:text-purple-400';
+        bgColor = 'bg-purple-100 dark:bg-purple-900';
+      }
+
+      // Format date to "Ontem, HH:mm" or "DD/MM, HH:mm"
+      const expenseDate = new Date(expense.date);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+
+      let time = '';
+      if (expenseDate.toDateString() === yesterday.toDateString()) {
+        time = `Ontem, ${expenseDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+      } else {
+        time = `${expenseDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}, ${expenseDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+      }
+
+      return {
+        icon,
+        title: expense.description,
+        category,
+        amount: formatToBRL(expense.amount),
+        time,
+        iconColor,
+        bgColor,
+      };
+    });
+  };
+
+  // Flatten and sort expenses from invoices
+  const allExpenses = card.invoices
+    .flatMap((invoice) => invoice.expenses)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by date descending
+
+  // Map expenses to transactions
+  const transactions = mapExpensesToTransactions(allExpenses);
+
+  // Limit to 3 transactions unless showAll is true
+  const displayedTransactions = showAll ? transactions : transactions.slice(0, 3);
 
   return (
     <div>
@@ -55,7 +127,7 @@ const TransactionsContent: React.FC = () => {
         </div>
       </div>
       <div className="space-y-4">
-        {transactions.map((tx, index) => (
+        {displayedTransactions.map((tx, index) => (
           <div
             key={index}
             className="flex items-center p-4 bg-white dark:bg-slate-950 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
@@ -69,13 +141,13 @@ const TransactionsContent: React.FC = () => {
               <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                 {tx.title}
               </h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{tx.category}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-50">{tx.category}</p>
             </div>
             <div className="text-right">
               <p className="text-base font-semibold text-red-600 dark:text-red-500">
                 {tx.amount}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{tx.time}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-50">{tx.time}</p>
             </div>
           </div>
         ))}
@@ -83,6 +155,7 @@ const TransactionsContent: React.FC = () => {
       <button
         className="w-full mt-6 py-3 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg text-sm font-semibold transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         aria-label="Ver todas as transações"
+        onClick={() => setShowAll(true)}
       >
         Ver todas as transações
       </button>

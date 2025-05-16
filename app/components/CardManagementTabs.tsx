@@ -9,14 +9,16 @@ import {
 import InvoicesContent from './InvoicesContent';
 import LimitsContent from './LimitsContent';
 import SecurityContent from './SecurityContent';
+import type { CreditCard } from '~/models/creditCard'
 import TransactionsContent from './TransactionsContext'
 
 interface CardManagementTabsProps {
+  card: CreditCard  
   onAdjustLimit: () => void;
   onTempBlock: () => void;
 }
 
-const CardManagementTabs: React.FC<CardManagementTabsProps> = ({ onAdjustLimit, onTempBlock }) => {
+const CardManagementTabs: React.FC<CardManagementTabsProps> = ({ onAdjustLimit, onTempBlock, card }) => {
   const [activeTab, setActiveTab] = useState<'transactions' | 'invoices' | 'limits' | 'security'>(
     'transactions'
   );
@@ -25,7 +27,6 @@ const CardManagementTabs: React.FC<CardManagementTabsProps> = ({ onAdjustLimit, 
     { id: 'transactions', label: 'Transações', icon: faExchangeAlt },
     { id: 'invoices', label: 'Faturas', icon: faFileInvoiceDollar },
     { id: 'limits', label: 'Limites', icon: faSlidersH },
-    { id: 'security', label: 'Segurança', icon: faShieldAlt },
   ];
 
   return (
@@ -52,10 +53,9 @@ const CardManagementTabs: React.FC<CardManagementTabsProps> = ({ onAdjustLimit, 
         </nav>
       </div>
       <div className="p-6" role="tabpanel" id={`tabpanel-${activeTab}`}>
-        {activeTab === 'transactions' && <TransactionsContent />}
-        {activeTab === 'invoices' && <InvoicesContent />}
-        {activeTab === 'limits' && <LimitsContent onAdjustLimit={onAdjustLimit} />}
-        {activeTab === 'security' && <SecurityContent onTempBlock={onTempBlock} />}
+        {activeTab === 'transactions' && <TransactionsContent card={card}/>}
+        {activeTab === 'invoices' && <InvoicesContent card={card}/>}
+        {activeTab === 'limits' && <LimitsContent onAdjustLimit={onAdjustLimit} card={card} />}
       </div>
     </div>
   );

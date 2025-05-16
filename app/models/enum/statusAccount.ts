@@ -1,6 +1,6 @@
 export enum StatusAccount
 {
-    Active,
-    Blocked,
-    Pendent
+    ACTIVE = 'ACTIVE',
+    BLOCKED = 'BLOCKED',
+    PENDENT = 'PENDENT'
 }

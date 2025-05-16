@@ -5,7 +5,6 @@ import QuickActions from '../components/QuickActions';
 import Footer from '../components/Footer';
 import CardsContent from './cards/CardsContent'
 import InvestmentsContent from './investments/InvestmentsContent'
-import AccountEditPage from './config/AccountEdit'
 import { useAccountStore } from '~/context/accountStore'
 import { useEventStore } from '~/context/eventStore'
 import { RecentTransactions } from '~/components/RecentTransactions'
@@ -21,6 +20,7 @@ import Notification from '~/components/Notification'
 import { NotificationType } from '~/models/enum/notificationType'
 import { useCreditCardStore } from '~/context/creditCardStore'
 import { DepositBillets } from './depositBillets/DepositBillets'
+import { AccountEditPage } from './config/AccountEdit'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -70,7 +70,7 @@ export function Index() {
     if(events.length === 0 && user) {
       listEvents(user.accountId, 20)
     }
-  }, [events, user])
+  }, [user])
 
   useEffect(() => {
     if(lastTransactions.length === 0 && user && !isAlreadyEvent) {

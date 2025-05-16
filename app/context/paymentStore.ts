@@ -1,18 +1,21 @@
 import type { ResponseStore } from 'types'
 import { create } from 'zustand';
 import type { DepositFormData } from '~/homeApp/schema/depositBilletsScheme'
+import type { DepositBillet } from '~/models/request/depositBilletRequest'
 import type { Billet } from '~/models/response/billetResponse'
 import { type ErrorApi } from '~/models/response/errorResponse'
 import { paymentApi } from '~/services/paymentApi'
 
 // Tipagem do estado de autenticação
 interface PaymentState {
+  message: string
   billet: Billet
   loading: boolean;
   error: ErrorApi | null
   directDeposit: (deposit: DepositFormData) => Promise<ResponseStore>;
   generateBillet: (deposit: DepositFormData) => Promise<ResponseStore>;
   getBillet: (billetCode: string) => Promise<boolean>;
+  depositBillet: (billet: DepositBillet) => Promise<boolean>;
 }
 // Criação da store com persistência
 export const usePaymentStore = create<PaymentState>()(
@@ -27,7 +30,7 @@ export const usePaymentStore = create<PaymentState>()(
           set({ loading: true, error: null });
           const response = await paymentApi.directDeposit(deposit);
           set({ loading: false});
-          return { message: response.data, success: true} as ResponseStore;
+          return { message: response.data, success: true,} as ResponseStore;
         } catch (err: any) {
           set({ loading: false });
           return { message: err.message, success: false} as ResponseStore;
@@ -37,6 +40,7 @@ export const usePaymentStore = create<PaymentState>()(
         try {
           set({ loading: true });
           const response = await paymentApi.generateBillet(deposit);
+          set({ loading: false });
           return { message: response.data, success: true} as ResponseStore;
         } catch (err: any) {
           set({ loading: false});
@@ -48,6 +52,17 @@ export const usePaymentStore = create<PaymentState>()(
           set({ loading: true, error: null });
           const response = await paymentApi.getBillet(codeGenerate);
           set({ billet: response.data, loading: false});
+          return true;
+        } catch (err: any) {
+          set({ error: err, loading: false});
+          return false
+        }
+      },
+      depositBillet: async (billet: DepositBillet) => {
+        try {
+          set({ loading: true, error: null });
+          const response = await paymentApi.depositBillet(billet);
+          set({ loading: false, message: response.data });
           return true;
         } catch (err: any) {
           set({ error: err, loading: false});
