@@ -14,6 +14,7 @@ interface AccountState {
   loading: boolean;
   error: ErrorApi | null;
   setDarkMode: (darkMode: boolean) => void;
+  registerPasswordTransaction: (passwordTransaction: string) => Promise<boolean>;
   updateUser: () => void;
   login: (credentials: LoginPayload) => Promise<boolean>;
   register: (credentials: RegisterRequest) => Promise<boolean>;
@@ -59,6 +60,21 @@ export const useAccountStore = create<AccountState>()(
           await accountApi.setModeDark(user.accountId, darkMode);
         } catch (err: any) {
           set({ loading: false, error: err || { message: 'Falha no login', levelError: LevelError.high } });
+        }
+      },
+      registerPasswordTransaction: async (passwordTransaction: string) => {
+        const { user } = get(); // CORREÇÃO: pegar user do estado atual
+        if (!user) {
+          set({ error: { message: 'Usuário não autenticado', levelError: LevelError.high }, loading: false});
+          return;
+        }
+        try {
+          await accountApi.registerPasswordTransaction(user.accountId, passwordTransaction);
+          set({ loading: false, user: { ...user, passwordTransaction: passwordTransaction }});
+          return true
+        } catch (err: any) {
+          set({ loading: false, error: err || { message: 'Falha no login', levelError: LevelError.high } });
+          return false
         }
       },
       updateUser: async () => {

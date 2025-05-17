@@ -299,6 +299,7 @@ export function AccountEditPage() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
               {activeTab === 'pix' ? 'Criar Chave Pix' : 'Editar Conta'}
             </h2>
+            {activeTab === 'account' && (
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <label className="flex items-center cursor-pointer">
@@ -326,15 +327,16 @@ export function AccountEditPage() {
                   {isDarkMode ? 'Modo Escuro' : 'Modo Claro'}
                 </span>
               </div>
-              <button
+              {/* <button
                 onClick={handleBack}
                 className="flex items-center px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200"
                 aria-label="Voltar para lista de contas"
               >
                 <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
                 Voltar
-              </button>
+              </button> */}
             </div>
+            )}
           </div>
 
           {/* Tab Navigation */}

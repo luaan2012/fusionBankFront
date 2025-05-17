@@ -71,9 +71,6 @@ export function RecentTransactions ({lastTransactions, loading}: RecentTransacti
                   >
                     {transaction.amount}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Saldo: {formatToBRL(transaction.balance)}
-                  </p>
                 </div>
               </div>
             ))

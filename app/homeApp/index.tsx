@@ -21,14 +21,17 @@ import { NotificationType } from '~/models/enum/notificationType'
 import { useCreditCardStore } from '~/context/creditCardStore'
 import { DepositBillets } from './depositBillets/DepositBillets'
 import { AccountEditPage } from './config/AccountEdit'
+import { PinRegistrationModal } from '~/components/PinRegistrationModal'
+import { useFetcher } from 'react-router'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isOpenModalPasswordTransaction, setIsOpenModalPasswordTransaction] = useState<boolean>(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
   const {view} = useAppStore();
   const { getEventTransactions, listEvents, updateEvents, lastTransactions, events, loading: eventLoading, isAlready: isAlreadyEvent } = useEventStore();
   const { getInvestmentsHome, investment, loading: investmentLoading, isAlready: isAlreadyInvestment} = useInvestmentStore();
-  const { setDarkMode, user, loading: accountLoading, updateUser} = useAccountStore();
+  const { setDarkMode, user, loading: accountLoading, updateUser, registerPasswordTransaction} = useAccountStore();
   const { getCreditCardsById, creditCard } = useCreditCardStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const eventUrl = import.meta.env.VITE_API_URL_EVENT
@@ -70,6 +73,12 @@ export function Index() {
     if(events.length === 0 && user) {
       listEvents(user.accountId, 20)
     }
+
+    if (user === null) return;
+    if (!user.passwordTransaction || user.passwordTransaction.length !== 4) {
+      setIsOpenModalPasswordTransaction(true);
+    }
+    
   }, [user])
 
   useEffect(() => {
@@ -90,6 +99,12 @@ export function Index() {
   const toggleDarkMode = () => {
     setDarkMode(!user?.darkMode)
   };
+
+  const handleRegisterModalPasswordTransaction = (passwordTransaction: string) => {
+    var response = registerPasswordTransaction(passwordTransaction)
+
+    if(response) setIsOpenModalPasswordTransaction(false)
+  }
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -147,8 +162,8 @@ export function Index() {
         </div>
       </main>
       <Footer />
-      
       <Notification key={toastMessage} message={toastMessage}/>
+      <PinRegistrationModal show={isOpenModalPasswordTransaction} onConfirm={handleRegisterModalPasswordTransaction} />
     </div>
   );
 }

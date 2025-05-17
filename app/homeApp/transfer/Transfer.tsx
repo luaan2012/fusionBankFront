@@ -134,7 +134,18 @@ const parseAmount = (value: string): string => {
     }
   };
 
-  const handleModalConfirm = async () => {
+  const handleModalConfirm = async (passwordTransaction: string) => {
+
+    if(passwordTransaction != user.passwordTransaction){
+      openToast({
+        message: 'Senha de transação inválida',
+        type: 'error',
+        duration: 4000,
+        position: 'top-right'
+      });
+      return;
+    }
+
     const success = await createTransfer(transfer);
     
     if(!success){

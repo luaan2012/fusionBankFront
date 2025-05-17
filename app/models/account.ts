@@ -27,6 +27,7 @@ export interface Account {
   phoneNumber: string;
   birthDate: Date;
   expensePerDay: number;
+  passwordTransaction: string;
   keyTypePix: TypeKeyPix
 }
 

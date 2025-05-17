@@ -2,11 +2,12 @@ import React, { useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faClock, faLock } from '@fortawesome/free-solid-svg-icons';
 import type { ConfirmationDetails } from 'types';
+import { useAccountStore } from '~/context/accountStore'
 
 interface ConfirmationModalProps {
   show: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (passwordTransaction: string) => void;
   reset: () => void;
   details: ConfirmationDetails | null;
 }
@@ -163,15 +164,6 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
             </div>
           </div>
 
-          <div className="flex justify-between items-center mb-6">
-            <button
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
-              aria-label="Recuperar PIN"
-            >
-              Esqueceu o PIN?
-            </button>
-          </div>
-
           <div className="flex justify-end space-x-3">
             <button
               className="px-4 py-2 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-medium rounded-lg text-sm hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
@@ -182,7 +174,10 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
             </button>
             <button
               className="px-6 py-2 cursor-pointer  bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-              onClick={onConfirm}
+              onClick={() => {
+                onConfirm(code.join('')); 
+                setCode(['', '', '', ''])
+              }}
               aria-label="Confirmar transação"
               disabled={!isCodeComplete}
             >

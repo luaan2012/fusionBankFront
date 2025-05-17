@@ -125,7 +125,6 @@ export function DepositContent({ setShowBoletoModal, setShowSuccessModal, setSho
   };
 
   const onSubmit = async (data: DepositFormData) => {
-    console.log('Form Data:', data);
     try {
       const details: ConfirmationDetails = {
         amount: data.amount,
@@ -152,8 +151,6 @@ export function DepositContent({ setShowBoletoModal, setShowSuccessModal, setSho
   const handleModalConfirm = async () => {
     if (!depositData) return;
     let response;
-
-    console.log('Submitting Deposit Data:', depositData);
 
     if (depositType === 'direct') {
       response = await directDeposit(depositData);

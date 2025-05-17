@@ -15,6 +15,7 @@ import type { RegisterKeyPix } from '~/models/request/registerKeyPix'
  const editAccount = baseUrl + 'account/edit-account'
  const registerKey = baseUrl + 'account/register-key-account'
  const deleteKey = baseUrl + 'account/delete-key-account'
+ const registerPasswordTransaction = baseUrl + 'account/register-password-transaction'
 
 export const accountApi = {
   login: (payload: LoginPayload) => httpClient.post<LoginResponse, LoginPayload>(loginUrl, payload),
@@ -23,5 +24,6 @@ export const accountApi = {
   getAccount: (accountId: string) => httpClient.get<Account>(`${getAccount}/${accountId}`),
   deleteKey: (accountId: string) => httpClient.deleted<string, string>(`${deleteKey}/${accountId}`),
   registerKey: (request: RegisterKeyPix) => httpClient.post<string, RegisterKeyPix>(registerKey, request),
-  setModeDark: (accountId: string, darkMode: boolean) => httpClient.put<ApiResponse<string>, boolean>(`${setDarkMode}/${accountId}?darkMode=${darkMode}`, darkMode),
+  setModeDark: (accountId: string, darkMode: boolean) => httpClient.put<string, boolean>(`${setDarkMode}/${accountId}?darkMode=${darkMode}`, darkMode),
+  registerPasswordTransaction: (accountId: string, passwordTransaction: string) => httpClient.put<string, string>(`${registerPasswordTransaction}/${accountId}?passwordTransaction=${passwordTransaction}`, passwordTransaction),
 };

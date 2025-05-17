@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWallet, faIdCard, faEnvelope, faSignInAlt, faFingerprint, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import { faGoogle, faApple } from '@fortawesome/free-brands-svg-icons';
 import { loginSchema, type LoginFormData, type AccountFormErrors, type DocumentFormErrors, type EmailFormErrors, type LoginPayload } from '../schema/loginSchema';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +8,7 @@ import { useNavigate } from 'react-router';
 import { useAccountStore } from '~/context/accountStore';
 import { IMaskInput } from 'react-imask';
 import { useToast } from '~/components/ToastContext'
+import { decryptString , encryptObject} from '~/services/encryptService'
 
 interface LoginFormProps {
   switchToRegister: () => void;
@@ -17,11 +17,11 @@ interface LoginFormProps {
 const LoginForm = ({ switchToRegister }: LoginFormProps) => {
   const [loginType, setLoginType] = useState<'account' | 'document' | 'email'>('account');
   const [showPassword, setShowPassword] = useState(false);
-  const { loading, error, login } = useAccountStore();
+  const [rememberMe, setRememberMe] = useState(false);
+  const { loading, login } = useAccountStore();
   const navigate = useNavigate();
   const { openToast } = useToast()
 
-  // Configuração do React Hook Form
   const {
     register,
     handleSubmit,
@@ -40,6 +40,27 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
       password: '',
     },
   });
+
+  useEffect(() => {
+    const encryptedCredentials = localStorage.getItem('loginCredentials');
+      if (encryptedCredentials) {
+        try {
+          const decrypted = decryptString(encryptedCredentials) as LoginFormData
+          setLoginType(decrypted.loginType);
+          setValue('password', decrypted.password);
+          setValue('loginType', decrypted.loginType);
+          setValue(
+            decrypted.loginType === 'account' ? 'accountNumber'
+              : decrypted.loginType === 'document' ? 'document' : 'email',
+            decrypted.loginType === 'account' ? decrypted.accountNumber
+              : decrypted.loginType === 'document' ? decrypted.document : decrypted.email || '');
+          setRememberMe(true)
+        } catch (error) {
+          console.error('Failed to decrypt credentials:', error);
+          localStorage.removeItem('loginCredentials'); // Clear invalid data
+        }
+      }
+  }, [])
 
   // Atualiza o loginType e reseta campos irrelevantes
   const handleLoginTypeChange = (type: 'account' | 'document' | 'email') => {
@@ -65,6 +86,14 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
     };
 
     const loginEfetuado = await login(loginPayload);
+    const error = useAccountStore.getState().error
+
+    if(rememberMe) {
+      var encrypted = encryptObject(data)
+      localStorage.setItem('loginCredentials', encrypted);
+    }else {
+      localStorage.removeItem('loginCredentials');
+    }
 
     if(!loginEfetuado){
       openToast({
@@ -77,11 +106,6 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
     }
 
     navigate('/app');
-  };
-
-  // Função de biometria (mock)
-  const handleBiometric = () => {
-    alert('Biometria solicitada. Em um ambiente real, isso acionaria a API de biometria do dispositivo.');
   };
 
   return (
@@ -269,6 +293,8 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
               <input
                 id="rememberMe"
                 type="checkbox"
+                checked={rememberMe}
+                onChange={() => setRememberMe(!rememberMe)}
                 className="h-4 w-4 text-blue-500 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
               />
               <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-pointer">

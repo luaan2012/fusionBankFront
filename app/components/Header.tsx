@@ -5,6 +5,7 @@ import { defaultMessage, getInitials } from '../utils/utils';
 import type { Account } from '~/models/account';
 import { useAccountStore } from '~/context/accountStore'
 import { useNavigate } from 'react-router'
+import { useAppStore } from '~/context/appStore'
 
 interface HeaderProps {
   user: Account | null;
@@ -27,9 +28,15 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { logout } = useAccountStore()
+  const { setView } = useAppStore()
   const navigate = useNavigate()
 
   const handleDropdownToggle = () => {
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  const handleConfig = () => {
+    setView('config')
     setIsDropdownOpen((prev) => !prev);
   };
 
@@ -124,24 +131,13 @@ const Header: React.FC<HeaderProps> = ({
               >
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
                   <li>
-                    <a
-                      href="#"
+                    <button
+                      onClick={handleConfig}
                       className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      <FontAwesomeIcon icon={faUser} className="mr-2" />
-                      Perfil
-                    </a>
-                  </li>
-                  <li>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
-                      onClick={() => setIsDropdownOpen(false)}
                     >
                       <FontAwesomeIcon icon={faCog} className="mr-2" />
                       Configurações
-                    </a>
+                    </button>
                   </li>
                   <li>
                     <button
