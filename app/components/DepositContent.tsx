@@ -11,6 +11,7 @@ import { depositSchema, type DepositFormData } from '~/homeApp/schema/depositBil
 import { usePaymentStore } from '~/context/paymentStore';
 import type { ResponseStore } from 'types';
 import { useBankStore } from '~/context/bankStore';
+import LoadingOverlay from './LoadingOverlay'
 
 interface DepositContentProps {
   setShowBoletoModal: (response: ResponseStore) => void;
@@ -41,9 +42,9 @@ export function DepositContent({ setShowBoletoModal, setShowSuccessModal, setSho
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [details, setDetails] = useState<ConfirmationDetails | null>(null);
   const [depositData, setDepositData] = useState<DepositFormData | null>(null);
-  const { directDeposit, generateBillet } = usePaymentStore();
+  const { directDeposit, generateBillet, loading } = usePaymentStore();
   const { banks, listBanks } = useBankStore();
-  const { user } = useAccountStore();
+  const { user, updateLocalUser } = useAccountStore();
   const { openToast } = useToast();
 
   const {
@@ -66,7 +67,7 @@ export function DepositContent({ setShowBoletoModal, setShowSuccessModal, setSho
       agencyNumberReceiver: '',
       accountNumberReceiver: '',
     },
-    mode: 'onChange',
+    // mode: 'onChange',
   });
 
   const watchedDepositType = watch('depositType');
@@ -175,17 +176,7 @@ export function DepositContent({ setShowBoletoModal, setShowSuccessModal, setSho
     }
 
     setIsModalOpen(false);
-    reset({
-      depositType: 'direct',
-      billetType: 'DEPOSIT',
-      amount: '',
-      description: '',
-      nameReceiver: '',
-      documentReceiver: '',
-      ispb: '',
-      agencyNumberReceiver: '',
-      accountNumberReceiver: '',
-    });
+    reset();
   };
 
   return (
@@ -550,6 +541,7 @@ export function DepositContent({ setShowBoletoModal, setShowSuccessModal, setSho
           })
         }
       />
+      <LoadingOverlay isVisible={loading} />
     </div>
   );
 }

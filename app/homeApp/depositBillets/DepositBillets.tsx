@@ -10,7 +10,6 @@ import { useToast } from '~/components/ToastContext'
 
 export function DepositBillets() {
   const [activeTab, setActiveTab] = useState<string>('deposit');
-  const [showMessageError, setShowMessageError] = useState<ResponseStore>({message: '', success: false});
   const [showBoletoModal, setShowBoletoModal] = useState<ResponseStore>({message: '', success: false});
   const [showSuccessModal, setShowSuccessModal] = useState<ResponseStore>({message: '', success: false});
   const { openToast } = useToast()

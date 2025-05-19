@@ -1,32 +1,88 @@
 import { create } from 'zustand';
-import type { Investment } from '~/models/investment'
-import { type ErrorApi } from '~/models/response/errorResponse'
-import { investmentApi } from '~/services/investmentApi'
+import type { AvailableInvestment } from 'types';
+import type { Investment } from '~/models/investment';
+import type { InvestmentRequest } from '~/models/request/investmentRequest';
+import type { ErrorApi } from '~/models/response/errorResponse';
+import { investmentApi } from '~/services/investmentApi';
 
-// Tipagem do estado de autenticação
 interface InvestmentState {
   investment: Investment[];
-  loading: boolean;
-  isAlready: boolean;
-  error: ErrorApi | null
-  getInvestmentsHome: (accountId: string, limit: number) => void;
+  availableInvestment: AvailableInvestment[];
+  loadingInvestment: boolean;
+  loadingBuying: boolean;
+  isAlreadyInvestments: boolean;
+  isAlreadyAvailable: boolean;
+  error: ErrorApi | string | null;
+  createInvest: (investment: InvestmentRequest) => Promise<boolean>;
+  handleInvestment: (accountId: string, investmentId: string, amount: number) => Promise<boolean>;
+  listInvestmentsUser: (accountId: string, limit: number) => Promise<boolean>;
+  availableInvestments: (accountId?: string) => Promise<boolean>;
 }
-// Criação da store com persistência
-export const useInvestmentStore = create<InvestmentState>()(
-  (set, get) => ({
-      investment: [],
-      loading: false,
-      error: null,
-      isAlready: false,
-      getInvestmentsHome: async (accountId: string, limit: number) => {
-        if (get().loading) return; 
-        set({ loading: true, error: null });
-        try {
-          const response = await investmentApi.listInvestmentHome(accountId, limit);
-          set({ loading: false, investment: response.data, isAlready: true });
-        } catch (err: any) {
-          set({ loading: false, error: err.message || 'Falha ao carregar ultimos Investmentos' });
-        }
-      }
-    })
-);
+
+export const useInvestmentStore = create<InvestmentState>()((set, get) => ({
+  investment: [],
+  availableInvestment: [],
+  loadingBuying: false,
+  loadingInvestment: false,
+  isAlreadyInvestments: false,
+  isAlreadyAvailable: false,
+  error: null,
+
+  createInvest: async (investment) => {
+    if (get().loadingBuying) return false;
+
+    set({ loadingBuying: true, error: null });
+
+    try {
+      await investmentApi.createInvest(investment);
+      set({ loadingBuying: false });
+      return true;
+    } catch (err: any) {
+      set({ loadingBuying: false, error: err?.message || 'Falha ao criar investimento' });
+      return false;
+    }
+  },
+
+  handleInvestment: async (accountId, investmentId, amount) => {
+    if (get().loadingInvestment) return false;
+
+    set({ loadingInvestment: true, error: null });
+
+    try {
+      await investmentApi.handleInvestment(accountId, investmentId, amount);
+      set({ loadingInvestment: false });
+      return true;
+    } catch (err: any) {
+      set({ loadingInvestment: false, error: err?.message || 'Falha ao aplicar investimento' });
+      return false;
+    }
+  },
+
+  listInvestmentsUser: async (accountId: string, limit: number) => {
+    if (get().loadingInvestment) return false;
+    set({ loadingInvestment: true, error: null });
+
+    try {
+      const response = await investmentApi.listInvestments(accountId, limit);
+      set({ investment: response.data, loadingInvestment: false, isAlreadyInvestments: true });
+      return true;
+    } catch (err: any) {
+      set({ loadingInvestment: false, error: err?.message || 'Falha ao listar investimentos do usuário' });
+      return false;
+    }
+  },
+  availableInvestments: async (accountId: string) => {
+    if (get().loadingInvestment) return false;
+
+    set({ loadingInvestment: true, error: null });
+
+    try {
+      const response = await investmentApi.availableInvestments(accountId);
+      set({ availableInvestment: response.data, loadingInvestment: false, isAlreadyAvailable: true });
+      return true;
+    } catch (err: any) {
+      set({ loadingInvestment: false, error: err?.message || 'Falha ao buscar investimentos disponíveis' });
+      return false;
+    }
+  }
+}));

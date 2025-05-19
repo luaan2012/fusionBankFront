@@ -14,7 +14,7 @@ interface InvestmentTabsProps {
 const tabs = [
   { id: 'portfolio', label: 'Carteira', icon: faChartPie },
   { id: 'explore', label: 'Explorar', icon: faCompass },
-  { id: 'reports', label: 'Relatórios', icon: faFileAlt },
+  { id: 'reports', label: 'Calculadora', icon: faFileAlt },
   { id: 'profile', label: 'Perfil', icon: faUser },
 ] as const;
 

@@ -1,4 +1,6 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core"
+import { number } from "zod"
+import type { InvestmentType } from "~/models/enum/investmentType"
 import type { StatusAccount } from "~/models/enum/statusAccount"
 
 export interface Notification {
@@ -83,4 +85,31 @@ export interface AccountRequest {
   expensePerDay: number;
   darkMode: boolean;
   status: StatusAccount;
+}
+
+export interface AvailableInvestment {
+  id: string
+  currency: string
+  marketCap: number
+  shortName: string
+  longName: string
+  regularMarketChange: number
+  regularMarketChangePercent: number
+  regularMarketTime: Date
+  regularMarketPrice: number
+  regularMarketDayHigh: number
+  regularMarketDayRange: number
+  regularMarketDayLow: number
+  regularMarketVolume: number
+  regularMarketPreviousClose: number
+  regularMarketOpen: number
+  fiftyTwoWeekRange: string
+  fiftyTwoWeekLow: number
+  fiftyTwoWeekHigh: number
+  symbol: string
+  priceEarnings: number
+  earningsPerShare: number
+  logourl: string
+  onMyPocket: boolean
+  type: InvestmentType
 }

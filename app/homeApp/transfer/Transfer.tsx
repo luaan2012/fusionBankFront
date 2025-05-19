@@ -14,6 +14,7 @@ import { formatToBRL ,formatNumberAccount, CleanString } from '~/utils/utils'
 import { useToast } from '~/components/ToastContext'
 import SuccessToast from '~/components/SuccessToast'
 import { useBankStore } from '~/context/bankStore'
+import LoadingOverlay from '~/components/LoadingOverlay'
 
 interface TransferCardData {
   type: 'pix' | 'ted' | 'doc';
@@ -29,8 +30,8 @@ export function TransferContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [details, setDetails] = useState<ConfirmationDetails | null>();
   const [transfer, setTransfer] = useState<TransferFormData | null>();
-  const { createTransfer, error } = useTransferStore();
-  const { user, updateUser} = useAccountStore();
+  const { createTransfer, error, loading } = useTransferStore();
+  const { user, updateLocalUser} = useAccountStore();
   const { banks, listBanks} = useBankStore();
   const [transferType, setTransferType] = useState<'pix' | 'ted' | 'doc'>('pix');
   const [keyType, setKeyType] = useState<'cpf' | 'email' | 'celular' | 'aleatorio'>('cpf');
@@ -164,7 +165,8 @@ const parseAmount = (value: string): string => {
         position: 'top-mid'
       });
       setIsModalOpen(false);
-      updateUser()
+      reset()
+      updateLocalUser('balance', user.balance - parseFloat(transfer.amount));
   };
 
   // Atualiza transferType e keyType quando o usuário seleciona um cartão
@@ -483,6 +485,7 @@ const parseAmount = (value: string): string => {
                         onAccept={(value) => field.onChange(value)}
                         className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5 transition-all duration-200"
                         placeholder="0,00"
+                        autoComplete="off"
                       />
                     )}
                   />
@@ -551,6 +554,7 @@ const parseAmount = (value: string): string => {
         onConfirm={handleModalConfirm}
         reset={reset}
       />
+      <LoadingOverlay isVisible={loading} />
     </div>
   );
 }

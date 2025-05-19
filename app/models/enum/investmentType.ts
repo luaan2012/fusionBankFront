@@ -1,5 +1,7 @@
 export enum InvestmentType {
-  CDB,
-  LCI,
-  LCA
+  CDB = 'CDB',
+  LCI = 'LCI',
+  LCA = 'LCA',
+  STOCK = 'STOCK',
+  FII = 'FII'
 }

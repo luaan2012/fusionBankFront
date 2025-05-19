@@ -10,6 +10,7 @@ import { BilletTypeToString } from '~/utils/map'
 import { IMaskInput } from 'react-imask'
 import type { DepositBillet } from '~/models/request/depositBilletRequest'
 import { useToast } from './ToastContext'
+import LoadingOverlay from './LoadingOverlay'
 
 interface BoletoPaymentContentProps {
   setShowSuccessModal: (response: ResponseStore) => void;
@@ -24,7 +25,7 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
   const [boletoInfo, setBoletoInfo] = useState<BoletoDetails | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'DEBIT' | 'CREDIT'>('DEBIT');
   const { getBillet, loading, depositBillet, billet: billetInfo } = usePaymentStore();
-  const { user } = useAccountStore();
+  const { user, updateLocalUser } = useAccountStore();
   const { creditCard } = useCreditCardStore();
   const { openToast } = useToast();
 
@@ -73,6 +74,8 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
       position: 'top-right',
       duration: 5000,
     })
+
+    response && updateLocalUser('balance', user.balance - parseFloat(boletoInfo.amount));
   };
 
   return (
@@ -176,6 +179,7 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
           </div>
         )}
       </div>
+      <LoadingOverlay isVisible={loading} />
     </div>
   );
 };

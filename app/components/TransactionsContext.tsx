@@ -95,7 +95,7 @@ const TransactionsContent: React.FC<TransactionContentProps> = ({ card }) => {
   };
 
   // Flatten and sort expenses from invoices
-  const allExpenses = card.invoices
+  const allExpenses = card?.invoices || []
     .flatMap((invoice) => invoice.expenses)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by date descending
 

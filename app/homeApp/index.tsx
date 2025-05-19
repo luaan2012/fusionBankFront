@@ -13,7 +13,6 @@ import { InvestmentsDisplay } from '~/components/InvestmentsDisplay'
 import { TransferContent } from './transfer/Transfer'
 import { useAppStore } from '~/context/appStore'
 import { Sidebar } from '~/components/Sidebar'
-import { AccountSummary } from '~/components/AccountSummary'
 import type { EventMessage } from '~/models/eventMessage'
 import { useSignalR } from '~/services/useSignalR'
 import Notification from '~/components/Notification'
@@ -22,18 +21,22 @@ import { useCreditCardStore } from '~/context/creditCardStore'
 import { DepositBillets } from './depositBillets/DepositBillets'
 import { AccountEditPage } from './config/AccountEdit'
 import { PinRegistrationModal } from '~/components/PinRegistrationModal'
-import { useFetcher } from 'react-router'
+import { AccountSummary } from '~/components/AccountSummary'
+import { useToast } from '~/components/ToastContext'
+import { useNavigate } from 'react-router'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isOpenModalPasswordTransaction, setIsOpenModalPasswordTransaction] = useState<boolean>(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
-  const {view} = useAppStore();
+  const { view } = useAppStore();
   const { getEventTransactions, listEvents, updateEvents, lastTransactions, events, loading: eventLoading, isAlready: isAlreadyEvent } = useEventStore();
-  const { getInvestmentsHome, investment, loading: investmentLoading, isAlready: isAlreadyInvestment} = useInvestmentStore();
-  const { setDarkMode, user, loading: accountLoading, updateUser, registerPasswordTransaction} = useAccountStore();
+  const { investment, loadingInvestment, listInvestmentsUser, isAlreadyInvestments } = useInvestmentStore();
+  const { setDarkMode, user, loading: accountLoading, updateUser, registerPasswordTransaction, tokenExpiry, checkToken} = useAccountStore();
   const { getCreditCardsById, creditCard } = useCreditCardStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { openToast } = useToast()
+  const navigate = useNavigate();
   const eventUrl = import.meta.env.VITE_API_URL_EVENT
 
   useSignalR(eventUrl + 'notification', user?.accountId, (notification: EventMessage) => {
@@ -48,6 +51,25 @@ export function Index() {
       updateUser();
     }
   });
+
+  useEffect(() => {
+      const validateToken = async () => {
+      const isValid = await checkToken();
+      console.log(useAccountStore.getState().clickedLogout)
+      if (!isValid && !useAccountStore.getState().clickedLogout) {
+        openToast({
+          message: 'Sessão expirada, entre novamente.',
+          type: 'error',
+          position: 'top-right',
+          duration: 5000
+        });
+        navigate('/');
+      }
+    };
+
+    validateToken();
+    
+  }, [tokenExpiry]);
 
   useEffect(() => {
   if (toastMessage) {
@@ -86,8 +108,8 @@ export function Index() {
       getEventTransactions(user.accountId, 3)
     }
 
-    if(investment.length === 0 && user && !isAlreadyInvestment) {
-      getInvestmentsHome(user.accountId, 3)
+    if(investment.length === 0 && user && !isAlreadyInvestments) {
+      listInvestmentsUser(user.accountId, 0)
     }
 
     if(!creditCard && user){
@@ -116,7 +138,6 @@ export function Index() {
 
   return (
     <div className="bg-gray-50 dark:bg-dark-primary smooth-transition">
-      {/* <LoadingOverlay isVisible={eventLoading} /> */}
       <NotificationCenter
         isOpen={isNotificationCenterOpen}
         notifications={events}
@@ -143,9 +164,9 @@ export function Index() {
             {view === 'dashboard' ? (
               <>
                 <QuickActions />
-                <AccountSummary user={user} loadingUser={accountLoading} investment={investment} loadingCard={false} loadingInvestment={investmentLoading} card={creditCard} />
+                <AccountSummary user={user} loadingUser={accountLoading} investment={investment} loadingCard={false} loadingInvestment={loadingInvestment} card={creditCard} />
                 <RecentTransactions lastTransactions={lastTransactions} loading={eventLoading}/>
-                <InvestmentsDisplay investments={investment} loading={investmentLoading}/>
+                <InvestmentsDisplay investments={investment} loading={loadingInvestment}/>
               </>
             ) : view === 'transfer' ? (
               <TransferContent />

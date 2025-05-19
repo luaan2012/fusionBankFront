@@ -211,3 +211,21 @@ export const formatAmount = (value: string | number): string => {
   // Formata com 2 casas decimais e separadores de milhar
   return numericValue.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
 };
+
+export const formatPercent = (value: number, digits = 1): string =>
+  `${(value * 100).toFixed(digits)}%`;
+
+export const normalizeInvestmentType = (type: string): string => {
+  switch (type.toUpperCase()) {
+    case 'STOCK':
+      return 'AÇÃO';
+    case 'CDB':
+    case 'FII':
+    case 'TESOURO':
+    case 'LCI':
+    case 'LCA':
+      return type.toUpperCase();
+    default:
+      return type.toUpperCase();
+  }
+};

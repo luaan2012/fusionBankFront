@@ -13,11 +13,9 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-// Interceptor para adicionar o token e verificar expiração
-api.interceptors.request.use(config => {
-  const { token, logout } = useAccountStore.getState();
+api.interceptors.request.use((config) => {
+  const { token } = useAccountStore.getState();
   if (token) {
-    // Verifica expiração do token
     const isExpired = (() => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -28,7 +26,6 @@ api.interceptors.request.use(config => {
       }
     })();
     if (isExpired) {
-      logout();
       throw new Error('Token expirado');
     }
     config.headers.Authorization = `Bearer ${token}`;

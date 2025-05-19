@@ -70,8 +70,8 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
 }
 
 export function mapInvestmentsToDisplay(investments: Investment[]): InvestmentHome[] {
-  if(investments.length <= 0) return [];
-  
+  if (investments.length <= 0) return [];
+
   return investments.map((investment) => {
     // Calcula o valor aplicado (soma dos aportes)
     const applied = investment.entries.reduce(
@@ -79,38 +79,22 @@ export function mapInvestmentsToDisplay(investments: Investment[]): InvestmentHo
       0
     );
 
-    // Calcula o rendimento (totalBalance - applied)
-    const yieldValue = investment.totalBalance - applied;
+    const yieldValue = investment.paidOff;
 
-    // Calcula o progresso (balance / totalBalance)
-    const progress = Math.min(
-      Math.round((investment.balance / investment.totalBalance) * 100),
-      100
-    );
+    const rate = '12,5% a.a.';
 
-    // Define a cor do progresso
-    const progressColor =
-      progress >= 70
-        ? 'bg-green-500'
-        : progress >= 30
-        ? 'bg-yellow-500'
-        : 'bg-red-500';
-
-    // Deriva o ano de vencimento (suposição: 2 anos a partir de dateInvestment)
-    const maturityYear = new Date(investment.dateInvestment).getFullYear() + 2;
-
-    // Suposição para a taxa de retorno (pode ser ajustada se disponível no backend)
-    const rate = '12,5% a.a.'; // Fixo, ou calcular com base em balance/totalBalance
+    // Suposição para rentabilidade percentual (ajuste se disponível no backend)
+    const regularMarketChangePercent = investment.percentageChange || 0;
 
     return {
       type: investment.investmentType,
-      name: `${investment.investmentType} Prefixado ${maturityYear}`,
+      name: investment.symbol,
       rate,
+      valueNormalized: investment.totalBalance,
       value: formatToBRL(investment.totalBalance),
-      progress,
       applied: formatToBRL(applied),
       yield: formatToBRL(yieldValue),
-      progressColor,
+      regularMarketChangePercent,
     };
   });
 }

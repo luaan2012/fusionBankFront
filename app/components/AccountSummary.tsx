@@ -166,7 +166,7 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
               <div
                 className="bg-yellow-600 h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${(user?.expenseDay / user?.expensePerDay) * 100}%` }}
+                style={{ width: `${((user?.expenseDay > user?.expensePerDay ? user?.expensePerDay : user?.expenseDay) / user?.expensePerDay) * 100}%` }}
               ></div>
             </div>
             <div className="flex justify-between mt-1">
@@ -204,8 +204,8 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
             <div className="flex justify-center items-center h-32">
               <FontAwesomeIcon icon={faSpinner} className="text-2xl text-gray-500 animate-spin" aria-label="Carregando cartão de crédito" />
             </div>
-          ) : !card ? (
-            renderEmptyState('Nenhum cartão de crédito encontrado')
+          ) : (!card || !card.invoices?.find(d => d.isOpen)?.periodEnd) ? (
+            renderEmptyState('Nenhuma fatura ou cartão de crédito encontrado')
           ) : (
             <div>
               <div className="flex items-center mb-4">
@@ -214,8 +214,9 @@ export function AccountSummary({ user, investment, card, loadingCard, loadingInv
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                     Fatura atual: <span className="text-red-600 dark:text-red-400">{formatToBRL(card.currentInvoiceAmount)}</span>
                   </p>
+
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Vencimento: {formatDateBR(card.invoices.find(d => d.isOpen).periodEnd)}
+                    Vencimento: {formatDateBR(card.invoices.find(d => d.isOpen)?.periodEnd)}
                   </p>
                 </div>
               </div>

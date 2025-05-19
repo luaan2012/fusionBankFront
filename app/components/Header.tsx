@@ -60,8 +60,8 @@ const Header: React.FC<HeaderProps> = ({
           >
             <FontAwesomeIcon icon={faBars} className="text-xl" />
           </button>
-          <a
-            href="#"
+          <button
+            onClick={() => setView('dashboard')}
             className="flex items-center hover:scale-105 transition-all duration-200"
             aria-label="Página inicial do DeepBank"
           >
@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline text-2xl font-semibold text-gray-900 dark:text-gray-100">
               DeepBank
             </span>
-          </a>
+          </button>
         </div>
         <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6">
           <button

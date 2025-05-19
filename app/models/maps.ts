@@ -16,10 +16,10 @@ export interface InvestmentHome{
   name: string,
   rate: string,
   value: string,
-  progress: number,
+  valueNormalized: number,
   applied: string,
   yield: string,
-  progressColor: string,
+  regularMarketChangePercent: number
 }
 
 export interface BankRegister {
