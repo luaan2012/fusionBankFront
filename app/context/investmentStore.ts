@@ -44,16 +44,16 @@ export const useInvestmentStore = create<InvestmentState>()((set, get) => ({
   },
 
   handleInvestment: async (accountId, investmentId, amount) => {
-    if (get().loadingInvestment) return false;
+    if (get().loadingBuying) return false;
 
-    set({ loadingInvestment: true, error: null });
+    set({ loadingBuying: true, error: null });
 
     try {
       await investmentApi.handleInvestment(accountId, investmentId, amount);
-      set({ loadingInvestment: false });
+      set({ loadingBuying: false });
       return true;
     } catch (err: any) {
-      set({ loadingInvestment: false, error: err?.message || 'Falha ao aplicar investimento' });
+      set({ loadingBuying: false, error: err?.message || 'Falha ao aplicar investimento' });
       return false;
     }
   },

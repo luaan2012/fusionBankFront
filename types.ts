@@ -2,6 +2,7 @@ import type { IconDefinition } from "@fortawesome/fontawesome-svg-core"
 import { number } from "zod"
 import type { InvestmentType } from "~/models/enum/investmentType"
 import type { StatusAccount } from "~/models/enum/statusAccount"
+import type { TransactionType } from "~/models/enum/transferType"
 
 export interface Notification {
   id: string;
@@ -63,10 +64,12 @@ export interface FileInfo {
 export interface ConfirmationDetails {
   amount: string;
   tax: string;
-  total: string;
-  destination: string;
-  description: string;
+  total?: string;
+  destination?: string;
+  description?: string;
   scheduleDate?: boolean;
+  transactionType?: TransactionType
+  details?: Record<string, string>;
 }
 
 export interface ResponseStore {

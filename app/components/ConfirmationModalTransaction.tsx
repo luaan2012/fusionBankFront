@@ -2,17 +2,27 @@ import React, { useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faClock, faLock } from '@fortawesome/free-solid-svg-icons';
 import type { ConfirmationDetails } from 'types';
-import { useAccountStore } from '~/context/accountStore'
+import type { TransactionType, TransferType } from '~/models/enum/transferType'
 
 interface ConfirmationModalProps {
   show: boolean;
   onClose: () => void;
   onConfirm: (passwordTransaction: string) => void;
-  reset: () => void;
+  reset?: () => void; // Optional, for resetting form state
   details: ConfirmationDetails | null;
+  title?: string; // Optional custom title
+  confirmButtonText?: string; // Optional custom confirm button text
 }
 
-export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }: ConfirmationModalProps) {
+export function ConfirmationModalTransaction({
+  show,
+  onClose,
+  onConfirm,
+  reset,
+  details,
+  title = 'Confirme sua transação',
+  confirmButtonText = 'Confirmar',
+}: ConfirmationModalProps) {
   const [code, setCode] = useState(['', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -22,7 +32,6 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
       newCode[index] = value;
       setCode(newCode);
 
-      // Move to next input if value is entered
       if (value && index < 3) {
         inputRefs.current[index + 1]?.focus();
       }
@@ -30,7 +39,6 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Handle backspace
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       const newCode = [...code];
       newCode[index - 1] = '';
@@ -39,9 +47,41 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
     }
   };
 
-  const isCodeComplete = code.every(digit => digit !== '');
+  const handleClose = () => {
+    setCode(['', '', '', '']);
+    if (reset) reset();
+    onClose();
+  };
 
-  if (!show) return null;
+  const handleConfirm = () => {
+    onConfirm(code.join(''));
+    setCode(['', '', '', '']);
+  };
+
+  const isCodeComplete = code.every((digit) => digit !== '');
+
+  if (!show || !details) return null;
+
+  // Map transaction types to human-readable labels
+  const transactionTypeLabels: Record<TransactionType, string> = {
+    transfer: 'Transferência',
+    investment: 'Investimento',
+    billPayment: 'Pagamento de Boleto',
+    deposit: 'Depósito',
+  };
+
+  // Define field labels for details (customize as needed)
+  const detailFieldLabels: Record<string, string> = {
+    source: 'Origem',
+    destination: 'Destino',
+    fundName: 'Fundo',
+    applicationDate: 'Data de Aplicação',
+    payee: 'Beneficiário',
+    dueDate: 'Data de Vencimento',
+    barcode: 'Código de Barras',
+    account: 'Conta',
+    method: 'Método',
+  };
 
   return (
     <div
@@ -59,10 +99,10 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
             id="confirmation-modal-title"
             className="text-xl font-semibold text-gray-900 dark:text-gray-100"
           >
-            Confirme sua transação
+            {title}
           </h3>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200"
             aria-label="Fechar modal"
           >
@@ -82,49 +122,51 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
               className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center"
             >
               <FontAwesomeIcon icon={faLock} className="text-blue-600 dark:text-blue-400 mr-2" />
-              Resumo da Transação
+              Resumo da {transactionTypeLabels[details.transactionType]}
             </h4>
             <div className="grid grid-cols-1 gap-4">
               <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Valor</span>
-                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{details?.amount}</span>
+                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{details.amount}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Taxa</span>
-                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{details?.tax}</span>
+                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{details.tax}</span>
               </div>
               <div className="flex justify-between items-center pt-3">
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Total</span>
-                <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{details?.total}</span>
+                <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{details.total}</span>
               </div>
             </div>
           </div>
 
           {/* Transaction Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Origem</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Conta Corrente • Ag. 1234 • C/C 56789-0
-              </p>
+          {Object.keys(details.details).length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {Object.entries(details.details).map(([key, value]) => (
+                <div
+                  key={key}
+                  className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    {detailFieldLabels[key] || key.charAt(0).toUpperCase() + key.slice(1)}
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{value}</p>
+                </div>
+              ))}
             </div>
-            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Destino</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{details?.destination}</p>
+          )}
+
+          {details.description && (
+            <div className="mb-6">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{details.description}</p>
             </div>
-          </div>
+          )}
 
-          <div className="mb-6">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição</p>
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{details?.description}</p>
-          </div>
-
-          {details?.scheduleDate && (
+          {details.scheduleDate && (
             <div className="mb-6 flex items-center">
-              <FontAwesomeIcon
-                icon={faClock}
-                className="text-blue-600 dark:text-blue-400 mr-2"
-              />
+              <FontAwesomeIcon icon={faClock} className="text-blue-600 dark:text-blue-400 mr-2" />
               <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
                 Agendado para {details.scheduleDate}
               </p>
@@ -138,12 +180,10 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
             Verificação de Senha
           </h4>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-            Insira o PIN de 4 dígitos do aplicativo para confirmar a transação:
+            Insira o PIN de 4 dígitos do aplicativo para confirmar a {transactionTypeLabels[details.transactionType].toLowerCase()}:
           </p>
           <div className="mb-6">
-            <label
-              className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2"
-            >
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
               PIN de 4 dígitos
             </label>
             <div className="flex space-x-2 justify-center">
@@ -153,7 +193,6 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
                   type="password"
                   maxLength={1}
                   value={digit}
-                  data-index={index}
                   ref={(el) => (inputRefs.current[index] = el) as any}
                   className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-12 h-12 text-center p-0 transition-all duration-200 hover:shadow-md"
                   onChange={(e) => handleCodeChange(index, e.target.value)}
@@ -167,21 +206,18 @@ export function ConfirmationModalTransfer({ show, onClose, onConfirm, details }:
           <div className="flex justify-end space-x-3">
             <button
               className="px-4 py-2 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 font-medium rounded-lg text-sm hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200"
-              onClick={onClose}
+              onClick={handleClose}
               aria-label="Cancelar transação"
             >
               Cancelar
             </button>
             <button
-              className="px-6 py-2 cursor-pointer  bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-              onClick={() => {
-                onConfirm(code.join('')); 
-                setCode(['', '', '', ''])
-              }}
-              aria-label="Confirmar transação"
+              className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleConfirm}
+              aria-label={`Confirmar ${transactionTypeLabels[details.transactionType].toLowerCase()}`}
               disabled={!isCodeComplete}
             >
-              Confirmar
+              {confirmButtonText}
             </button>
           </div>
         </div>

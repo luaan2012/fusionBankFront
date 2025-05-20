@@ -229,3 +229,10 @@ export const normalizeInvestmentType = (type: string): string => {
       return type.toUpperCase();
   }
 };
+
+export const formatDateShort = (date: string | Date) => {
+    return new Date(date).toLocaleString('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+}

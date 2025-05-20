@@ -14,10 +14,12 @@ import {
 import { useInvestmentStore } from '~/context/investmentStore';
 import { useAccountStore } from '~/context/accountStore';
 import type { InvestmentRequest } from '~/models/request/investmentRequest';
-import { formatPercent, formatToBRLInput } from '~/utils/utils'
+import { formatDateShort, formatPercent, formatToBRLInput } from '~/utils/utils'
 import type { InvestmentType } from '~/models/enum/investmentType'
 import LoadingOverlay from './LoadingOverlay'
-import type { AvailableInvestment } from 'types'
+import type { AvailableInvestment, ConfirmationDetails } from 'types'
+import { ConfirmationModalTransaction } from './ConfirmationModalTransaction'
+import { useToast } from './ToastContext'
 
 const InvestmentDashboard: React.FC = () => {
   const {
@@ -29,7 +31,7 @@ const InvestmentDashboard: React.FC = () => {
     handleInvestment,
     createInvest,
   } = useInvestmentStore();
-  const { user } = useAccountStore();
+  const { user, updateLocalUser } = useAccountStore();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedInvestment, setSelectedInvestment] = useState<AvailableInvestment>(null);
   const [investmentAmount, setInvestmentAmount] = useState<string>('');
@@ -37,6 +39,10 @@ const InvestmentDashboard: React.FC = () => {
   const [amountError, setAmountError] = useState<string>('');
   const [displayCount, setDisplayCount] = useState<number>(6);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  const [isModalTransactionOpen, setIsModalTransactionOpen] = useState(false);
+  const [details, setDetails] = useState<ConfirmationDetails | null>();
+  const [investmentRequest, setInvestmentRequest] = useState<InvestmentRequest | null>();
+  const { openToast } = useToast()
 
   useEffect(() => {
     if(user) {
@@ -78,15 +84,41 @@ const InvestmentDashboard: React.FC = () => {
       investmentType: selectedInvestment.type as InvestmentType,
     };
 
+    const detailsModal: ConfirmationDetails = { 
+      transactionType: 'investment',
+        amount: formatToBRLInput(investmentAmount),
+        tax: 'R$ 0,00',
+        total: formatToBRLInput(investmentAmount),
+        details: {
+          fundName: selectedInvestment.shortName,
+          applicationDate: formatDateShort(Date.now().toString()),
+        },
+    }
+      setDetails(detailsModal)
+      setIsModalTransactionOpen(true);
+      setInvestmentRequest(investmentRequest);
+  }
+
+  const handleModalConfirm = async (passwordTransaction: string) => {
+
+    if(passwordTransaction != user.passwordTransaction){
+      openToast({
+        message: 'Senha de transação inválida',
+        type: 'error',
+        duration: 4000,
+        position: 'top-right'
+      });
+      return;
+    }
+
     if(selectedInvestment.onMyPocket) {
-      const handleSuccess = await handleInvestment(user.accountId, selectedInvestment.id, amount)
-      
-      if (handleSuccess) {
-        setIsModalOpen(false);
-        setInvestmentAmount('');
-        setSelectedInvestment(null);
-        setAmountError('');
-      }
+      const handleSuccess = await handleInvestment(user.accountId, selectedInvestment.id, investmentRequest.amount)
+
+          setIsModalOpen(false);
+          setInvestmentAmount('');
+          setSelectedInvestment(null);
+          setIsModalTransactionOpen(false)
+          setAmountError('');
       return
     }
     
@@ -96,9 +128,23 @@ const InvestmentDashboard: React.FC = () => {
       setIsModalOpen(false);
       setInvestmentAmount('');
       setSelectedInvestment(null);
+      setIsModalTransactionOpen(false)
       setAmountError('');
+      updateLocalUser('balance', user.balance - investmentRequest.amount)
     }
-  };
+
+    setIsModalOpen(false);
+    setInvestmentAmount('');
+    setSelectedInvestment(null);
+    setIsModalTransactionOpen(false)
+    setAmountError('');
+  }
+
+  const handleReset = () => {
+    setIsModalTransactionOpen(false)
+    setSelectedInvestment(null)
+    setInvestmentAmount(null)
+  }
 
   const getCategoryColor = (type: string): string => {
     switch (type) {
@@ -610,7 +656,6 @@ const InvestmentDashboard: React.FC = () => {
             </div>
           </div>
         )}
-        <LoadingOverlay isVisible={loadingBuying} />
       </div>
 
       {/* <style>{`
@@ -722,6 +767,15 @@ const InvestmentDashboard: React.FC = () => {
           animation: ripple 0.6s linear;
         }
       `}</style> */}
+
+      <ConfirmationModalTransaction
+        show={isModalTransactionOpen}
+        onClose={() => setIsModalTransactionOpen(false)}
+        details={details}
+        onConfirm={handleModalConfirm}
+        reset={handleReset}
+      />
+      <LoadingOverlay isVisible={loadingBuying} />
     </div>
   );
 };

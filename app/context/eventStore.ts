@@ -13,6 +13,9 @@ interface EventState {
   getEventTransactions: (accountId: string, limit: number ) => void;
   listEvents: (accountId: string, limit: number) => void;
   updateEvents: (event: EventMessage) => void;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  deleteAllById: (accountId: string) => void;
 }
 // Criação da store com persistência
 export const useEventStore = create<EventState>()(
@@ -46,5 +49,44 @@ export const useEventStore = create<EventState>()(
         const currentEvents = get().events || [];
         set({ events: [newEvent, ...currentEvents] });
       },
+      markAsRead: async (id: string) => {
+        try {
+          await eventApi.markAsRead(id);
+          const currentEvents = get().events || [];
+          const updatedEvents = currentEvents.map((event) => {
+          if (event.eventId === id) {
+            return {...event, read: true}
+          }
+          return event
+        })
+          set({ events: updatedEvents });
+          return true
+        } catch(err) {
+          set({ loading: false, error: err || 'Falha ao carregar ultimos eventos' });
+        }
+      },
+      markAllAsRead: async () => {
+        try {
+          const currentEvents = get().events || [];
+          const eventsToRead = currentEvents.filter(e => !e.read).map(d => d.eventId);
+          await eventApi.markAllAsRead(eventsToRead);
+
+          const updatedEvents = currentEvents.filter(e => !e.read).map((event) => {
+            return {...event, read: true}
+          })
+          
+          set({ events: updatedEvents });
+        }catch(err) {
+          set({ loading: false, error: err || 'Falha ao carregar ultimos eventos'})
+        }
+      },
+      deleteAllById: async (accountId: string) => {
+        try {
+          const response = eventApi.deleteAllById(accountId)
+          set({ events: [] });
+        }catch(err) {
+          set({ loading: false, error: err || 'Falha ao carregar ultimos eventos'})
+        }
+      }
     })
 );

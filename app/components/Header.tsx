@@ -83,28 +83,33 @@ const Header: React.FC<HeaderProps> = ({
             <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} className="text-xl" />
           </button>
           <div className="relative">
-            <button
-              className={`text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
-                isNotificationCenterOpen ? 'ring-2 ring-blue-500' : ''
-              }`}
-              onClick={toggleNotificationCenter}
-              aria-label={`Abrir centro de notificações (${notificationCount} novas)`}
-              title="Notificações"
-            >
-              <FontAwesomeIcon icon={faBell} className="text-xl" />
-              {notificationCount > 0 && (
-                <>
-                  <span
-                    className="absolute top-0 right-0 bg-red-600 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
-                    aria-hidden="true"
-                  >
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </span>
-                  <span className="sr-only">{notificationCount} novas notificações</span>
-                </>
-              )}
-            </button>
-          </div>
+  <button
+    className={`notification-button text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+      isNotificationCenterOpen ? 'ring-2 ring-blue-500' : ''
+    }`}
+    onClick={(e) => {
+      e.stopPropagation(); // Prevent click from bubbling to document
+      toggleNotificationCenter();
+    }}
+    aria-label={`${
+      isNotificationCenterOpen ? 'Fechar' : 'Abrir'
+    } centro de notificações (${notificationCount} novas)`}
+    title="Notificações"
+  >
+    <FontAwesomeIcon icon={faBell} className="text-xl" />
+    {notificationCount > 0 && (
+      <>
+        <span
+          className="absolute top-0 right-0 bg-red-600 text-white text-xs font-medium rounded-full w-5 h-5 flex items-center justify-center animate-pulse"
+          aria-hidden="true"
+        >
+          {notificationCount > 9 ? '9+' : notificationCount}
+        </span>
+        <span className="sr-only">{notificationCount} novas notificações</span>
+      </>
+    )}
+  </button>
+</div>
           <div className="relative">
             <button
               className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"

@@ -44,7 +44,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
           balance: 0
         };
 
-      case NotificationType.DEPOSIT:
+      case NotificationType.DEPOSIT_MADE:
         return {
           icon: faBarcode,
           iconColor: 'text-blue-600 dark:text-gray-100',

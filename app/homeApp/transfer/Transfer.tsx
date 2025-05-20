@@ -6,7 +6,6 @@ import { transferSchema,  type TransferFormData } from '../schema/transferScheme
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { useTransferStore } from '~/context/transferStore';
-import { ConfirmationModalTransfer } from '~/components/ConfirmationModalTransfer'
 import type { ConfirmationDetails } from 'types'
 import { useAccountStore } from '~/context/accountStore'
 import { IMaskInput } from 'react-imask'
@@ -15,6 +14,7 @@ import { useToast } from '~/components/ToastContext'
 import SuccessToast from '~/components/SuccessToast'
 import { useBankStore } from '~/context/bankStore'
 import LoadingOverlay from '~/components/LoadingOverlay'
+import { ConfirmationModalTransaction } from '~/components/ConfirmationModalTransaction'
 
 interface TransferCardData {
   type: 'pix' | 'ted' | 'doc';
@@ -112,13 +112,18 @@ const parseAmount = (value: string): string => {
 
   const onSubmit = async (data: TransferFormData) => {
     try {
-      const details: ConfirmationDetails = { 
+      const detailsModal: ConfirmationDetails = { 
         amount: data.amount,
         tax: "0",
         total: data.amount,
         destination: data.nameReceiver,
         scheduleDate: false,
         description: data.description,
+        transactionType: 'transfer',
+        details: {
+          source: 'Conta Corrente • Ag. 1234 • C/C 56789-0',
+          destination: 'João Silva • CPF 123.456.789-00',
+        }
       }
 
       const resquest: TransferFormData & { accountId: string, accountNumberPayer: string } = {...data,
@@ -128,7 +133,7 @@ const parseAmount = (value: string): string => {
         keyAccount: data.transferType == 'pix' ? CleanString(data.keyAccount) : '',
       }};
 
-      setDetails(details)
+      setDetails(detailsModal)
       setTransfer(resquest)
       setIsModalOpen(true);
     } catch (error) {
@@ -547,7 +552,7 @@ const parseAmount = (value: string): string => {
           </div>
         </form>
       </div>
-      <ConfirmationModalTransfer
+      <ConfirmationModalTransaction
         show={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         details={details}
