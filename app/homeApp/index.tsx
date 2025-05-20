@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '../components/Header';
 import NotificationCenter from '../components/NotificationCenter';
 import QuickActions from '../components/QuickActions';
@@ -14,7 +14,7 @@ import { TransferContent } from './transfer/Transfer'
 import { useAppStore } from '~/context/appStore'
 import { Sidebar } from '~/components/Sidebar'
 import type { EventMessage } from '~/models/eventMessage'
-import { useSignalR } from '~/services/useSignalR'
+// import { useSignalR } from '~/services/useSignalR'
 import Notification from '~/components/Notification'
 import { NotificationType } from '~/models/enum/notificationType'
 import { useCreditCardStore } from '~/context/creditCardStore'
@@ -24,6 +24,7 @@ import { PinRegistrationModal } from '~/components/PinRegistrationModal'
 import { AccountSummary } from '~/components/AccountSummary'
 import { useToast } from '~/components/ToastContext'
 import { useNavigate } from 'react-router'
+import { Connector }  from "~/services/signalR"
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -39,23 +40,70 @@ export function Index() {
   const navigate = useNavigate();
   const eventUrl = import.meta.env.VITE_API_URL_EVENT
 
-  useSignalR(eventUrl + 'notification', user?.accountId, (notification: EventMessage) => {
-    updateEvents(notification);
-    setToastMessage(notification.title);
+const connectorRef = useRef<Connector | null>(null);
 
-    if (notification?.action === NotificationType.CREDITCARD_RESPONSED) {
-      getCreditCardsById(user?.accountId);
+useEffect(() => {
+    if (!user?.accountId) {
+      // Se não há user, desconectar qualquer conexão existente
+      connectorRef.current?.stopConnection();
+      connectorRef.current = null;
+      return;
     }
 
-    if(notification?.action === NotificationType.DEPOSIT) {
-      updateUser();
+    // Criar nova instância do Connector apenas se não existir
+    if (!connectorRef.current) {
+      connectorRef.current = new Connector();
     }
-  });
+
+    const startConnection = async () => {
+      try {
+        await connectorRef.current?.startConnection();
+        await connectorRef.current?.joinGroup(user.accountId);
+
+        // Configurar o recebimento de notificações
+        connectorRef.current?.onReceiveNotification((message) => {
+          console.log("Notificação recebida:", message);
+          updateEvents(message as any);
+          if (message.title) {
+            setToastMessage(message.title);
+          }
+
+          if (message.action === "CREDITCARD_RESPONDED") {
+            getCreditCardsById(user.accountId);
+          }
+
+          if (message.action === "DEPOSIT_DIRECT_MADE") {
+            updateUser();
+          }
+        });
+
+        // Configurar manipulador de reconexão
+        connectorRef.current?.onReconnected((userId) => {
+          console.log(`Usuário ${userId} reingressou no grupo após reconexão.`);
+        });
+
+        // Configurar manipulador de falha na reconexão
+        connectorRef.current?.onReconnectionFailed(() => {
+          console.error("Falha na reconexão. Tente fazer login novamente.");
+          // Opcional: disparar uma ação para notificar o usuário ou tentar reiniciar a conexão
+        });
+      } catch (err) {
+        console.error("Erro ao configurar SignalR:", err);
+      }
+    };
+
+    startConnection();
+
+    // Cleanup: parar a conexão quando o componente desmontar ou user mudar
+    return () => {
+      connectorRef.current?.stopConnection();
+      connectorRef.current = null;
+    };
+  }, [user?.accountId]);
 
   useEffect(() => {
       const validateToken = async () => {
       const isValid = await checkToken();
-      console.log(useAccountStore.getState().clickedLogout)
       if (!isValid && !useAccountStore.getState().clickedLogout) {
         openToast({
           message: 'Sessão expirada, entre novamente.',

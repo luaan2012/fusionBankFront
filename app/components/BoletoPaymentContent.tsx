@@ -18,7 +18,6 @@ interface BoletoPaymentContentProps {
 }
 
 const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
-  setShowSuccessModal,
   setShowErrorToast,
 }) => {
   const [boletoCode, setBoletoCode] = useState<string>('');
@@ -75,7 +74,11 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
       duration: 5000,
     })
 
-    response && updateLocalUser('balance', user.balance - parseFloat(boletoInfo.amount));
+    if (response) {
+      updateLocalUser('balance', user.balance - billetInfo.amount);
+      setBoletoCode('');
+      setBoletoInfo(null); // Reseta as informações do boleto
+    }
   };
 
   return (

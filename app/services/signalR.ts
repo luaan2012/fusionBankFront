@@ -1,75 +1,113 @@
-// signalR.ts
-import { HubConnection, HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr';
+import * as signalR from "@microsoft/signalr";
 
-export class SignalRService {
-  private static instance: SignalRService | null = null;
-  private connection: HubConnection | null = null;
-  private url: string;
-  private accountId: string;
-  private messageHandler: (data: any) => void;
+const URL = import.meta.env.VITE_API_URL_EVENT + "notification";
 
-  private constructor(url: string, accountId: string, messageHandler: (data: any) => void) {
-    this.url = url;
-    this.accountId = accountId;
-    this.messageHandler = messageHandler;
-  }
+interface NotificationMessage {
+  action: string;
+  title?: string;
+  [key: string]: any; // Para propriedades adicionais do message
+}
 
-  public static getInstance(url: string, accountId: string, messageHandler: (data: any) => void): SignalRService {
-    if (!SignalRService.instance) {
-      SignalRService.instance = new SignalRService(url, accountId, messageHandler);
-    } else {
-      SignalRService.instance.messageHandler = messageHandler;
-      SignalRService.instance.accountId = accountId;
-    }
+export class Connector {
+  private connection: signalR.HubConnection;
+  private userId: string | null = null;
 
-    return SignalRService.instance;
-  }
-
-  public async startConnection() {
-    if (this.connection && this.connection.state === HubConnectionState.Connected) return;
-
-    this.connection = new HubConnectionBuilder()
-      .withUrl(this.url)
-      .configureLogging(LogLevel.Information)
-      .withAutomaticReconnect()
+  constructor() {
+    console.log("Nova instância do Connector criada."); // Log para depuração
+    this.connection = new signalR.HubConnectionBuilder()
+      .withUrl(URL)
+      .withAutomaticReconnect([0, 1000, 5000, 10000])
+      .configureLogging(signalR.LogLevel.Debug) // Habilitar logs detalhados
       .build();
+  }
 
-    this.connection.on('ReceiveNotification', this.messageHandler);
+  public async startConnection(): Promise<void> {
+    if (
+      this.connection.state === signalR.HubConnectionState.Disconnected ||
+      this.connection.state === signalR.HubConnectionState.Disconnecting
+    ) {
+      try {
+        await this.connection.start();
+        console.log("Conexão SignalR iniciada com sucesso.");
+      } catch (err) {
+        console.error("Erro ao iniciar conexão SignalR:", err);
+        throw err;
+      }
+    }
+  }
 
-    this.connection.onclose((error) => {
-      console.warn('SignalR connection closed:', error);
+  public async stopConnection(): Promise<void> {
+    if (this.connection.state === signalR.HubConnectionState.Connected) {
+      try {
+        await this.connection.stop();
+        console.log("Conexão SignalR parada.");
+        this.userId = null;
+      } catch (err) {
+        console.error("Erro ao parar conexão SignalR:", err);
+      }
+    }
+  }
+
+  public onReceiveNotification(callback: (message: NotificationMessage) => void): void {
+    this.connection.on("ReceiveNotification", (message) => {
+      console.log("Mensagem recebida do SignalR:", message);
+      callback(message);
     });
+  }
 
-    this.connection.onreconnected(async () => {
-      console.log('SignalR reconnected');
-      await this.joinGroup();
-    });
+  public async joinGroup(userId: string): Promise<void> {
+    if (this.connection.state !== signalR.HubConnectionState.Connected) {
+      try {
+        await this.startConnection();
+      } catch (err) {
+        console.error("Erro ao tentar iniciar a conexão antes de ingressar no grupo:", err);
+        throw err;
+      }
+    }
 
     try {
-      await this.connection.start();
-      console.log('SignalR connected');
-      await this.joinGroup();
+      await this.connection.invoke("JoinUserGroup", userId);
+      console.log(`Usuário ${userId} entrou no grupo.`);
+      this.userId = userId;
     } catch (error) {
-      console.error('Error starting SignalR connection:', error);
+      console.error("Erro ao tentar entrar no grupo:", error);
+      throw error;
     }
   }
 
-  private async joinGroup() {
-    if (!this.connection || this.connection.state !== HubConnectionState.Connected) return;
+  public async sendMessage(username: string, message: string): Promise<void> {
     try {
-      await this.connection.invoke('JoinUserGroup', this.accountId);
-      console.log(`Joined group for accountId: ${this.accountId}`);
+      await this.connection.send("newMessage", username, message);
+      console.log("Mensagem enviada.");
     } catch (err) {
-      console.error('Failed to join group:', err);
+      console.error("Erro ao enviar mensagem:", err);
+      throw err;
     }
   }
 
-  public async stopConnection() {
-    if (this.connection) {
-      await this.connection.stop();
-      this.connection = null;
-      SignalRService.instance = null;
-      console.log('SignalR disconnected');
-    }
+  public onReconnected(callback: (userId: string | null) => void): void {
+    this.connection.onreconnected(async () => {
+      console.log("Reconexão SignalR bem-sucedida.");
+      if (this.userId) {
+        try {
+          await this.joinGroup(this.userId);
+          callback(this.userId);
+        } catch (err) {
+          console.error("Erro ao reingressar no grupo após reconexão:", err);
+        }
+      }
+    });
+  }
+
+  public onReconnectionFailed(callback: () => void): void {
+    this.connection.onreconnecting(() => {
+      console.warn("Tentativa de reconexão SignalR em andamento...");
+      return false;
+    });
+
+    this.connection.onclose((err) => {
+      console.error("Conexão SignalR fechada. Falha na reconexão:", err);
+      callback();
+    });
   }
 }
