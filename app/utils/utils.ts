@@ -236,3 +236,17 @@ export const formatDateShort = (date: string | Date) => {
     timeStyle: 'short',
   })
 }
+
+export const getYesterdayDateString = () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0); // Zera hora, minuto, segundo, milissegundo
+  return yesterday.toISOString().split('T')[0]; // Pega só a parte da data 'YYYY-MM-DD'
+};
+
+export const getTodayDateString = () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate());
+  yesterday.setHours(0, 0, 0, 0); // Zera hora, minuto, segundo, milissegundo
+  return yesterday.toISOString().split('T')[0]; // Pega só a parte da data 'YYYY-MM-DD'
+};

@@ -5,10 +5,10 @@ import InvestmentTabs from '~/components/InvestmentTabs';
 import InvestModal from '~/components/InvestModal';
 import SummaryCard from '~/components/SummaryCard';
 import VerificationModal from '~/components/VerificationModal';
-import { useInvestmentStore } from '~/context/investmentStore'
-import { formatToBRL } from '~/utils/utils'
-import { useAccountStore } from '~/context/accountStore'
-import { number } from 'zod'
+import { useInvestmentStore } from '~/context/investmentStore';
+import { useAccountStore } from '~/context/accountStore';
+import { formatToBRL, getYesterdayDateString } from '~/utils/utils';
+import type { Investment } from '~/models/investment'
 
 interface Notification {
   show: boolean;
@@ -22,35 +22,95 @@ const App: React.FC = () => {
   const [notification, setNotification] = useState<Notification>({ show: false, message: '' });
 
   const { investment, listInvestmentsUser, isAlreadyInvestments } = useInvestmentStore();
-  const { user } = useAccountStore()
+  const { user } = useAccountStore();
 
   const showSuccess = (message: string): void => {
     setNotification({ show: true, message });
     setTimeout(() => setNotification({ show: false, message: '' }), 5000);
   };
 
-  const getTotalInvested = () => {
-    return investment.reduce((acc, inv) => acc + inv.balance, 0);
+  // Calculate total invested amount
+  const getTotalInvested = (): number => {
+    if (!investment || investment.length === 0) return 0;
+    return investment.reduce((acc, inv) => acc + (inv.balance || 0), 0);
   };
 
-  const getTodayPerformance = () => {
-    // Isso é um mock. Substitua pela lógica real se tiver.
-    return 342.15;
+  // Calculate portfolio performance over 12 months
+  const getPortfolioPerformance = (): number => {
+    if (!investment || investment.length === 0) return 0;
+    const invested = investment.reduce((acc, inv) => acc + (inv.balance || 0), 0);
+    const current = investment.reduce((acc, inv) => acc + (inv.totalBalance || 0), 0);
+    if (invested === 0) return 0;
+    return ((current - invested) / invested) * 100;
   };
 
-  const getTopAsset = () => {
-    return investment.length > 0
-      ? investment.reduce((prev, current) =>
-          current.totalBalance > prev.totalBalance ? current : prev
-        ).symbol
-      : 'N/A';
+  // Calculate today's performance (value change)
+  const getTodayPerformance = (): number => {
+    if (!investment || investment.length === 0) return 0;
+    let totalYesterdayValue = 0;
+    let totalTodayValue = 0;
+
+    const yesterdayDate = getYesterdayDateString()
+
+    investment.forEach((inv) => {
+      const quantity = inv.entries.find(entry => {
+        const entryDate = new Date(entry.date);
+        const entryDateString = entryDate.toISOString().split('T')[0];
+        return entryDateString === yesterdayDate;
+      })?.quantity || 0;
+      const unitPrice = inv.entries.find(entry => {
+        const entryDate = new Date(entry.date);
+        const entryDateString = entryDate.toISOString().split('T')[0];
+        return entryDateString === yesterdayDate;
+      })?.unitPrice || 0;
+      const todayPrice = inv.regularMarketPrice || 0;
+      
+      totalYesterdayValue += quantity * unitPrice;
+      totalTodayValue += quantity * todayPrice;
+    });
+    return totalTodayValue - totalYesterdayValue;
+  };
+
+  // Calculate today's performance percentage
+  const getTodayPerformancePercentage = (): number => {
+    if (!investment || investment.length === 0) return 0;
+    let totalYesterdayValue = 0;
+    let totalTodayValue = 0;
+    const yesterdayDate = getYesterdayDateString();
+
+    investment.forEach((inv) => {
+      const quantity = inv.entries.find(entry => {
+        const entryDate = new Date(entry.date);
+        const entryDateString = entryDate.toISOString().split('T')[0];
+        return entryDateString === yesterdayDate;
+      })?.quantity || 0;
+      const unitPrice = inv.entries.find(entry => {
+        const entryDate = new Date(entry.date);
+        const entryDateString = entryDate.toISOString().split('T')[0];
+        return entryDateString === yesterdayDate;
+      })?.unitPrice || 0;
+      const todayPrice = inv.regularMarketPrice || 0;
+      totalYesterdayValue += quantity * unitPrice;
+      totalTodayValue += quantity * todayPrice;
+    });
+
+    if (totalYesterdayValue === 0) return 0;
+    return ((totalTodayValue - totalYesterdayValue) / totalYesterdayValue) * 100;
+  };
+
+  // Get the top-performing asset
+  const getTopAsset = (): Investment | null => {
+    if (!investment || investment.length === 0) return null;
+    return investment.reduce((prev, current) =>
+      (current.totalBalance || 0) > (prev.totalBalance || 0) ? current : prev
+    );
   };
 
   useEffect(() => {
-    if(user && !isAlreadyInvestments) {
+    if (user?.accountId && !isAlreadyInvestments) {
       listInvestmentsUser(user.accountId, Number.MAX_VALUE);
     }
-  }, [listInvestmentsUser, user.accountId]);
+  }, [user?.accountId]);
 
   return (
     <div className="bg-transparent min-h-screen transition-colors duration-300">
@@ -60,19 +120,33 @@ const App: React.FC = () => {
             title="Total Investido"
             icon={faWallet}
             value={formatToBRL(getTotalInvested())}
-            performance={{ value: '—', trend: 'up', period: 'últimos 12 meses' }}
+            performance={{
+              value: `${getPortfolioPerformance().toFixed(2)}%`,
+              trend: getPortfolioPerformance() >= 0 ? 'up' : 'down',
+              period: 'últimos 12 meses',
+            }}
           />
+
           <SummaryCard
             title="Hoje"
             icon={faChartLine}
             value={formatToBRL(getTodayPerformance())}
-            performance={{ value: '0.8%', trend: 'up', period: 'vs. ontem' }}
+            performance={{
+              value: `${getTodayPerformancePercentage().toFixed(2)}%`,
+              trend: getTodayPerformance() >= 0 ? 'up' : 'down',
+              period: 'vs. ontem',
+            }}
           />
+
           <SummaryCard
             title="Melhor Ativo"
             icon={faTrophy}
-            value={getTopAsset()}
-            performance={{ value: '12.7%', trend: 'up', period: 'este mês' }}
+            value={getTopAsset()?.symbol ?? 'N/A'}
+            performance={{
+              value: `${getTopAsset()?.percentageChange?.toFixed(2) ?? '0'}%`,
+              trend: getTopAsset()?.percentageChange >= 0 ? 'up' : 'down',
+              period: 'este mês',
+            }}
           />
         </div>
 

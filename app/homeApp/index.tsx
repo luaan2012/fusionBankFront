@@ -22,7 +22,9 @@ import { AccountSummary } from '~/components/AccountSummary';
 import { useToast } from '~/components/ToastContext';
 import { useNavigate } from 'react-router';
 import { Connector } from '~/services/signalR';
-import { useInvestmentStore } from '~/context/investmentStore'
+import { useInvestmentStore } from '~/context/investmentStore';
+import { faBars } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -38,6 +40,10 @@ export function Index() {
   const navigate = useNavigate();
 
   const connectorRef = useRef<Connector | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view])
 
   useEffect(() => {
     if (!user?.accountId) {
@@ -139,18 +145,18 @@ export function Index() {
   }, [user]);
 
   useEffect(() => {
-    if (lastTransactions.length === 0 && user && !isAlreadyEvent) {
+    if (lastTransactions.length === 0 && user?.accountId && !isAlreadyEvent) {
       getEventTransactions(user.accountId, 3);
     }
 
-    if (investment.length === 0 && user && !isAlreadyInvestments) {
+    if (investment.length === 0 && user?.accountId && !isAlreadyInvestments) {
       listInvestmentsUser(user.accountId, 0);
     }
 
-    if (!creditCard && user) {
+    if (!creditCard && user?.accountId) {
       getCreditCardsById(user.accountId);
     }
-  }, [lastTransactions, investment, user, creditCard]);
+  }, [user?.accountId]);
 
   const toggleDarkMode = () => {
     setDarkMode(!user?.darkMode);
@@ -171,7 +177,7 @@ export function Index() {
 
   const handleDeleteAllById = () => {
     deleteAllById(user?.accountId);
-  }
+  };
 
   return (
     <div className="bg-gray-50 dark:bg-dark-primary smooth-transition">
@@ -188,13 +194,36 @@ export function Index() {
         toggleMobileMenu={toggleMobileMenu}
         toggleDarkMode={toggleDarkMode}
         toggleNotificationCenter={toggleNotificationCenter}
-        notificationCount={events?.filter((event) => !event.read)?.length} // Show only unread notifications
+        notificationCount={events?.filter((event) => !event.read)?.length}
         isDarkMode={user?.darkMode || false}
         isNotificationCenterOpen={isNotificationCenterOpen}
       />
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 bg-white dark:bg-slate-950 z-30 flex flex-col">
+          <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+            <span className="text-xl font-semibold text-gray-900 dark:text-gray-100">DeepBank</span>
+            <button
+              onClick={toggleMobileMenu}
+              className="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Fechar menu móvel"
+            >
+              <FontAwesomeIcon icon={faBars} className="text-xl" />
+            </button>
+          </div>
+          <Sidebar
+            user={user}
+            view={view}
+            onNavigate={() => setIsMobileMenuOpen(false)} // Close menu after navigation
+          />
+        </div>
+      )}
       <main className="flex-grow container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
-          <Sidebar user={user} view={view} />
+          {/* Sidebar for desktop */}
+          <div className="hidden md:block w-64 flex-shrink-0">
+            <Sidebar user={user} view={view} />
+          </div>
           <div className="flex-grow">
             {view === 'dashboard' ? (
               <>

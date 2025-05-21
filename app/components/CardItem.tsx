@@ -134,10 +134,10 @@ export function CardItem({ card, onBlockCard, onDeleteCard }: CardItemProps) {
             <button
               onClick={() => setViewCvv(!viewCvv)}
               className="w-full sm:w-24 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-500 dark:from-purple-500 dark:to-indigo-400 text-white rounded-md text-xs font-medium flex items-center justify-center space-x-2 hover:from-purple-700 hover:to-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
-              aria-label={viewCvv ? 'Mostrar CVV' : 'Ocultar CVV'}
+              aria-label={!viewCvv ? 'Mostrar CVV' : 'Ocultar CVV'}
             >
-              <FontAwesomeIcon icon={viewCvv ? faEye : faEyeSlash} className="w-4 h-4" />
-              <span className="sm:inline">{viewCvv ? 'Ver CVV' : 'Ocultar'}</span>
+              <FontAwesomeIcon icon={!viewCvv ? faEye : faEyeSlash} className="w-4 h-4" />
+              <span className="sm:inline">{!viewCvv ? 'Ver CVV' : 'Ocultar'}</span>
             </button>
 
             {/* Delete or Block */}

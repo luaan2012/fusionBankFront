@@ -25,6 +25,7 @@ import type { Asset, ConfirmationDetails } from 'types';
 import { useAccountStore } from '~/context/accountStore';
 import type { InvestmentRequest } from '~/models/request/investmentRequest';
 import RedeemInvestmentModal from './RescueInvestmentModal'
+import { useToast } from './ToastContext'
 
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -47,18 +48,19 @@ const colorMap: Record<string, string> = {
 
 const PortfolioContent: React.FC = () => {
   const { user, updateLocalUser } = useAccountStore();
-  const { investment, loadingBuying, availableInvestment, availableInvestments, rescueInvestment } = useInvestmentStore();
+  const { investment, loadingBuying, listInvestmentsUser, rescueInvestment } = useInvestmentStore();
   const [investmentRequest, setInvestmentRequest] = useState<InvestmentRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isModalTransactionOpen, setIsModalTransactionOpen] = useState<boolean>(false);
   const [details, setDetails] = useState<ConfirmationDetails | null>(null);
   const [selectedInvestment, setSelectedInvestment] = useState<Asset | null>(null);
+  const { openToast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      availableInvestments(user.accountId); // Carrega availableInvestment para obter regularMarketPrice
+    if (user?.accountId && investment.length === 0) {
+      listInvestmentsUser(user.accountId, 0);
     }
-  }, [user, availableInvestments]);
+  }, [user?.accountId]);
 
   const handleInvest = (amount: number) => {
     if (!selectedInvestment) return;
@@ -102,7 +104,7 @@ const PortfolioContent: React.FC = () => {
     const success = await rescueInvestment(investmentRequest.accountId, investmentRequest.investmentId, investmentRequest.amount)
     
     if (success) {
-      updateLocalUser('balance', user.balance - investmentRequest.amount);
+      updateLocalUser('balance', user.balance + investmentRequest.amount);
     }
 
     setIsModalOpen(false);
@@ -123,15 +125,11 @@ const PortfolioContent: React.FC = () => {
     if (total === 0) return [];
 
     return investment.map((inv) => {
-      const matchingInvestment = availableInvestment.find(
-        (avail: any) => avail.symbol === inv.symbol && avail.type === inv.investmentType
-      );
-      const regularMarketPrice = matchingInvestment?.regularMarketPrice || inv.balance / (inv.quantity || 1) || 0;
 
       return {
         investmentId: inv.id,
         name: inv.symbol,
-        shortName: matchingInvestment?.shortName || inv.symbol, // Usa shortName de availableInvestment ou fallback para symbol
+        shortName: inv?.shortName || inv.symbol, // Usa shortName de availableInvestment ou fallback para symbol
         symbol: inv.symbol,
         details: normalizeInvestmentType(inv.investmentType),
         value: formatToBRL(inv.balance),
@@ -146,11 +144,11 @@ const PortfolioContent: React.FC = () => {
         color: colorMap[inv.investmentType] || 'gray',
         logourl: inv.logourl,
         type: inv.investmentType,
-        regularMarketPrice,
+        regularMarketPrice: inv.regularMarketPrice,
         totalBalance: inv.totalBalance
       };
     });
-  }, [investment, total, availableInvestment]);
+  }, [investment, total, investment]);
 
   const portfolioDistribution = useMemo(() => {
     if (total === 0 || !investment.length) {
@@ -442,7 +440,3 @@ const PortfolioContent: React.FC = () => {
 };
 
 export default PortfolioContent;
-
-function openToast(arg0: { message: string; type: string; duration: number; position: string }) {
-  throw new Error('Function not implemented.')
-}

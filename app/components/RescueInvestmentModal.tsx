@@ -26,21 +26,22 @@ const RedeemInvestmentModal: React.FC<RedeemInvestmentModalProps> = ({
 
   // Função para preencher os campos automaticamente quando "Resgatar Tudo" é selecionado
   const fillRedeemAll = useCallback(() => {
-    if(!redeemAll) {
+    if (!redeemAll) {
       setShares('');
       setInvestmentAmount('');
+      return;
     }
 
-    if (!selectedInvestment || !redeemAll) return;
+    if (!selectedInvestment) return;
 
     const isStockOrFII = selectedInvestment.type === 'STOCK' || selectedInvestment.type === 'FII';
-    if (isStockOrFII && selectedInvestment.ownedShares) {
-      setShares(selectedInvestment.ownedShares.toString());
-      setInvestmentAmount(
-        (selectedInvestment.ownedShares * selectedInvestment.regularMarketPrice).toFixed(2)
-      );
-    } else if (selectedInvestment.totalBalance) {
+    
+    // Sempre usar totalBalance como base para o resgate total
+    if (selectedInvestment.totalBalance) {
       setInvestmentAmount(selectedInvestment.totalBalance.toFixed(2));
+      if (isStockOrFII && selectedInvestment.ownedShares) {
+        setShares(selectedInvestment.ownedShares.toString());
+      }
     }
   }, [selectedInvestment, redeemAll]);
 
@@ -61,30 +62,37 @@ const RedeemInvestmentModal: React.FC<RedeemInvestmentModalProps> = ({
 
   const correctAmount = (inputAmount: number) => {
     const isStockOrFII = selectedInvestment?.type === 'STOCK' || selectedInvestment?.type === 'FII';
+    
     if (!isStockOrFII || !selectedInvestment?.regularMarketPrice) {
       setInvestmentAmount(inputAmount.toFixed(2));
       return;
     }
 
     const pricePerShare = selectedInvestment.regularMarketPrice;
-    let calculatedShares = Math.floor(inputAmount / pricePerShare);
-    let adjustedAmount = calculatedShares * pricePerShare;
+    const maxBalance = selectedInvestment.totalBalance || 0;
+    
+    // Ajustar o valor para não exceder o totalBalance
+    if (inputAmount > maxBalance) {
+      setInvestmentAmount(maxBalance.toFixed(2));
+      setAmountWarning(`O valor máximo disponível é ${formatToBRL(maxBalance)}.`);
+      if (selectedInvestment.ownedShares) {
+        setShares(selectedInvestment.ownedShares.toString());
+      }
+      return;
+    }
 
-    const maxShares = selectedInvestment?.ownedShares || 0;
-    if (calculatedShares > maxShares) {
-      calculatedShares = maxShares;
-      adjustedAmount = maxShares * pricePerShare;
+    // Calcular cotas apenas para exibição, mas permitir resgate até totalBalance
+    const calculatedShares = Math.floor(inputAmount / pricePerShare);
+    const adjustedAmount = calculatedShares * pricePerShare;
+
+    if (calculatedShares > 0 && inputAmount > 0) {
       setAmountWarning(
-        `Você possui apenas ${maxShares} cotas. Valor ajustado para ${formatToBRL(adjustedAmount)}.`,
-      );
-    } else if (calculatedShares > 0 && inputAmount > 0) {
-      setAmountWarning(
-        `Valor ajustado para ${formatToBRL(adjustedAmount)}, equivalente a ${calculatedShares} cotas.`,
+        `Valor ajustado para ${formatToBRL(adjustedAmount)}, equivalente a ${calculatedShares} cotas. O valor total disponível é ${formatToBRL(maxBalance)}.`
       );
     }
 
     setShares(calculatedShares > 0 ? calculatedShares.toString() : '');
-    setInvestmentAmount(adjustedAmount > 0 ? adjustedAmount.toFixed(2) : '');
+    setInvestmentAmount(inputAmount.toFixed(2));
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,24 +165,20 @@ const RedeemInvestmentModal: React.FC<RedeemInvestmentModalProps> = ({
     const amount = parseFloat(investmentAmount.replace(',', '.'));
     const isStockOrFII = selectedInvestment?.type === 'STOCK' || selectedInvestment?.type === 'FII';
 
-    if (isStockOrFII) {
+    // Validar com base no totalBalance, mesmo para STOCK ou FII
+    if (!selectedInvestment?.totalBalance || amount > selectedInvestment.totalBalance) {
+      setAmountError('Você não possui saldo suficiente deste investimento para resgatar.');
+      return false;
+    }
+
+    if (isStockOrFII && inputMode === 'shares') {
       if (!shares || parseInt(shares) <= 0) {
         setAmountError('Por favor, insira uma quantidade válida de cotas.');
-        return false;
-      }
-      const expectedAmount = parseInt(shares) * selectedInvestment.regularMarketPrice;
-      if (Math.abs(amount - expectedAmount) > 0.01) {
-        setAmountError('O valor deve corresponder a um número inteiro de cotas.');
         return false;
       }
       const sharesToSell = parseInt(shares);
       if (!selectedInvestment?.ownedShares || sharesToSell > selectedInvestment.ownedShares) {
         setAmountError('Você não possui cotas suficientes para vender.');
-        return false;
-      }
-    } else {
-      if (!selectedInvestment?.totalBalance || amount > selectedInvestment.totalBalance) {
-        setAmountError('Você não possui saldo suficiente deste investimento para resgatar.');
         return false;
       }
     }
@@ -381,6 +385,10 @@ const RedeemInvestmentModal: React.FC<RedeemInvestmentModalProps> = ({
                     <span>Cotas Estimadas:</span>
                     <span className="font-semibold">{shares || '0'}</span>
                   </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 flex justify-between">
+                    <span>Saldo Total Disponível:</span>
+                    <span className="font-semibold">{formatToBRL(selectedInvestment.totalBalance || 0)}</span>
+                  </p>
                 </>
               )}
             </>
@@ -404,6 +412,10 @@ const RedeemInvestmentModal: React.FC<RedeemInvestmentModalProps> = ({
                   redeemAll ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               />
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 flex justify-between">
+                <span>Saldo Total Disponível:</span>
+                <span className="font-semibold">{formatToBRL(selectedInvestment.totalBalance || 0)}</span>
+              </p>
             </>
           )}
           {amountError && (
@@ -434,7 +446,7 @@ const RedeemInvestmentModal: React.FC<RedeemInvestmentModalProps> = ({
             disabled={
               !investmentAmount ||
               parseFloat(investmentAmount.replace(',', '.')) <= 0 ||
-              (isStockOrFII && (!shares || parseInt(shares) <= 0))
+              (isStockOrFII && inputMode === 'shares' && (!shares || parseInt(shares) <= 0))
             }
             className="relative py-2 px-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 disabled:bg-gray-400/80 disabled:cursor-not-allowed text-sm font-semibold shadow-md hover:shadow-xl animate-pulse-button overflow-hidden"
           >

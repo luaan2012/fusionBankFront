@@ -10,11 +10,12 @@ import {
   faBalanceScale,
   faArrowDown,
   faArrowUp,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import { useInvestmentStore } from '~/context/investmentStore';
 import { useAccountStore } from '~/context/accountStore';
 import type { InvestmentRequest } from '~/models/request/investmentRequest';
-import { formatDateBR, formatDateShort, formatPercent, formatToBRL, formatToBRLInput } from '~/utils/utils';
+import { formatDateBR, formatDateShort, formatPercent, formatToBRL, formatToBRLInput, normalizeInvestmentType } from '~/utils/utils';
 import type { InvestmentType } from '~/models/enum/investmentType';
 import LoadingOverlay from './LoadingOverlay';
 import type { AvailableInvestment, ConfirmationDetails } from 'types';
@@ -44,12 +45,12 @@ const InvestmentDashboard: React.FC = () => {
   const { openToast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (user?.accountId && availableInvestment.length === 0) {
       availableInvestments(user?.accountId);
     }
-  }, [availableInvestments, user]);
+  }, [user?.accountId]);
 
-  const categories = ['Todos', 'Stock', 'FII', 'CDB', 'LCI', 'LCA', 'Fundo'];
+  const categories = ['Todos', 'STOCK', 'FII', 'CDB', 'LCI', 'LCA'];
 
   const suggestedInvestments = availableInvestment
     .filter((inv: AvailableInvestment) => inv.regularMarketPrice > 0)
@@ -206,17 +207,28 @@ const InvestmentDashboard: React.FC = () => {
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"
                 />
               </div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full bg-transparent border border-gray-200/50 dark:border-gray-700/50 rounded-full py-2 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm shadow-inner appearance-none"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat === 'Todos' ? 'Todas Categorias' : cat}
-                  </option>
-                ))}
-              </select>
+              <div className="relative w-full">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-blue-700/50 rounded-full py-2.5 px-5 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-sm font-medium shadow-inner appearance-none bg-gradient-to-r from-blue-100/30 to-cyan-100/30 dark:from-blue-900/70 dark:to-cyan-900/70 backdrop-blur-sm"
+                  style={{ colorScheme: 'dark' }}
+                >
+                  {categories.map((cat) => (
+                    <option
+                      key={cat}
+                      value={cat}
+                      className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    >
+                      {cat === 'Todos' ? 'Todas Categorias' : normalizeInvestmentType(cat)}
+                    </option>
+                  ))}
+                </select>
+                <FontAwesomeIcon
+                  icon={faChevronDown}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-500 dark:text-cyan-400 pointer-events-none"
+                />
+              </div>
             </div>
           </div>
         </div>

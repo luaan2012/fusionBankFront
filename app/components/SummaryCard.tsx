@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
-import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 interface Performance {
   value: string;
@@ -29,13 +29,22 @@ const SummaryCard: React.FC<SummaryCardProps> = ({ title, icon, value, performan
       />
     </div>
     <p
-      className={`text-${title === 'Melhor Ativo' ? 'xl' : '2xl'} font-bold text-gray-900 dark:text-gray-100`}
+      className={`text-${title === 'Melhor Ativo' ? 'xl' : '2xl'} font-bold ${
+        performance.trend === 'up' ? 'text-gray-900 dark:text-gray-100' : 'text-red-500 dark:text-red-400'
+      }`}
     >
       {value}
     </p>
     <div className="mt-2 flex items-center">
-      <span className="text-green-500 dark:text-green-400 text-sm font-medium">
-        <FontAwesomeIcon icon={performance.trend === 'up' ? faArrowUp : faArrowDown} className="mr-1" />
+      <span
+        className={`text-sm font-medium ${
+          performance.trend === 'up' ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
+        }`}
+      >
+        <FontAwesomeIcon
+          icon={performance.trend === 'up' ? faArrowUp : faArrowDown}
+          className="mr-1"
+        />
         {performance.value}
       </span>
       <span className="text-gray-500 dark:text-gray-400 text-sm ml-2">{performance.period}</span>

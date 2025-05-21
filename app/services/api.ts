@@ -7,27 +7,15 @@ import type { ApiResponse, AxyosResponse } from '~/models/response/apiResponse'
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://api.example.com',
-  timeout: 10000, // Timeout de 10 segundos
+  timeout: 60000, // Timeout de 10 segundos
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 api.interceptors.request.use((config) => {
-  const { token, setSessionExpired } = useAccountStore.getState();
+  const { token } = useAccountStore.getState();
   if (token) {
-    const isExpired = (() => {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const expiry = payload.exp * 1000;
-        return Date.now() >= expiry;
-      } catch {
-        return true;
-      }
-    })();
-    if (isExpired && location.pathname !== '/') {
-      setSessionExpired("Sessao expirada")
-    }
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

@@ -50,6 +50,7 @@ const ProfileContent: React.FC = () => {
       financialGoals: questionnaire.financialGoals,
       investmentHorizon: questionnaire.investmentHorizon,
     });
+    console.log(profile)
     setIsQuestionnaireOpen(false);
   };
 

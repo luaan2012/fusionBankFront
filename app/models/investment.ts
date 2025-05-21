@@ -5,13 +5,14 @@ export interface Investment {
   accountId: string;
   symbol: string;
   shortName: string;
+  name: string;
   logourl: string;
   balance: number,
   paidOff: number,
   totalBalance: number,
   quantity: number,
   unitPrice: number,
-  currentMarketValue: number,
+  regularMarketPrice: number,
   percentageChange: number,
   entries: InvestmentEntry[];
   investmentType: InvestmentType,
@@ -23,4 +24,5 @@ export interface InvestmentEntry{
   date: Date,
   decimal: number,
   unitPrice: number,
+  quantity: number
 }
