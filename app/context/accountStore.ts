@@ -118,6 +118,7 @@ export const useAccountStore = create<AccountState>()(
         set({ loading: true, error: null, sessionExpiredMessage: null });
         try {
           const response = await accountApi.login(credentials);
+
           const token = response.data.token;
           const tokenExpiry = getTokenExpiry(token);
           set({

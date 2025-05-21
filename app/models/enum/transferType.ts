@@ -7,3 +7,5 @@ export enum TransferType {
 }
 
 export type TransactionType = 'transfer' | 'investment' | 'billPayment' | 'deposit';
+
+export type InvestmentAction = 'buy' | 'sell'

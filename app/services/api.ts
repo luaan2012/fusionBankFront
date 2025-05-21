@@ -14,7 +14,7 @@ const api: AxiosInstance = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const { token } = useAccountStore.getState();
+  const { token, setSessionExpired } = useAccountStore.getState();
   if (token) {
     const isExpired = (() => {
       try {
@@ -25,8 +25,8 @@ api.interceptors.request.use((config) => {
         return true;
       }
     })();
-    if (isExpired) {
-      throw new Error('Token expirado');
+    if (isExpired && location.pathname !== '/') {
+      setSessionExpired("Sessao expirada")
     }
     config.headers.Authorization = `Bearer ${token}`;
   }

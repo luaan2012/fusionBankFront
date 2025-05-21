@@ -49,7 +49,7 @@ interface PasswordStrength {
 export function RegistrationForm() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const { banks, listBanks } = useBankStore();
-  const { register, error } = useAccountStore();
+  const { register } = useAccountStore();
   const navigate = useNavigate();
   const { openToast } = useToast()
   const [formData, setFormData] = useState<RegisterRequest>({
@@ -76,9 +76,7 @@ export function RegistrationForm() {
   const [passwordMatchError, setPasswordMatchError] = useState<boolean>(false);
   const [formErrors, setFormErrors] = useState<{ [key: string]: FormError }>({});
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
-  const [smsVerification, setSmsVerification] = useState<boolean>(false);
   const [clickNextStep, setClickNextStep] = useState<boolean>(false);
-  const [emailVerification, setEmailVerification] = useState<boolean>(false);
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -433,7 +431,7 @@ export function RegistrationForm() {
       const newFormData = { ...formData, salaryPerMonth: parseFloat(formData.salaryPerMonth.replace(',', '.')).toString(), 
         document: CleanString(formData.document), phoneNumber: CleanString(formData.document) };
       const success = await register(newFormData);
-
+      const error = useAccountStore.getState().error
       if (!success) {
         openToast({
           message: error.message || 'Aconteceu um erro ao registrar sua conta!',
@@ -453,57 +451,6 @@ export function RegistrationForm() {
       setCurrentStep(currentStep - 1);
       setClickNextStep(false);
     }
-  };
-
-  const handleSendSmsCode = () => {
-    if (!formData.phoneNumber || formData.phoneNumber.length < 15) {
-      setFormErrors((prev) => ({
-        ...prev,
-        phoneNumber: { error: true, message: 'Por favor, insira um número de celular válido' },
-      }));
-      setTouched((prev) => ({ ...prev, phoneNumber: true }));
-      return;
-    }
-    setSmsVerification(true);
-    alert(`Código de verificação enviado para ${formData.phoneNumber}`);
-  };
-
-  const handleVerifySmsCode = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
-    if (input.value.length < 6) {
-      alert('Por favor, insira o código de 6 dígitos recebido por SMS.');
-      return;
-    }
-    setSmsVerification(false);
-    alert('Número de celular verificado com sucesso!');
-  };
-
-  const handleSendEmailCode = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      setFormErrors((prev) => ({
-        ...prev,
-        email: { error: true, message: 'Por favor, insira um endereço de e-mail válido' },
-      }));
-      setTouched((prev) => ({ ...prev, email: true }));
-      return;
-    }
-    setEmailVerification(true);
-    alert(`Código de verificação enviado para ${formData.email}`);
-  };
-
-  const handleVerifyEmailCode = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const input = (e.target as HTMLButtonElement).previousSibling as HTMLInputElement;
-    if (input.value.length < 6) {
-      alert('Por favor, insira o código de 6 dígitos recebido por e-mail.');
-      return;
-    }
-    setEmailVerification(false);
-    alert('E-mail verificado com sucesso!');
-  };
-
-  const handleUploadSelfie = () => {
-    alert('Em um ambiente real, isso abriria a câmera para tirar uma selfie com documento.');
   };
 
   const handleToAccount = () => {

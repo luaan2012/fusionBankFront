@@ -9,7 +9,7 @@ interface ConfirmationModalProps {
   onClose: () => void;
   onConfirm: (passwordTransaction: string) => void;
   reset?: () => void; // Optional, for resetting form state
-  details: ConfirmationDetails | null;
+  detailsModal: ConfirmationDetails | null;
   title?: string; // Optional custom title
   confirmButtonText?: string; // Optional custom confirm button text
 }
@@ -19,7 +19,7 @@ export function ConfirmationModalTransaction({
   onClose,
   onConfirm,
   reset,
-  details,
+  detailsModal,
   title = 'Confirme sua transação',
   confirmButtonText = 'Confirmar',
 }: ConfirmationModalProps) {
@@ -60,7 +60,7 @@ export function ConfirmationModalTransaction({
 
   const isCodeComplete = code.every((digit) => digit !== '');
 
-  if (!show || !details) return null;
+  if (!show || !detailsModal) return null;
 
   // Map transaction types to human-readable labels
   const transactionTypeLabels: Record<TransactionType, string> = {
@@ -122,28 +122,28 @@ export function ConfirmationModalTransaction({
               className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center"
             >
               <FontAwesomeIcon icon={faLock} className="text-blue-600 dark:text-blue-400 mr-2" />
-              Resumo da {transactionTypeLabels[details.transactionType]}
+              Resumo da {transactionTypeLabels[detailsModal.transactionType]}
             </h4>
             <div className="grid grid-cols-1 gap-4">
               <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Valor</span>
-                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{details.amount}</span>
+                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{detailsModal.amount}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Taxa</span>
-                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{details.tax}</span>
+                <span className="text-base font-bold text-gray-900 dark:text-gray-100">{detailsModal.tax}</span>
               </div>
               <div className="flex justify-between items-center pt-3">
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Total</span>
-                <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{details.total}</span>
+                <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{detailsModal.total}</span>
               </div>
             </div>
           </div>
 
           {/* Transaction Details */}
-          {Object.keys(details.details).length > 0 && (
+          {Object.keys(detailsModal.details).length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {Object.entries(details.details).map(([key, value]) => (
+              {Object.entries(detailsModal.details).map(([key, value]) => (
                 <div
                   key={key}
                   className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
@@ -157,18 +157,18 @@ export function ConfirmationModalTransaction({
             </div>
           )}
 
-          {details.description && (
+          {detailsModal.description && (
             <div className="mb-6">
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição</p>
-              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{details.description}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{detailsModal.description}</p>
             </div>
           )}
 
-          {details.scheduleDate && (
+          {detailsModal.scheduleDate && (
             <div className="mb-6 flex items-center">
               <FontAwesomeIcon icon={faClock} className="text-blue-600 dark:text-blue-400 mr-2" />
               <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                Agendado para {details.scheduleDate}
+                Agendado para {detailsModal.scheduleDate}
               </p>
             </div>
           )}
@@ -180,7 +180,7 @@ export function ConfirmationModalTransaction({
             Verificação de Senha
           </h4>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-            Insira o PIN de 4 dígitos do aplicativo para confirmar a {transactionTypeLabels[details.transactionType].toLowerCase()}:
+            Insira o PIN de 4 dígitos do aplicativo para confirmar a {transactionTypeLabels[detailsModal.transactionType].toLowerCase()}:
           </p>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
@@ -214,7 +214,7 @@ export function ConfirmationModalTransaction({
             <button
               className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white font-medium rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-600 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleConfirm}
-              aria-label={`Confirmar ${transactionTypeLabels[details.transactionType].toLowerCase()}`}
+              aria-label={`Confirmar ${transactionTypeLabels[detailsModal.transactionType].toLowerCase()}`}
               disabled={!isCodeComplete}
             >
               {confirmButtonText}

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowUp,
@@ -18,7 +18,14 @@ import {
   Legend,
 } from 'chart.js';
 import { useInvestmentStore } from '~/context/investmentStore';
-import { formatPercent, formatToBRL, normalizeInvestmentType } from '~/utils/utils';
+import { formatDateShort, formatPercent, formatToBRL, normalizeInvestmentType } from '~/utils/utils';
+import LoadingOverlay from './LoadingOverlay';
+import { ConfirmationModalTransaction } from './ConfirmationModalTransaction';
+import type { Asset, ConfirmationDetails } from 'types';
+import { useAccountStore } from '~/context/accountStore';
+import type { InvestmentRequest } from '~/models/request/investmentRequest';
+import RedeemInvestmentModal from './RescueInvestmentModal'
+
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -30,7 +37,7 @@ const iconMap: Record<string, any> = {
   LCA: faChartBar,
 };
 
-const colorMap = {
+const colorMap: Record<string, string> = {
   CDB: 'blue',
   LCI: 'green',
   LCA: 'lime',
@@ -39,26 +46,111 @@ const colorMap = {
 };
 
 const PortfolioContent: React.FC = () => {
-  const { investment } = useInvestmentStore();
+  const { user, updateLocalUser } = useAccountStore();
+  const { investment, loadingBuying, availableInvestment, availableInvestments, rescueInvestment } = useInvestmentStore();
+  const [investmentRequest, setInvestmentRequest] = useState<InvestmentRequest | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isModalTransactionOpen, setIsModalTransactionOpen] = useState<boolean>(false);
+  const [details, setDetails] = useState<ConfirmationDetails | null>(null);
+  const [selectedInvestment, setSelectedInvestment] = useState<Asset | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      availableInvestments(user.accountId); // Carrega availableInvestment para obter regularMarketPrice
+    }
+  }, [user, availableInvestments]);
+
+  const handleInvest = (amount: number) => {
+    if (!selectedInvestment) return;
+
+    const investmentRequest: InvestmentRequest = {
+      accountId: user.accountId,
+      investmentId: selectedInvestment.investmentId,
+      amount,
+      investmentType: selectedInvestment.type,
+      symbol: selectedInvestment.symbol,
+    };
+
+    const detailsModal: ConfirmationDetails = {
+      transactionType: 'investment',
+      amount: formatToBRL(amount),
+      tax: 'R$ 0,00',
+      total: formatToBRL(amount),
+      details: {
+        fundName: selectedInvestment.shortName,
+        applicationDate: formatDateShort(new Date(Date.now())),
+      },
+    };
+
+    setDetails(detailsModal);
+    setInvestmentRequest(investmentRequest);
+    setIsModalTransactionOpen(true);
+    setIsModalOpen(false);
+  };
+
+  const handleModalConfirm = async (passwordTransaction: string) => {
+    if (passwordTransaction !== user.passwordTransaction) {
+      openToast({
+        message: 'Senha de transação inválida',
+        type: 'error',
+        duration: 4000,
+        position: 'top-right',
+      });
+      return;
+    }
+
+    const success = await rescueInvestment(investmentRequest.accountId, investmentRequest.investmentId, investmentRequest.amount)
+    
+    if (success) {
+      updateLocalUser('balance', user.balance - investmentRequest.amount);
+    }
+
+    setIsModalOpen(false);
+    setSelectedInvestment(null);
+    setIsModalTransactionOpen(false);
+  };
+
+  const handleReset = () => {
+    setInvestmentRequest(null);
+    setDetails(null);
+    setIsModalTransactionOpen(false);
+    setSelectedInvestment(null);
+  };
 
   const total = useMemo(() => investment.reduce((acc, inv) => acc + inv.balance, 0), [investment]);
 
-  const assets = useMemo(() => {
+  const assets: Asset[] = useMemo(() => {
     if (total === 0) return [];
 
     return investment.map((inv) => {
+      const matchingInvestment = availableInvestment.find(
+        (avail: any) => avail.symbol === inv.symbol && avail.type === inv.investmentType
+      );
+      const regularMarketPrice = matchingInvestment?.regularMarketPrice || inv.balance / (inv.quantity || 1) || 0;
+
       return {
+        investmentId: inv.id,
         name: inv.symbol,
+        shortName: matchingInvestment?.shortName || inv.symbol, // Usa shortName de availableInvestment ou fallback para symbol
+        symbol: inv.symbol,
         details: normalizeInvestmentType(inv.investmentType),
         value: formatToBRL(inv.balance),
+        valueNumber: inv.balance,
+        quantity: inv.quantity,
+        ownedShares: inv.quantity, // Sinônimo de quantity para STOCK/FII
+        balance: inv.balance, // Saldo total do investimento
         share: formatPercent(inv.balance / total),
         performance: formatPercent(inv.percentageChange / 100),
-        color: 'gray',
+        regularMarketChangePercent: inv.percentageChange / 100,
+        yield: formatToBRL((inv.balance * inv.percentageChange) / 100),
+        color: colorMap[inv.investmentType] || 'gray',
         logourl: inv.logourl,
-        type: inv.investmentType
+        type: inv.investmentType,
+        regularMarketPrice,
+        totalBalance: inv.totalBalance
       };
     });
-  }, [investment, total]);
+  }, [investment, total, availableInvestment]);
 
   const portfolioDistribution = useMemo(() => {
     if (total === 0 || !investment.length) {
@@ -159,6 +251,11 @@ const PortfolioContent: React.FC = () => {
     };
   }, [investment, total]);
 
+  const onAssetClick = (asset: Asset) => {
+    setSelectedInvestment(asset);
+    setIsModalOpen(true);
+  };
+
   return (
     <div>
       {/* DISTRIBUIÇÃO E SALDO POR TIPO */}
@@ -244,7 +341,7 @@ const PortfolioContent: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                {['Ativo', 'Valor Investido', '% Carteira', 'Rentabilidade', 'Ações'].map((header) => (
+                {['Ativo', 'Valor Investido', '% Carteira', 'Rentabilidade', 'Rendimentos', 'Ações'].map((header) => (
                   <th
                     key={header}
                     className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
@@ -262,7 +359,7 @@ const PortfolioContent: React.FC = () => {
                       <div
                         className={`flex-shrink-0 h-10 w-10 rounded-full bg-${asset.color}-100 dark:bg-${asset.color}-900 flex items-center justify-center text-${asset.color}-600 dark:text-${asset.color}-400`}
                       >
-                        {asset.type === "STOCK" ? (
+                        {asset.type === 'STOCK' ? (
                           <img
                             src={asset.logourl || 'https://icons.brapi.dev/icons/BRAPI.svg'}
                             alt={`${asset.name} Logo`}
@@ -272,10 +369,10 @@ const PortfolioContent: React.FC = () => {
                             }}
                           />
                         ) : (
-                        <FontAwesomeIcon
-                          icon={iconMap[asset.type] || 'faCircle'} // Fallback para ícone
-                          className={`bg-${colorMap[asset.type]}-100 dark:bg-${colorMap[asset.type]}-900 text-${colorMap[asset.type]}-600 dark:text-${colorMap[asset.type]}-400`}
-                        />
+                          <FontAwesomeIcon
+                            icon={iconMap[asset.type] || faChartBar}
+                            className={`text-${colorMap[asset.type]}-600 dark:text-${colorMap[asset.type]}-400`}
+                          />
                         )}
                       </div>
                       <div className="ml-4">
@@ -301,12 +398,23 @@ const PortfolioContent: React.FC = () => {
                       {asset.performance}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`text-sm font-medium ${
+                        Number(asset.performance.replace('%', '')) >= 0
+                          ? 'text-green-500 dark:text-green-400'
+                          : 'text-red-500 dark:text-red-400'
+                      }`}
+                    >
+                      {asset.yield}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                    <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mr-3 transition-all duration-200">
+                    <button
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200"
+                      onClick={() => onAssetClick(asset)}
+                    >
                       Resgatar
-                    </button>
-                    <button className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-all duration-200">
-                      Detalhes
                     </button>
                   </td>
                 </tr>
@@ -315,8 +423,26 @@ const PortfolioContent: React.FC = () => {
           </table>
         </div>
       </div>
+      <ConfirmationModalTransaction
+        show={isModalTransactionOpen}
+        onClose={() => setIsModalTransactionOpen(false)}
+        detailsModal={details}
+        onConfirm={handleModalConfirm}
+        reset={handleReset}
+      />
+      <LoadingOverlay isVisible={loadingBuying} />
+      <RedeemInvestmentModal
+        isModalOpen={isModalOpen}
+        selectedInvestment={selectedInvestment}
+        setIsModalOpen={setIsModalOpen}
+        handleInvest={handleInvest}
+      />
     </div>
   );
 };
 
 export default PortfolioContent;
+
+function openToast(arg0: { message: string; type: string; duration: number; position: string }) {
+  throw new Error('Function not implemented.')
+}

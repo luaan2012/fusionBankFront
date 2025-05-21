@@ -84,8 +84,9 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
       password: data.password,
       loginType: data.loginType === 'document' ? 'cpfcnpj' : data.loginType,
     };
-
+    
     const loginEfetuado = await login(loginPayload);
+
     const error = useAccountStore.getState().error
 
     if(rememberMe) {
@@ -94,6 +95,7 @@ const LoginForm = ({ switchToRegister }: LoginFormProps) => {
     }else {
       localStorage.removeItem('loginCredentials');
     }
+
 
     if(!loginEfetuado){
       openToast({

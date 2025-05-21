@@ -36,7 +36,6 @@ export function Index() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const { openToast } = useToast();
   const navigate = useNavigate();
-  const eventUrl = import.meta.env.VITE_API_URL_EVENT;
 
   const connectorRef = useRef<Connector | null>(null);
 

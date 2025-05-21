@@ -15,6 +15,7 @@ interface InvestmentState {
   error: ErrorApi | string | null;
   createInvest: (investment: InvestmentRequest) => Promise<boolean>;
   handleInvestment: (accountId: string, investmentId: string, amount: number) => Promise<boolean>;
+  rescueInvestment: (accountId: string, investmentId: string, amount: number) => Promise<boolean>;
   listInvestmentsUser: (accountId: string, limit: number) => Promise<boolean>;
   availableInvestments: (accountId?: string) => Promise<boolean>;
 }
@@ -42,7 +43,6 @@ export const useInvestmentStore = create<InvestmentState>()((set, get) => ({
       return false;
     }
   },
-
   handleInvestment: async (accountId, investmentId, amount) => {
     if (get().loadingBuying) return false;
 
@@ -57,7 +57,20 @@ export const useInvestmentStore = create<InvestmentState>()((set, get) => ({
       return false;
     }
   },
+  rescueInvestment: async (accountId, investmentId, amount) => {
+    if (get().loadingBuying) return false;
 
+    set({ loadingBuying: true, error: null });
+
+    try {
+      await investmentApi.rescueInvestment(accountId, investmentId, amount);
+      set({ loadingBuying: false });
+      return true;
+    } catch (err: any) {
+      set({ loadingBuying: false, error: err?.message || 'Falha ao aplicar investimento' });
+      return false;
+    }
+  },
   listInvestmentsUser: async (accountId: string, limit: number) => {
     if (get().loadingInvestment) return false;
     set({ loadingInvestment: true, error: null });
