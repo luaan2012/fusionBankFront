@@ -150,3 +150,19 @@ export interface Asset {
   regularMarketPrice: number; // Preço atual por cota (ex.: 30.25)
   totalBalance: number
 }
+
+export interface InvestmentProfile {
+  type: string,
+  lastUpdated: Date,
+  riskTolerance: number,
+  experience: string,
+  financialGoals: string,
+  investmentHorizon: string,
+}
+
+export interface InvestmentDisplay {
+  name: string;
+  value: string;
+  color: string;
+  items: string[]
+}

@@ -30,6 +30,7 @@ const InvestmentDashboard: React.FC = () => {
     loadingInvestment,
     error,
     availableInvestments,
+    listInvestmentsUser,
     handleInvestment,
     createInvest,
   } = useInvestmentStore();
@@ -108,13 +109,19 @@ const InvestmentDashboard: React.FC = () => {
       return;
     }
 
+    let success = false;
+
     if (selectedInvestment?.onMyPocket) {
-      await handleInvestment(user.accountId, selectedInvestment.id, investmentRequest.amount);
-    } else {
-      const success = await createInvest(investmentRequest);
-      if (success) {
-        updateLocalUser('balance', user.balance - investmentRequest.amount);
-      }
+      success = await handleInvestment(user.accountId, selectedInvestment.id, investmentRequest.amount);
+    }
+        
+    if (!selectedInvestment?.onMyPocket) {
+      success = await createInvest(investmentRequest);
+    }
+  
+    if(success) {
+      await listInvestmentsUser(user.accountId, 0)
+      updateLocalUser('balance', user.balance - investmentRequest.amount);
     }
 
     setIsModalOpen(false);

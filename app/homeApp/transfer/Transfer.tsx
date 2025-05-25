@@ -11,7 +11,6 @@ import { useAccountStore } from '~/context/accountStore'
 import { IMaskInput } from 'react-imask'
 import { formatToBRL ,formatNumberAccount, CleanString } from '~/utils/utils'
 import { useToast } from '~/components/ToastContext'
-import SuccessToast from '~/components/SuccessToast'
 import { useBankStore } from '~/context/bankStore'
 import LoadingOverlay from '~/components/LoadingOverlay'
 import { ConfirmationModalTransaction } from '~/components/ConfirmationModalTransaction'
@@ -30,7 +29,7 @@ export function TransferContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [details, setDetails] = useState<ConfirmationDetails | null>();
   const [transfer, setTransfer] = useState<TransferFormData | null>();
-  const { createTransfer, error, loading } = useTransferStore();
+  const { createTransfer, loading } = useTransferStore();
   const { user, updateLocalUser} = useAccountStore();
   const { banks, listBanks} = useBankStore();
   const [transferType, setTransferType] = useState<'pix' | 'ted' | 'doc'>('pix');
@@ -66,7 +65,7 @@ export function TransferContent() {
       description: '',
     },
   });
-
+  
   const transferCards: TransferCardData[] = [
     {
       type: 'pix',
@@ -113,9 +112,9 @@ const parseAmount = (value: string): string => {
   const onSubmit = async (data: TransferFormData) => {
     try {
       const detailsModal: ConfirmationDetails = { 
-        amount: data.amount,
+        amount: formatToBRL(data.amount),
         tax: "0",
-        total: data.amount,
+        total: formatToBRL(data.amount),
         destination: data.nameReceiver,
         scheduleDate: false,
         description: data.description,
@@ -130,7 +129,7 @@ const parseAmount = (value: string): string => {
         ...{
         accountId: user.accountId,
         accountNumberPayer: user.accountNumber,
-        keyAccount: data.transferType == 'pix' ? CleanString(data.keyAccount) : '',
+        keyAccount: getKeyAccount(data),
       }};
 
       setDetails(detailsModal)
@@ -140,6 +139,18 @@ const parseAmount = (value: string): string => {
     }
   };
 
+  const getKeyAccount = (data: TransferFormData) => {
+  if (data.transferType === 'pix' && (data.keyType === 'celular' || data.keyType === 'cpf')) {
+    return CleanString(data.keyAccount);
+  }
+
+  if (data.transferType === 'pix' && data.keyType === 'email') {
+    return data.keyAccount;
+  }
+
+  return '';
+};
+  
   const handleModalConfirm = async (passwordTransaction: string) => {
 
     if(passwordTransaction != user.passwordTransaction){
@@ -153,7 +164,7 @@ const parseAmount = (value: string): string => {
     }
 
     const success = await createTransfer(transfer);
-    
+    const error = useTransferStore.getState().error
     if(!success){
       openToast({
         message: error.message || 'Erro ao tentar fazer a transferencia!',
@@ -555,7 +566,7 @@ const parseAmount = (value: string): string => {
       <ConfirmationModalTransaction
         show={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        details={details}
+        detailsModal={details}
         onConfirm={handleModalConfirm}
         reset={reset}
       />

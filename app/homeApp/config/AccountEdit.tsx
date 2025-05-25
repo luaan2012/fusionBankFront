@@ -121,15 +121,15 @@ export function AccountEditPage() {
     setPixFormData((prev) => ({
       ...prev,
       [name]: value,
+      keyPix: name === 'keyTypePix' ? '' : prev.keyPix
     }));
     setPixErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handlePixMaskedInputChange = (name: string, value: string) => {
-    console.log({name, value})
     setPixFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
     setPixErrors((prev) => ({ ...prev, [name]: '' }));
   };
@@ -490,7 +490,7 @@ export function AccountEditPage() {
                               type="text"
                               id="keyPix"
                               name="keyPix"
-                              value={pixFormData.keyPix}
+                              value={pixFormData?.keyPix || ''}
                               onChange={handlePixInputChange}
                               readOnly={pixFormData.keyTypePix === 'RANDOM'}
                               className={`block w-full rounded-lg border py-3 px-4 text-sm ${

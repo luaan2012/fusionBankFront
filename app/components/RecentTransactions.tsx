@@ -1,20 +1,8 @@
-import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUp, faArrowDown, faBarcode, faInbox, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { useEventStore } from '~/context/eventStore'
+import { faInbox, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import type { EventMessage } from '~/models/eventMessage'
 import { mapEventMessagesToTransactions } from '~/utils/map'
-import { formatToBRL } from '~/utils/utils'
-
-interface Transaction {
-  icon: any; // Use specific icon type if needed
-  iconColor: string;
-  bg: string;
-  title: string;
-  description: string;
-  amount: string;
-  balance: string;
-}
+import { useAppStore } from '~/context/appStore'
 
 interface RecentTransactionProps{
   lastTransactions: EventMessage[]
@@ -22,18 +10,19 @@ interface RecentTransactionProps{
 }
 
 export function RecentTransactions ({lastTransactions, loading}: RecentTransactionProps) {
-  const transactions = mapEventMessagesToTransactions(lastTransactions);
+  const { setView } = useAppStore()
+  const transactions = mapEventMessagesToTransactions(lastTransactions.slice(0, 3));
 
   return (
     <div className="bg-white dark:bg-slate-950 rounded-xl shadow-lg mb-6 p-6 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Últimas Transações</h2>
-        <a
-          href="#"
-          className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-colors duration-200"
+        <button
+          onClick={() => setView('extractFull')}
+          className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-colors duration-200 cursor-pointer"
         >
           Ver extrato completo
-        </a>
+        </button>
       </div>
       {loading ? 
           <div className="flex justify-center items-center h-full">
@@ -63,11 +52,7 @@ export function RecentTransactions ({lastTransactions, loading}: RecentTransacti
                 </div>
                 <div className="text-right">
                   <p
-                    className={`text-base font-semibold ${
-                      transaction.amount.startsWith('+')
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-red-600 dark:text-red-400'
-                    }`}
+                    className={`text-base font-semibold ${transaction.textColor}`}
                   >
                     {transaction.amount}
                   </p>

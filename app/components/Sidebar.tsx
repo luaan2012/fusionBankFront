@@ -8,6 +8,8 @@ import {
   faBarcode,
   faCog,
   faUser,
+  faTractor,
+  faFileInvoice,
 } from '@fortawesome/free-solid-svg-icons';
 import type { Account } from '~/models/account';
 import { useAppStore } from '~/context/appStore';
@@ -28,7 +30,8 @@ export function Sidebar({ user, view, onNavigate }: SidebarProps) {
     { icon: faCreditCard, color: 'text-purple-500', label: 'Cartões', view: 'cards' },
     { icon: faChartLine, color: 'text-green-500', label: 'Investimentos', view: 'investments' },
     { icon: faBarcode, color: 'text-green-500', label: 'Depósitos & Boletos', view: 'deposit' },
-    { icon: faCog, color: 'text-gray-500', label: 'Configurações', view: 'accountEdit' },
+    { icon: faFileInvoice, color: 'text-green-500', label: 'Extrato Completo', view: 'extract' },
+    { icon: faCog, color: 'text-gray-500', label: 'Configurações', view: 'accountEdit' }
   ];
 
   const handleNavigation = (newView: string) => {
@@ -67,7 +70,7 @@ export function Sidebar({ user, view, onNavigate }: SidebarProps) {
         <button
           className="w-full bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white py-2.5 px-4 rounded-lg transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
           aria-label="Ver extrato completo"
-          onClick={() => handleNavigation('dashboard')} // Optional: Navigate to dashboard or specific statement view
+          onClick={() => handleNavigation('extractFull')} // Optional: Navigate to dashboard or specific statement view
         >
           Ver extrato completo
         </button>

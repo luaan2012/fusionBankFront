@@ -4,6 +4,7 @@ import type { InvestmentType } from "./enum/investmentType"
 export interface LastTransction{
   icon: any
   iconColor: string
+  textColor: string
   bg: string
   title: string
   description: string

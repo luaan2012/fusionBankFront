@@ -7,6 +7,8 @@ import type { Investment } from "~/models/investment"
 import type { BankRegister, InvestmentHome, LastTransction } from "~/models/maps"
 import { formatToBRL } from "./utils"
 import { BilletType } from "~/models/response/billetResponse"
+import type { InvestmentDisplay } from "types"
+import { InvestmentType } from "~/models/enum/investmentType"
 
 export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): LastTransction[] {
   if(eventMessages?.length <= 0) return [];
@@ -27,6 +29,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
           icon: faArrowDown,
           iconColor: 'text-red-800',
           bg: 'bg-red-100',
+          textColor: 'text-red-600 dark:text-red-400',
           title: event.title,
           description: `${event.transferType} enviado para ${event.userReceive} • ${formattedDate}`,
           amount: event.amount, 
@@ -38,6 +41,19 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
           icon: faArrowUp,
           iconColor: 'text-green-800',
           bg: 'bg-green-100',
+          textColor: 'text-green-600 dark:text-green-400',
+          title: event.title,
+          description: `${event.transferType} recebido de ${event.userOwner} • ${formattedDate}`,
+          amount: event.amount,
+          balance: 0
+        };
+
+      case NotificationType.DEPOSIT_DIRECT_MADE:
+        return {
+          icon: faArrowUp,
+          iconColor: 'text-green-800',
+          bg: 'bg-green-100',
+          textColor: 'text-green-600 dark:text-green-400',
           title: event.title,
           description: `${event.transferType} recebido de ${event.userOwner} • ${formattedDate}`,
           amount: event.amount,
@@ -50,6 +66,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
           iconColor: 'text-blue-600 dark:text-gray-100',
           bg: 'bg-blue-100 dark:bg-blue-900',
           title: event.title,
+          textColor: 'text-green-600 dark:text-green-400',
           description: `${event.service} • ${formattedDate}`,
           amount: event.amount,
           balance: 0// Negativo para transferência enviada
@@ -61,6 +78,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
           iconColor: 'text-blue-600 dark:text-gray-100',
           bg: 'bg-blue-100 dark:bg-blue-900',
           title: event.title,
+          textColor: 'text-red-600 dark:text-red-400',
           description: `Detalhes: ${event.details} • ${formattedDate}`,
           amount: event.amount,
           balance: 0
@@ -176,3 +194,57 @@ export const BilletTypeToString = (type: BilletType): string => {
       return 'Compras';
   }
 }
+
+export const mapInvestmentsToInvestmentDisplay = (investments: Investment[]): InvestmentDisplay[] => {
+  // Calculate total balance across all investments
+  const totalBalance = investments.reduce((sum, inv) => sum + inv.totalBalance, 0);
+
+  // Group investments by category based on investmentType
+  const groupedInvestments: Record<string, Investment[]> = {
+    'Renda Fixa': [],
+    'Renda Variável': [],
+    'Fundos Imobiliários': [],
+  };
+
+  investments.forEach((inv) => {
+    switch (inv.investmentType) {
+      case InvestmentType.CDB:
+      case InvestmentType.LCI:
+      case InvestmentType.LCA:
+        groupedInvestments['Renda Fixa'].push(inv);
+        break;
+      case InvestmentType.STOCK:
+        groupedInvestments['Renda Variável'].push(inv);
+        break;
+      case InvestmentType.FII:
+        groupedInvestments['Fundos Imobiliários'].push(inv);
+        break;
+      default:
+        // Optionally handle unknown types; for now, skip them
+        break;
+    }
+  });
+
+  // Map grouped investments to InvestmentDisplay
+  return Object.entries(groupedInvestments)
+    .filter(([_, invs]) => invs.length > 0) // Only include categories with investments
+    .map(([categoryName, invs]) => {
+      // Calculate total balance for this category
+      const categoryBalance = invs.reduce((sum, inv) => sum + inv.totalBalance, 0);
+
+      // Calculate percentage (value) for this category
+      const value = totalBalance > 0 ? ((categoryBalance / totalBalance) * 100).toFixed(0) : '0';
+
+      // Assign color based on category
+      const color = categoryName === 'Renda Fixa' ? 'blue' : categoryName === 'Renda Variável' ? 'green' : 'purple';
+      // Create items array
+      const items = invs.map((inv) => `${inv.shortName}: ${formatToBRL(inv.totalBalance)}`);
+      
+      return {
+        name: categoryName,
+        value,
+        color,
+        items,
+      };
+    });
+};

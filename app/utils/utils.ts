@@ -1,4 +1,5 @@
 import type { AccountType } from "~/models/enum/accountType"
+import { TransferType } from "~/models/enum/transferType"
 
 export const getInitials = (name: string): string => {
   return name
@@ -250,3 +251,19 @@ export const getTodayDateString = () => {
   yesterday.setHours(0, 0, 0, 0); // Zera hora, minuto, segundo, milissegundo
   return yesterday.toISOString().split('T')[0]; // Pega só a parte da data 'YYYY-MM-DD'
 };
+
+ export const getTransactionTypeLabel = (type: TransferType) => {
+    switch (type) {
+      case TransferType.PIX:
+        return 'Pix';
+      case TransferType.TED:
+        return 'TED';
+      case TransferType.DOC:
+        return 'DOC';
+      case TransferType.BOLETO:
+        return 'Boleto';
+      case TransferType.DEPOSITO:
+      default:
+        return type;
+    }
+  };

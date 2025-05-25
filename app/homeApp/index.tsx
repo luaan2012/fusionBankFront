@@ -25,19 +25,22 @@ import { Connector } from '~/services/signalR';
 import { useInvestmentStore } from '~/context/investmentStore';
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import SessionTimer from '~/components/SessionTimer'
+import { NotificationType } from '~/models/enum/notificationType'
+import { RecentTransactionsFull } from './fullExtract'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isOpenModalPasswordTransaction, setIsOpenModalPasswordTransaction] = useState<boolean>(false);
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
   const { view } = useAppStore();
-  const { getEventTransactions, listEvents, updateEvents, lastTransactions, events, loading: eventLoading, isAlready: isAlreadyEvent, markAsRead, markAllAsRead, deleteAllById } = useEventStore();
+  const { getEventTransactions, listEvents, updateEvents, lastTransactions, events, loadingTransactions, isAlready: isAlreadyEvent, markAsRead, markAllAsRead, deleteAllById } = useEventStore();
   const { investment, loadingInvestment, listInvestmentsUser, isAlreadyInvestments } = useInvestmentStore();
-  const { setDarkMode, user, loading: accountLoading, updateUser, registerPasswordTransaction, tokenExpiry, checkToken } = useAccountStore();
+  const { setDarkMode, user, loading: accountLoading, updateUser, registerPasswordTransaction, checkToken, clickedLogout} = useAccountStore();
   const { getCreditCardsById, creditCard } = useCreditCardStore();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const { openToast } = useToast();
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const connectorRef = useRef<Connector | null>(null);
 
@@ -45,74 +48,96 @@ export function Index() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [view])
 
+
   useEffect(() => {
-    if (!user?.accountId) {
-      connectorRef.current?.stopConnection();
-      connectorRef.current = null;
-      return;
+  if (!user?.accountId) return;
+
+  const fetchData = async () => {
+    try {
+      const promises = [];
+
+      if (lastTransactions.length === 0 && !isAlreadyEvent) {
+        promises.push(getEventTransactions(user.accountId, 0));
+      }
+
+      if (investment.length === 0 && !isAlreadyInvestments) {
+        promises.push(listInvestmentsUser(user.accountId, 0));
+      }
+
+      if (!creditCard) {
+        promises.push(getCreditCardsById(user.accountId));
+      }
+
+      if (events.length === 0) {
+        promises.push(listEvents(user.accountId, 20));
+      }
+
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
     }
+  };
 
-    if (!connectorRef.current) {
-      connectorRef.current = new Connector();
-    }
+  fetchData();
+}, [user?.accountId]);
 
-    const startConnection = async () => {
-      try {
-        await connectorRef.current?.startConnection();
-        await connectorRef.current?.joinGroup(user.accountId);
+  useEffect(() => {
+  let isMounted = true;
 
-        connectorRef.current?.onReceiveNotification((message) => {
-          console.log('Notificação recebida:', message);
-          updateEvents(message as any);
-          if (message.title) {
-            setToastMessage(message.title);
-          }
+  if (!user?.accountId) {
+    connectorRef.current?.stopConnection();
+    connectorRef.current = null;
+    return;
+  }
 
-          if (message.action === 'CREDITCARD_RESPONDED') {
-            getCreditCardsById(user.accountId);
-          }
+  if (!connectorRef.current) {
+    connectorRef.current = new Connector();
+  }
 
-          if (message.action === 'DEPOSIT_DIRECT_MADE') {
-            updateUser();
-          }
-        });
+  const startConnection = async () => {
+    try {
+      await connectorRef.current?.startConnection();
+      await connectorRef.current?.joinGroup(user.accountId);
 
-        connectorRef.current?.onReconnected((userId) => {
-          console.log(`Usuário ${userId} reingressou no grupo após reconexão.`);
-        });
+      if (!isMounted) return;
 
-        connectorRef.current?.onReconnectionFailed(() => {
-          console.error('Falha na reconexão. Tente fazer login novamente.');
-        });
-      } catch (err) {
+      connectorRef.current?.onReceiveNotification((message: EventMessage) => {
+        updateEvents(message as any);
+        if (message.title) {
+          setToastMessage(message.title);
+        }
+
+        if (message.action === NotificationType.CREDITCARD_RESPONSED) {
+          getCreditCardsById(user.accountId).catch();
+        }
+
+        if ([NotificationType.TRANSFER_RECEIVE, NotificationType.DEPOSIT_DIRECT_MADE].includes(message.action)) {
+          updateUser().catch();
+        }
+      });
+
+      connectorRef.current?.onReconnected((userId) => {
+        console.log(`Usuário ${userId} reingressou no grupo após reconexão.`);
+      });
+
+      connectorRef.current?.onReconnectionFailed(() => {
+        console.error('Falha na reconexão. Tente fazer login novamente.');
+      });
+    } catch (err) {
+      if (isMounted) {
         console.error('Erro ao configurar SignalR:', err);
       }
-    };
+    }
+  };
 
-    startConnection();
+  startConnection();
 
-    return () => {
-      connectorRef.current?.stopConnection();
-      connectorRef.current = null;
-    };
-  }, [user?.accountId]);
-
-  useEffect(() => {
-    const validateToken = async () => {
-      const isValid = await checkToken();
-      if (!isValid && !useAccountStore.getState().clickedLogout) {
-        openToast({
-          message: 'Sessão expirada, entre novamente.',
-          type: 'error',
-          position: 'top-right',
-          duration: 5000,
-        });
-        navigate('/');
-      }
-    };
-
-    validateToken();
-  }, [tokenExpiry]);
+  return () => {
+    isMounted = false;
+    connectorRef.current?.stopConnection();
+    connectorRef.current = null;
+  };
+}, [user?.accountId]);
 
   useEffect(() => {
     if (toastMessage) {
@@ -124,6 +149,21 @@ export function Index() {
   }, [toastMessage]);
 
   useEffect(() => {
+    const checkTokenAsync = async () => {
+      const isValid = await checkToken();
+
+      if (!isValid && !clickedLogout) {
+        openToast({
+          message: 'Sessão expirada, entre novamente.',
+          type: 'error',
+          position: 'top-right',
+          duration: 5000,
+        });
+        navigate('/');
+        return;
+      }
+    }
+
     if (user?.darkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
@@ -131,32 +171,13 @@ export function Index() {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-  }, [user?.darkMode]);
 
-  useEffect(() => {
-    if (events.length === 0 && user) {
-      listEvents(user.accountId, 20);
-    }
-
-    if (user === null) return;
-    if (!user.passwordTransaction || user.passwordTransaction.length !== 4) {
+    if (user && (!user?.passwordTransaction || user?.passwordTransaction.length !== 4)) {
       setIsOpenModalPasswordTransaction(true);
     }
+
+    checkTokenAsync()
   }, [user]);
-
-  useEffect(() => {
-    if (lastTransactions.length === 0 && user?.accountId && !isAlreadyEvent) {
-      getEventTransactions(user.accountId, 3);
-    }
-
-    if (investment.length === 0 && user?.accountId && !isAlreadyInvestments) {
-      listInvestmentsUser(user.accountId, 0);
-    }
-
-    if (!creditCard && user?.accountId) {
-      getCreditCardsById(user.accountId);
-    }
-  }, [user?.accountId]);
 
   const toggleDarkMode = () => {
     setDarkMode(!user?.darkMode);
@@ -236,7 +257,7 @@ export function Index() {
                   loadingInvestment={loadingInvestment}
                   card={creditCard}
                 />
-                <RecentTransactions lastTransactions={lastTransactions} loading={eventLoading} />
+                <RecentTransactions lastTransactions={lastTransactions.slice(3)} loading={loadingTransactions} />
                 <InvestmentsDisplay investments={investment} loading={loadingInvestment} />
               </>
             ) : view === 'transfer' ? (
@@ -247,8 +268,10 @@ export function Index() {
               <InvestmentsContent />
             ) : view === 'deposit' ? (
               <DepositBillets />
-            ) : (
+            ) : view === 'accountEdit' ? (
               <AccountEditPage />
+            ) : (
+              <RecentTransactionsFull transactions={lastTransactions} loading={loadingTransactions} />
             )}
           </div>
         </div>
@@ -256,6 +279,7 @@ export function Index() {
       <Footer />
       <Notification key={toastMessage} message={toastMessage} />
       <PinRegistrationModal show={isOpenModalPasswordTransaction} onConfirm={handleRegisterModalPasswordTransaction} />
+      <SessionTimer />
     </div>
   );
 }

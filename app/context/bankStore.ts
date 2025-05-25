@@ -18,7 +18,7 @@ export const useBankStore = create<BankState>()(
     loading: false,
     error: null,
     listBanks: async () => {
-      if (get().loading) return get().banks; // Prevent concurrent calls
+      if (get().loading) return; // Prevent concurrent calls
       set({ loading: true, error: null});
       try {
         var banks = await bankApi.listBanks();

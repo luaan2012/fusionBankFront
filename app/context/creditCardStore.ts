@@ -10,7 +10,7 @@ interface CreditCardState {
   error: ErrorApi;
   requestCreditCard: (account: string, limit: number) => Promise<boolean>;
   requestVirtualCreditCard: (account: string) => Promise<boolean>;
-  getCreditCardsById: (account: string) => void;
+  getCreditCardsById: (account: string) => Promise<void>;
   virtualCreditCardDelete: (account: string) => Promise<boolean>;
   creditCardToggleBlocked: (account: string, isBlocked: boolean) => Promise<boolean>;
 }
@@ -65,8 +65,8 @@ export const useCreditCardStore = create<CreditCardState>()(
         return false
       }
     },
-    getCreditCardsById: async (account: string) => {
-      if (get().loading) return get().creditCard;
+    getCreditCardsById: async (account: string): Promise<void> => {
+      if(get().loading) return;
       set({ loading: true, error: null});
       try {
         var creditCard = await creditCardApi.getCreditCardsById(account);

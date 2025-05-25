@@ -4,7 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { accountApi } from '../services/accountApi';
 import { type LoginPayload } from '../homePage/schema/loginSchema';
 import { LevelError, type ErrorApi } from '~/models/response/errorResponse';
-import type { AccountRequest } from 'types';
+import type { AccountRequest, InvestmentProfile } from 'types';
 import type { RegisterKeyPix } from '~/models/request/registerKeyPix';
 
 // Tipagem do estado de autenticação
@@ -18,12 +18,13 @@ interface AccountState {
   sessionExpiredMessage: string | null;
   setDarkMode: (darkMode: boolean) => void;
   registerPasswordTransaction: (passwordTransaction: string) => Promise<boolean>;
-  updateUser: () => void;
+  updateUser: () => Promise<void>;
   updateLocalUser: (field: string, value: any) => void;
   login: (credentials: LoginPayload) => Promise<boolean>;
   register: (credentials: RegisterRequest) => Promise<boolean>;
   editAccount: (accountId: string, credentials: AccountRequest) => Promise<boolean>;
   registerKey: (request: RegisterKeyPix) => Promise<boolean>;
+  saveInvestmentProfile: (request: InvestmentProfile) => Promise<boolean>;
   deleteKey: () => Promise<boolean>;
   logout: () => void;
   checkToken: () => Promise<boolean>;
@@ -108,6 +109,16 @@ export const useAccountStore = create<AccountState>()(
           const { user } = get();
           const response = await accountApi.registerKey(request);
           set({ loading: false, user: { ...user, keyAccount: request.keyPix } });
+          return true;
+        } catch (err: any) {
+          set({ loading: false, error: err.message || 'Falha ao cadastrar chave Pix' });
+          return false;
+        }
+      },
+      saveInvestmentProfile: async (request: InvestmentProfile) => {
+        try {
+          const { user } = get();
+          await accountApi.saveInvestmentProfile(user.accountId, request);
           return true;
         } catch (err: any) {
           set({ loading: false, error: err.message || 'Falha ao cadastrar chave Pix' });

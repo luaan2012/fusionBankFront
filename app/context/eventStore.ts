@@ -7,7 +7,8 @@ import type { EventMessage } from '~/models/eventMessage'
 interface EventState {
   events: EventMessage[];
   lastTransactions: EventMessage[];
-  loading: boolean;
+  loadingEvents: boolean;
+  loadingTransactions: boolean;
   isAlready: boolean
   error: ErrorApi | null
   getEventTransactions: (accountId: string, limit: number ) => void;
@@ -22,27 +23,28 @@ export const useEventStore = create<EventState>()(
   (set, get) => ({
       events: [],
       lastTransactions: [],
-      loading: false,
+      loadingEvents: false,
+      loadingTransactions: false,
       error: null,
       isAlready: false,
       getEventTransactions: async (accountId: string, limit: number) => {
-        if (get().loading) return; 
-        set({ loading: true, error: null });
+        if(get().loadingTransactions) return;
+        set({ loadingTransactions: true, error: null });
         try {
           const response = await eventApi.eventTransactions(accountId, limit);
-          set({ loading: false, lastTransactions: response.data, isAlready: true});
+          set({ loadingTransactions: false, lastTransactions: response.data, isAlready: true});
         } catch (err: any) {
-          set({ loading: false, error: err.message || 'Falha ao carregar ultimos eventos' });
+          set({ loadingTransactions: false, error: err.message || 'Falha ao carregar ultimos eventos' });
         }
       },
       listEvents: async (accountId: string, limit: number) => {
-        if (get().loading) return; 
-        set({ loading: true, error: null });
+        if(get().loadingEvents) return;
+        set({ loadingEvents: true, error: null });
         try {
           const response = await eventApi.listEvents(accountId, limit);
-          set({ loading: false, events: response.data});
+          set({ loadingEvents: false, events: response.data});
         } catch (err: any) {
-          set({ loading: false, error: err.message || 'Falha ao carregar ultimos eventos' });
+          set({ loadingEvents: false, error: err.message || 'Falha ao carregar ultimos eventos' });
         }
       },
       updateEvents: async (newEvent: EventMessage) => {
@@ -62,7 +64,6 @@ export const useEventStore = create<EventState>()(
           set({ events: updatedEvents });
           return true
         } catch(err) {
-          set({ loading: false, error: err || 'Falha ao carregar ultimos eventos' });
         }
       },
       markAllAsRead: async () => {
@@ -77,7 +78,6 @@ export const useEventStore = create<EventState>()(
           
           set({ events: updatedEvents });
         }catch(err) {
-          set({ loading: false, error: err || 'Falha ao carregar ultimos eventos'})
         }
       },
       deleteAllById: async (accountId: string) => {
@@ -85,7 +85,6 @@ export const useEventStore = create<EventState>()(
           const response = eventApi.deleteAllById(accountId)
           set({ events: [] });
         }catch(err) {
-          set({ loading: false, error: err || 'Falha ao carregar ultimos eventos'})
         }
       }
     })

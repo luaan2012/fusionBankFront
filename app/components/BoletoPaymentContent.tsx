@@ -75,9 +75,13 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
     })
 
     if (response) {
-      updateLocalUser('balance', user.balance - billetInfo.amount);
       setBoletoCode('');
       setBoletoInfo(null); // Reseta as informações do boleto
+    }
+
+    if(response && paymentMethod == 'DEBIT') {
+      console.log('aq')
+      updateLocalUser('balance', user.balance - billetInfo.amount);
     }
   };
 
@@ -167,7 +171,7 @@ const BoletoPaymentContent: React.FC<BoletoPaymentContentProps> = ({
                 aria-label="Selecionar método de pagamento"
               >
                 <option value="account">Conta Corrente • Saldo: {formatToBRL(user.balance)}</option>
-                <option value="credit">Cartão de Crédito • Final {creditCard.creditCardNumber.substring(creditCard.creditCardNumber.length - 4)}</option>
+                {creditCard && <option value="credit">Cartão de Crédito • Final {creditCard.creditCardNumber.substring(creditCard.creditCardNumber.length - 4)}</option> }
               </select>
             </div>
             <div className="flex justify-end">

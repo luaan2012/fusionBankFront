@@ -1,160 +1,230 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserTie, faChartLine, faClock, faMoneyBillWave, faMoon, faSun, faInfoCircle, faBuilding, faChartPie, faWallet } from '@fortawesome/free-solid-svg-icons';
+import { faUserTie, faChartLine, faClock, faMoneyBillWave, faBuilding, faChartPie, faWallet, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import type { InvestmentProfile } from 'types';
+import { useToast } from './ToastContext';
+import { useAccountStore } from '~/context/accountStore';
+import { formatDateBR } from '~/utils/utils';
+import { useInvestmentStore } from '~/context/investmentStore';
+import { mapInvestmentsToInvestmentDisplay } from '~/utils/map';
 
 const ProfileContent: React.FC = () => {
-  // State for profile, dark mode, modals, and questionnaire
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState<boolean>(false);
-  const [profile, setProfile] = useState({
-    type: 'Moderado',
-    lastUpdated: '15/03/2023',
-    riskTolerance: 5, // 1-10 scale
-    experience: 'Intermediário (3-5 anos)',
-    financialGoals: 'Crescimento patrimonial e aposentadoria',
-    investmentHorizon: 'Médio a longo prazo (5-10 anos)',
-  });
+  const { saveInvestmentProfile, user, updateLocalUser } = useAccountStore();
+  const { investment } = useInvestmentStore();
+  const { openToast } = useToast();
 
-  // State for questionnaire responses
+  const initialProfile: InvestmentProfile | null = user.investmentProfile
+    ? {
+        type: user.investmentProfile.riskTolerance >= 7
+          ? 'Agressivo'
+          : user.investmentProfile.riskTolerance >= 4
+          ? 'Moderado'
+          : 'Conservador',
+        lastUpdated: user.investmentProfile.lastUpdated || new Date(),
+        riskTolerance: user.investmentProfile.riskTolerance || 5,
+        experience: user.investmentProfile.experience || 'Intermediário (3-5 anos)',
+        financialGoals: user.investmentProfile.financialGoals || 'Crescimento patrimonial e aposentadoria',
+        investmentHorizon: user.investmentProfile.investmentHorizon || 'Médio a longo prazo (5-10 anos)',
+      }
+    : null;
+
+  const [profile, setProfile] = useState<InvestmentProfile | null>(initialProfile);
   const [questionnaire, setQuestionnaire] = useState({
-    riskTolerance: 3, // 1-5 scale, will be scaled to 1-10
-    experience: '1-3 anos',
-    financialGoals: 'Crescimento patrimonial',
-    investmentHorizon: '3-5 anos',
+    riskTolerance: profile?.riskTolerance ? Math.round(profile.riskTolerance / 2) : 3,
+    experience: profile?.experience || '1-3 anos',
+    financialGoals: profile?.financialGoals || 'Crescimento patrimonial',
+    investmentHorizon: profile?.investmentHorizon || '3-5 anos',
   });
 
-  // User's current investments
-  const userInvestments = [
-    { name: 'Renda Fixa', value: 50, color: 'blue', items: ['CDB 100% CDI: R$ 25.000', 'Tesouro Selic: R$ 15.000'] },
-    { name: 'Renda Variável', value: 30, color: 'green', items: ['Ações Petrobras: R$ 10.000', 'ETF S&P 500: R$ 5.000'] },
-    { name: 'Fundos Imobiliários', value: 20, color: 'purple', items: ['FII XPML11: R$ 8.000', 'FII HGLG11: R$ 4.000'] },
-  ];
+  const userInvestments = mapInvestmentsToInvestmentDisplay(investment);
 
-  // Handle questionnaire form changes
   const handleQuestionnaireChange = (field: string, value: string | number) => {
     setQuestionnaire((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Calculate profile based on questionnaire
-  const calculateProfile = () => {
-    const riskScore = questionnaire.riskTolerance * 2; // Scale 1-5 to 1-10
-    let profileType = 'Conservador';
+  const calculateProfile = async () => {
+    const riskScore = questionnaire.riskTolerance * 2;
+    let profileType: 'Conservador' | 'Moderado' | 'Agressivo' = 'Conservador';
     if (riskScore >= 7) profileType = 'Agressivo';
     else if (riskScore >= 4) profileType = 'Moderado';
 
-    setProfile({
+    const newProfile: InvestmentProfile = {
       type: profileType,
-      lastUpdated: new Date().toLocaleDateString('pt-BR'),
+      lastUpdated: new Date(),
       riskTolerance: riskScore,
-      experience: questionnaire.experience,
+      experience: questionnaire.experience as InvestmentProfile['experience'],
       financialGoals: questionnaire.financialGoals,
-      investmentHorizon: questionnaire.investmentHorizon,
+      investmentHorizon: questionnaire.investmentHorizon as InvestmentProfile['investmentHorizon'],
+    };
+
+    setProfile(newProfile);
+    const response = await saveInvestmentProfile(newProfile);
+
+    openToast({
+      type: response ? 'success' : 'error',
+      message: response
+        ? profile
+          ? 'Perfil de investimento atualizado com sucesso!'
+          : 'Perfil de investimento criado com sucesso!'
+        : 'Erro ao salvar perfil de investimento',
+      duration: 5000,
+      position: 'top-right',
     });
-    console.log(profile)
+
+    response && updateLocalUser('investmentProfile', newProfile);
     setIsQuestionnaireOpen(false);
   };
 
-  return (
-    <div className={`relative bg-gradient-to-br from-gray-50 via-white to-cyan-200/60 dark:from-gray-900 dark:via-gray-800 dark:to-cyan-900/60 min-h-screen p-6 md:p-8 overflow-hidden`}>
-      {/* Particle Background */}
-      {/* <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute w-72 h-72 bg-cyan-300/20 dark:bg-cyan-800/30 rounded-full blur-3xl top-0 left-0 animate-float"></div>
-        <div className="absolute w-96 h-96 bg-indigo-300/20 dark:bg-indigo-800/30 rounded-full blur-3xl bottom-10 right-10 animate-float-slow"></div>
-      </div> */}
+  const profileButtonText = profile ? 'Atualizar Perfil' : 'Criar Perfil';
 
+  return (
+    <div className="relative bg-gradient-to-br from-gray-50 via-white to-cyan-200/60 dark:from-gray-900 dark:via-gray-800 dark:to-cyan-900/60 min-h-screen p-6 md:p-8 overflow-hidden">
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header with Dark Mode Toggle */}
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
             Seu Perfil de Investidor
-          </h2> 
+          </h2>
         </div>
 
-        {/* Main Content: Profile and Investments */}
+        {/* Main Content */}
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Profile Card */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl p-6 md:w-1/2 transition-all duration-500 hover:shadow-2xl border border-gray-100/50 dark:border-gray-700/20 animate-fade-in-up">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center">
-                <div className="w-16 h-16 rounded-full bg-blue-100/80 dark:bg-blue-900/80 backdrop-blur-sm flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4 shadow-lg animate-glow">
-                  <FontAwesomeIcon icon={faUserTie} className="text-2xl animate-pulse-slow" />
+          {/* Shared Card Styling Class */}
+          <div className="card bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-3xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl border border-gradient-to-r from-blue-200/50 to-cyan-200/50 dark:from-blue-900/50 dark:to-cyan-900/50 animate-in fade-in-up min-w-[300px] max-w-[600px]">
+            {profile ? (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-4 shadow-lg">
+                      <FontAwesomeIcon icon={faUserTie} className="text-2xl" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{profile.type}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Última atualização: {formatDateBR(profile.lastUpdated)}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsProfileModalOpen(true)}
+                    className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200"
+                    aria-label="Ver detalhes do perfil"
+                  >
+                    Ver Detalhes
+                  </button>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{profile.type}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Última atualização: {profile.lastUpdated}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsProfileModalOpen(true)}
-                className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200"
-                aria-label="Ver detalhes do perfil"
-              >
-                Ver Detalhes
-              </button>
-            </div>
 
-            {/* Risk Tolerance Meter */}
-            <div className="mb-6">
-              <div className="flex items-center mb-2">
-                <FontAwesomeIcon icon={faChartLine} className="text-gray-500 dark:text-gray-400 mr-2" />
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Tolerância ao Risco</h4>
-              </div>
-              <div className="relative w-full bg-gray-200/50 dark:bg-gray-700/50 rounded-full h-4 shadow-inner">
-                <div
-                  className="h-4 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500 dark:from-blue-300 dark:to-cyan-400 transition-all duration-500"
-                  style={{ width: `${(profile.riskTolerance / 10) * 100}%` }}
-                ></div>
-                <span className="absolute top-1/2 left-2 transform -translate-y-1/2 text-xs text-gray-600 dark:text-gray-300">
-                  Conservador
-                </span>
-                <span className="absolute top-1/2 right-2 transform -translate-y-1/2 text-xs text-gray-600 dark:text-gray-300">
-                  Agressivo
-                </span>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Nível: {profile.riskTolerance}/10 ({profile.type})
-              </p>
-            </div>
+                <div className="mb-6">
+                  <div className="flex items-center mb-2">
+                    <FontAwesomeIcon icon={faChartLine} className="text-gray-500 dark:text-gray-400 mr-2" />
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Tolerância ao Risco</h4>
+                  </div>
+                  <div className="relative w-full bg-gray-200/50 dark:bg-gray-700/50 rounded-full h-4 shadow-inner">
+                    <div
+                      className="h-4 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500 dark:from-blue-300 dark:to-cyan-400 transition-all duration-500"
+                      style={{ width: `${(profile.riskTolerance / 10) * 100}%` }}
+                    ></div>
+                    <span className="absolute top-1/2 left-2 transform -translate-y-1/2 text-xs text-gray-600 dark:text-gray-300">
+                      Conservador
+                    </span>
+                    <span className="absolute top-1/2 right-2 transform -translate-y-1/2 text-xs text-gray-600 dark:text-gray-300">
+                      Agressivo
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    Nível: {profile.riskTolerance}/10 ({profile.type})
+                  </p>
+                </div>
 
-            {/* Profile Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <div className="flex items-center mb-2">
-                  <FontAwesomeIcon icon={faClock} className="text-gray-500 dark:text-gray-400 mr-2" />
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Horizonte de Investimento</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <FontAwesomeIcon icon={faClock} className="text-gray-500 dark:text-gray-400 mr-2" />
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Horizonte de Investimento</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{profile.investmentHorizon}</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <FontAwesomeIcon icon={faChartLine} className="text-gray-500 dark:text-gray-400 mr-2" />
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Experiência de Investimento</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{profile.experience}</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center mb-2">
+                      <FontAwesomeIcon icon={faMoneyBillWave} className="text-gray-500 dark:text-gray-400 mr-2" />
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Objetivos Financeiros</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{profile.financialGoals}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{profile.investmentHorizon}</p>
-              </div>
-              <div>
-                <div className="flex items-center mb-2">
-                  <FontAwesomeIcon icon={faChartLine} className="text-gray-500 dark:text-gray-400 mr-2" />
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Experiência de Investimento</h4>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{profile.experience}</p>
-              </div>
-              <div>
-                <div className="flex items-center mb-2">
-                  <FontAwesomeIcon icon={faMoneyBillWave} className="text-gray-500 dark:text-gray-400 mr-2" />
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Objetivos Financeiros</h4>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{profile.financialGoals}</p>
-              </div>
-            </div>
 
-            {/* Update Profile Button */}
-            <button
-              onClick={() => setIsQuestionnaireOpen(true)}
-              className="w-full py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 animate-pulse-button"
-              aria-label="Atualizar ou refazer questionário de perfil"
-            >
-              Atualizar Perfil
-            </button>
+                <button
+                  onClick={() => setIsQuestionnaireOpen(true)}
+                  className="w-full py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  aria-label={profileButtonText}
+                >
+                  {profileButtonText}
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8">
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Nada encontrado aqui</p>
+                <button
+                  onClick={() => setIsQuestionnaireOpen(true)}
+                  className="py-2 px-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  aria-label="Criar Perfil"
+                >
+                  Criar Perfil
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Minhas Aplicações Card */}
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl p-6 md:w-1/2 transition-all duration-500 hover:shadow-2xl border border-gray-100/50 dark:border-gray-700/20 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <div
+            className="card bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-3xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl border border-gradient-to-r from-blue-200/50 to-cyan-200/50 dark:from-blue-900/50 dark:to-cyan-900/50 animate-in fade-in-up min-w-[300px] max-w-[600px] flex-grow overflow-y-auto max-h-[80vh]"
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(59, 130, 246, 0.5) rgba(229, 231, 235, 0.2)', // blue-500 and gray-200 for light mode
+            }}
+          >
+            <style>
+              {`
+                .card::-webkit-scrollbar {
+                  width: 8px;
+                }
+                .card::-webkit-scrollbar-track {
+                  background: rgba(229, 231, 235, 0.2); /* gray-200 with opacity */
+                  border-radius: 8px;
+                  margin: 4px 0;
+                }
+                .card::-webkit-scrollbar-thumb {
+                  background: rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+                  border-radius: 8px;
+                  transition: background 0.2s ease-in-out;
+                }
+                .card::-webkit-scrollbar-thumb:hover {
+                  background: rgba(59, 130, 246, 0.8); /* blue-500 darker on hover */
+                }
+                .dark .card::-webkit-scrollbar-track {
+                  background: rgba(55, 65, 81, 0.2); /* gray-700 with opacity */
+                }
+                .dark .card::-webkit-scrollbar-thumb {
+                  background: rgba(96, 165, 250, 0.5); /* blue-400 with opacity */
+                }
+                .dark .card::-webkit-scrollbar-thumb:hover {
+                  background: rgba(96, 165, 250, 0.8); /* blue-400 darker on hover */
+                }
+              `}
+            </style>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Minhas Aplicações</h3>
+              <h3 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+                Minhas Aplicações
+              </h3>
               <button
                 className="text-blue-600 dark:text-blue-400 text-sm font-semibold hover:text-blue-700 dark:hover:text-blue-300 transition-all duration-200"
                 aria-label="Ver detalhes das aplicações"
@@ -162,36 +232,80 @@ const ProfileContent: React.FC = () => {
                 Ver Detalhes
               </button>
             </div>
-            <div className="space-y-4">
-              {userInvestments.map((category, index) => (
-                <div key={category.name} className="bg-gray-50/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-lg p-4">
-                  <div className="flex items-center mb-2">
-                    <FontAwesomeIcon
-                      icon={category.name === 'Renda Fixa' ? faWallet : category.name === 'Renda Variável' ? faChartPie : faBuilding}
-                      className={`text-${category.color}-600 dark:text-${category.color}-400 mr-2`}
-                    />
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{category.name}</h4>
+            <div className="space-y-6">
+              {userInvestments.length > 0 ? (
+                userInvestments.map((category, index) => (
+                  <div
+                    key={category.name}
+                    className="bg-gray-50/70 dark:bg-gray-800/70 backdrop-blur-md rounded-xl p-5 transition-all duration-300 hover:bg-gray-100/70 dark:hover:bg-gray-700/70 animate-in fade-in-up"
+                    style={{ animationDelay: `${0.1 * (index + 1)}s` }}
+                  >
+                    <div className="flex items-center mb-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 flex items-center justify-center mr-3 transition-transform duration-200 hover:scale-110">
+                        <FontAwesomeIcon
+                          icon={
+                            category.name === 'Renda Fixa'
+                              ? faWallet
+                              : category.name === 'Renda Variável'
+                              ? faChartPie
+                              : faBuilding
+                          }
+                          className={`text-${category.color}-600 dark:text-${category.color}-400 text-lg`}
+                        />
+                      </div>
+                      <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">{category.name}</h4>
+                    </div>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Alocação</span>
+                      <span className="text-base font-extrabold text-gray-900 dark:text-gray-100">{category.value}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200/50 dark:bg-gray-700/50 rounded-full h-3 shadow-inner overflow-hidden">
+                      <div
+                        className={`h-3 rounded-full bg-gradient-to-r from-${category.color}-500 to-${category.color}-700 dark:from-${category.color}-400 dark:to-${category.color}-600 transition-all duration-500 ease-out`}
+                        style={{ width: `${category.value}%` }}
+                      ></div>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {category.items.map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-100/50 dark:hover:bg-gray-600/50 transition-colors duration-200"
+                        >
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">{item}</p>
+                          <span className={`text-xs text-${category.color}-600 dark:text-${category.color}-400`}>
+                            {category.name === 'Renda Fixa' ? '📈' : category.name === 'Renda Variável' ? '📊' : '🏠'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-gray-900 dark:text-gray-100">Alocação</span>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{category.value}%</span>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 animate-in fade-in zoom-in-95 duration-500">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900 dark:to-cyan-900 flex items-center justify-center mb-4">
+                    <FontAwesomeIcon icon={faPlusCircle} className="text-2xl text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="w-full bg-gray-200/50 dark:bg-gray-700/50 rounded-full h-2 shadow-inner">
-                    <div className={`bg-${category.color}-600 dark:bg-${category.color}-500 h-2 rounded-full`} style={{ width: `${category.value}%` }}></div>
-                  </div>
-                  <div className="mt-2">
-                    {category.items.map((item, i) => (
-                      <p key={i} className="text-xs text-gray-600 dark:text-gray-300">{item}</p>
-                    ))}
-                  </div>
+                  <h4 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300 mb-2">
+                    Nenhuma aplicação encontrada
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 text-center mb-4">
+                    Adicione investimentos para visualizar suas aplicações aqui!
+                  </p>
+                  <button
+                    onClick={() => {/* Add logic to navigate to investment creation */}}
+                    className="py-2 px-6 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-cyan-600 transition-all duration-200 hover:shadow-xl transform hover:scale-105"
+                    aria-label="Adicionar Investimento"
+                  >
+                    Adicionar Investimento
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
 
         {/* Profile Summary Modal */}
-        {isProfileModalOpen && (
+        {isProfileModalOpen && profile && (
           <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
             <div className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-2xl rounded-3xl p-8 max-w-md w-full shadow-2xl transform transition-all duration-500 animate-fade-in">
               <div className="flex items-center justify-between mb-4">
@@ -221,7 +335,7 @@ const ProfileContent: React.FC = () => {
                   <span className="font-semibold">Horizonte de Investimento:</span> {profile.investmentHorizon}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  <span className="font-semibold">Última Atualização:</span> {profile.lastUpdated}
+                  <span className="font-semibold">Última Atualização:</span> {formatDateBR(profile.lastUpdated)}
                 </p>
               </div>
               <button
@@ -335,110 +449,6 @@ const ProfileContent: React.FC = () => {
           </div>
         )}
       </div>
-
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        @keyframes pulseSlow {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.08);
-            opacity: 0.9;
-          }
-        }
-        @keyframes pulseButton {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.04);
-          }
-        }
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
-        }
-        @keyframes floatSlow {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-30px);
-          }
-        }
-        @keyframes glow {
-          0%, 100% {
-            box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 16px rgba(255, 255, 255, 0.5);
-          }
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 0.4s ease-out both;
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .animate-pulse-slow {
-          animation: pulseSlow 2.5s infinite ease-in-out;
-        }
-        .animate-pulse-button {
-          animation: pulseButton 1.8s infinite ease-in-out;
-        }
-        .animate-float {
-          animation: float 6s infinite ease-in-out;
-        }
-        .animate-float-slow {
-          animation: floatSlow 8s infinite ease-in-out;
-        }
-        .animate-glow {
-          animation: glow 2s infinite ease-in-out;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 16px;
-          height: 16px;
-          background: #3b82f6;
-          border-radius: 50%;
-          cursor: pointer;
-          box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-        }
-        input[type="range"]::-moz-range-thumb {
-          width: 16px;
-          height: 16px;
-          background: #3b82f6;
-          border-radius: 50%;
-          cursor: pointer;
-          box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-        }
-      `}</style>
     </div>
   );
 };

@@ -28,7 +28,16 @@ export interface Account {
   birthDate: Date;
   expensePerDay: number;
   passwordTransaction: string;
+  investmentProfile: InvestmentProfile;
   keyTypePix: TypeKeyPix
+}
+
+export interface InvestmentProfile {
+  experience: string
+  financialGoals: string
+  investmentHorizon: string
+  riskTolerance: number
+  lastUpdated: Date
 }
 
 export enum TypeKeyPix {
