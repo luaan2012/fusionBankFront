@@ -1,9 +1,7 @@
 import { create } from 'zustand';
-import type { AvailableInvestment } from 'types';
-import type { Investment } from '~/models/investment';
-import type { InvestmentRequest } from '~/models/request/investmentRequest';
-import type { ErrorApi } from '~/models/response/errorResponse';
-import { investmentApi } from '~/services/investmentApi';
+import { investmentApi } from '~/services/investmentService'
+import type { ErrorApi } from '~/types/api'
+import type { AvailableInvestment, Investment, InvestmentRequest } from '~/types/investment'
 
 interface InvestmentState {
   investment: Investment[];

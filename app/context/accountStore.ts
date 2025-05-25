@@ -1,11 +1,10 @@
-import { type Account } from './../models/account';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { accountApi } from '../services/accountApi';
 import { type LoginPayload } from '../homePage/schema/loginSchema';
-import { LevelError, type ErrorApi } from '~/models/response/errorResponse';
-import type { AccountRequest, InvestmentProfile } from 'types';
-import type { RegisterKeyPix } from '~/models/request/registerKeyPix';
+import { LevelError, type ErrorApi } from '~/types/api'
+import type { Account, AccountRequest, RegisterKeyPix, RegisterRequest } from '~/types/account'
+import type { InvestmentProfile } from '~/types/investment'
+import { accountApi } from '~/services/accountService'
 
 // Tipagem do estado de autenticação
 interface AccountState {

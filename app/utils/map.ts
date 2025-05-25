@@ -1,14 +1,9 @@
 import { faArrowDown, faArrowUp, faBarcode, faCreditCard, faHandHoldingUsd, faPiggyBank, faUniversity } from "@fortawesome/free-solid-svg-icons"
-import type { Bank } from "~/models/bank"
-import { BankType } from "~/models/enum/bankType"
-import { NotificationType } from "~/models/enum/notificationType"
-import type { EventMessage } from "~/models/eventMessage"
-import type { Investment } from "~/models/investment"
-import type { BankRegister, InvestmentHome, LastTransction } from "~/models/maps"
-import { formatToBRL } from "./utils"
-import { BilletType } from "~/models/response/billetResponse"
-import type { InvestmentDisplay } from "types"
-import { InvestmentType } from "~/models/enum/investmentType"
+import { BankType, type Bank, type BankRegister } from "~/types/bank"
+import { type Investment, type InvestmentHome, type InvestmentDisplay, InvestmentType } from "~/types/investment"
+import { NotificationType, type EventMessage } from "~/types/notification"
+import { type LastTransction, BilletType } from "~/types/transaction"
+import { formatToBRL } from "./util"
 
 export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): LastTransction[] {
   if(eventMessages?.length <= 0) return [];
@@ -67,7 +62,7 @@ export function mapEventMessagesToTransactions(eventMessages: EventMessage[]): L
           bg: 'bg-blue-100 dark:bg-blue-900',
           title: event.title,
           textColor: 'text-green-600 dark:text-green-400',
-          description: `${event.service} • ${formattedDate}`,
+          description: `${event.details} • ${formattedDate}`,
           amount: event.amount,
           balance: 0// Negativo para transferência enviada
         };

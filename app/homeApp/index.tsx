@@ -1,33 +1,33 @@
-import { useState, useEffect, useRef } from 'react';
-import Header from '../components/Header';
-import NotificationCenter from '../components/NotificationCenter';
-import QuickActions from '../components/QuickActions';
-import Footer from '../components/Footer';
-import CardsContent from './cards/CardsContent';
-import InvestmentsContent from './investments/InvestmentsContent';
-import { useAccountStore } from '~/context/accountStore';
-import { useEventStore } from '~/context/eventStore';
-import { RecentTransactions } from '~/components/RecentTransactions';
-import { InvestmentsDisplay } from '~/components/InvestmentsDisplay';
-import { TransferContent } from './transfer/Transfer';
-import { useAppStore } from '~/context/appStore';
-import { Sidebar } from '~/components/Sidebar';
-import type { EventMessage } from '~/models/eventMessage';
-import Notification from '~/components/Notification';
-import { useCreditCardStore } from '~/context/creditCardStore';
-import { DepositBillets } from './depositBillets/DepositBillets';
-import { AccountEditPage } from './config/AccountEdit';
-import { PinRegistrationModal } from '~/components/PinRegistrationModal';
-import { AccountSummary } from '~/components/AccountSummary';
-import { useToast } from '~/components/ToastContext';
-import { useNavigate } from 'react-router';
-import { Connector } from '~/services/signalR';
-import { useInvestmentStore } from '~/context/investmentStore';
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import SessionTimer from '~/components/SessionTimer'
-import { NotificationType } from '~/models/enum/notificationType'
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router'
+import { AccountSummary } from '~/components/Contents/AccountSummary'
+import { InvestmentsDisplay } from '~/components/Contents/InvestmentsDisplay'
+import { Sidebar } from '~/components/Sidebars/Sidebar'
+import { useToast } from '~/components/Toasts/ToastContext'
+import { useAccountStore } from '~/context/accountStore'
+import { useAppStore } from '~/context/appStore'
+import { useCreditCardStore } from '~/context/creditCardStore'
+import { useEventStore } from '~/context/eventStore'
+import { useInvestmentStore } from '~/context/investmentStore'
+import { Connector } from '~/services/signalRService'
+import { NotificationType, type EventMessage } from '~/types/notification'
 import { RecentTransactionsFull } from './fullExtract'
+import { Transference } from './transference/Transference'
+import { CreditCard } from './creditCard/CreditCard'
+import { Transaction } from './transaction/Transaction'
+import { Configuration } from './configuration/Configuration'
+import './css/app.css'
+import { NotificationCenter } from '~/components/Contents/NotificationCenter'
+import { QuickActions } from '~/components/Contents/QuickActions'
+import { RecentTransactions } from '~/components/Contents/RecentTransactions'
+import Footer from '~/components/Footers/Footer'
+import { Header } from '~/components/Headers/Header'
+import { PinRegistrationModal } from '~/components/Modals/PinRegistrationModal'
+import { SessionTimer } from '~/components/Session/SessionTimer'
+import { Notification } from '~/components/Toasts/Notification'
+import { InvestmentContent } from './investments/InvestmentsContent'
 
 export function Index() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -261,15 +261,15 @@ export function Index() {
                 <InvestmentsDisplay investments={investment} loading={loadingInvestment} />
               </>
             ) : view === 'transfer' ? (
-              <TransferContent />
+              <Transference />
             ) : view === 'cards' ? (
-              <CardsContent />
+              <CreditCard />
             ) : view === 'investments' ? (
-              <InvestmentsContent />
+              <InvestmentContent />
             ) : view === 'deposit' ? (
-              <DepositBillets />
+              <Transaction />
             ) : view === 'accountEdit' ? (
-              <AccountEditPage />
+              <Configuration />
             ) : (
               <RecentTransactionsFull transactions={lastTransactions} loading={loadingTransactions} />
             )}

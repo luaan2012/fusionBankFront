@@ -1,10 +1,8 @@
-import type { ResponseStore } from 'types'
 import { create } from 'zustand';
 import type { DepositFormData } from '~/homeApp/schema/depositBilletsScheme'
-import type { DepositBillet } from '~/models/request/depositBilletRequest'
-import type { Billet } from '~/models/response/billetResponse'
-import { type ErrorApi } from '~/models/response/errorResponse'
-import { paymentApi } from '~/services/paymentApi'
+import { paymentApi } from '~/services/paymentService'
+import type { ErrorApi, ResponseStore } from '~/types/api'
+import type { Billet, DepositBillet } from '~/types/transaction'
 
 // Tipagem do estado de autenticação
 interface PaymentState {

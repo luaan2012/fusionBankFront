@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { LevelError, type ErrorApi } from '~/models/response/errorResponse'
-import type { Bank } from '~/models/bank'
-import { bankApi } from '~/services/bankApi'
+import { bankApi } from '~/services/bankService'
+import { LevelError, type ErrorApi } from '~/types/api'
+import type { Bank } from '~/types/bank'
 
 // Tipagem do estado de autenticação
 interface BankState {

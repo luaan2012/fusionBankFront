@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faCheckCircle, faTimes, faTrophy, faWallet } from '@fortawesome/free-solid-svg-icons';
-import InvestmentTabs from '~/components/InvestmentTabs';
-import InvestModal from '~/components/InvestModal';
-import SummaryCard from '~/components/SummaryCard';
-import VerificationModal from '~/components/VerificationModal';
-import { useInvestmentStore } from '~/context/investmentStore';
-import { useAccountStore } from '~/context/accountStore';
-import { formatToBRL, getYesterdayDateString } from '~/utils/utils';
-import type { Investment } from '~/models/investment'
+import { SummaryCard } from '~/components/Cards/SummaryCard'
+import { InvestModal } from '~/components/Modals/InvestModal'
+import { VerificationModal } from '~/components/Modals/VerificationModal'
+import InvestmentTabs from '~/components/Tabs/InvestmentTabs'
+import { useAccountStore } from '~/context/accountStore'
+import { useInvestmentStore } from '~/context/investmentStore'
+import type { Investment } from '~/types/investment'
+import { formatToBRL, getYesterdayDateString } from '~/utils/util'
+
 
 interface Notification {
   show: boolean;
   message: string;
 }
 
-const App: React.FC = () => {
+export const InvestmentContent = () => {
   const [activeTab, setActiveTab] = useState<'portfolio' | 'explore' | 'reports' | 'profile'>('portfolio');
   const [isInvestModalOpen, setInvestModalOpen] = useState(false);
   const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
@@ -191,5 +192,3 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-export default App;

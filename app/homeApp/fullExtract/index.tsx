@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp, faArrowDown, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import type { EventMessage } from '~/models/eventMessage';
-import { TransferType } from '~/models/enum/transferType';
-import { formatDateBR, getTransactionTypeLabel } from '~/utils/utils';
-import { NotificationType } from '~/models/enum/notificationType';
+import { NotificationType, type EventMessage } from '~/types/notification'
+import { formatDateBR, getTransactionTypeLabel } from '~/utils/util'
 
 interface RecentTransactionsFullProps {
   transactions: EventMessage[];

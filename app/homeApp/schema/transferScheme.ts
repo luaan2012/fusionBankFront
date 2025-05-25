@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { type FieldErrors } from 'react-hook-form';
+import { validarCNPJ, validarCPF } from '~/utils/validator'
 
 export const pixSchemaBase = z.object({
   transferType: z.literal('pix'),
@@ -112,9 +114,6 @@ export const tedDocSchema = z.object({
 });
 
 export type TedDocFormData = z.infer<typeof tedDocSchema>;
-import { type FieldErrors } from 'react-hook-form';
-import { validarCNPJ, validarCPF } from '~/utils/validators'
-
 export const transferSchema = z.union([pixSchema, tedDocSchema]);
 
 export type TransferFormData = z.infer<typeof transferSchema>;

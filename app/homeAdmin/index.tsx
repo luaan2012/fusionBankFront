@@ -1,11 +1,12 @@
-import BankContexts from "./banks/BankContexts"
-import DashboardContent from "./dashboard/DashboardContent"
+
+import BankContexts from "./banks/Banks"
 import TransationMain from "./transactions/Transaction"
 import React, { useState } from 'react';
-import { SidebarAdmin } from "~/components/SideBarAdmin"
-import ModalAdmin from "~/components/ModalAdmin"
-import HeaderAdmin from "~/components/HeaderAdmin"
-import NotificationAreaAdmin from "~/components/NotificationAreaAdmin"
+import Dashboard from "./dashboard/Dashboard"
+import { HeaderAdmin } from "~/components/Headers/HeaderAdmin"
+import { ModalAdmin } from "~/components/Modals/ModalAdmin"
+import { SidebarAdmin } from "~/components/Sidebars/SideBarAdmin"
+import { NotificationAreaAdmin } from "~/components/Toasts/NotificationAreaAdmin"
 
 interface ModalState {
   type: 'bank' | 'transfer' | 'twofa' | 'confirm' | null;
@@ -60,7 +61,7 @@ export function Index () {
         >
           <HeaderAdmin openModal={openModal} />
           <main className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
-            {activeTab === 'dashboard' && <DashboardContent />}
+            {activeTab === 'dashboard' && <Dashboard />}
             {activeTab === 'accounts' && <BankContexts />}
             {activeTab === 'transactions' && <TransationMain />}
           </main>

@@ -7,9 +7,9 @@ import {
   ScrollRestoration,
 } from "react-router";
 import type { Route } from "./+types/root";
-import { ToastProvider } from "./components/ToastContext"
-import { PageError } from "./components/PageError"
 import "../app.css";
+import { ToastProvider } from "./components/Toasts/ToastContext"
+import { PageError } from "./components/Errors/PageError"
 
 
 export function Layout({ children }: { children: React.ReactNode }) {

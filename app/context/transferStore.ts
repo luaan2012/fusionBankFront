@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import type { TransferFormData } from '~/homeApp/schema/transferScheme'
-import { type ErrorApi } from '~/models/response/errorResponse'
-import { transferApi } from '~/services/transferApi'
-import { useAccountStore } from './accountStore'
+import { transferApi } from '~/services/transferService'
+import type { ErrorApi } from '~/types/api'
 
 // Tipagem do estado de autenticação
 interface TransferState {

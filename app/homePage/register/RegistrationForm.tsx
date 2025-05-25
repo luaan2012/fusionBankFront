@@ -9,42 +9,16 @@ import {
   faMagnifyingGlass,
   faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
-import ProgressSteps from '~/components/ProgressSteps';
-import BankCard from '~/components/BankCard';
-import { useBankStore } from '~/context/bankStore';
-import { mapBanksToDisplay } from '~/utils/map';
-import { useAccountStore } from '~/context/accountStore';
-import { CleanString, formatToBRLInput } from '../../utils/utils';
-import { useNavigate } from 'react-router';
-import { validarCNPJ, validarCPF } from '~/utils/validators';
-import { useToast } from '~/components/ToastContext'
-
-interface FormError {
-  error: boolean;
-  message: string;
-}
-
-interface RegisterRequest {
-  name: string;
-  lastName: string;
-  phoneNumber: string;
-  salaryPerMonth: string;
-  accountType: string;
-  bankISBP: string;
-  bankName: string;
-  documentType: 'CPF' | 'CNPJ';
-  email: string;
-  document: string;
-  password: string;
-  confirmPassword: string;
-  birthDate: string;
-}
-
-interface PasswordStrength {
-  width: number;
-  color: string;
-  text: string;
-}
+import { useNavigate } from 'react-router'
+import { useToast } from '~/components/Toasts/ToastContext'
+import { useAccountStore } from '~/context/accountStore'
+import { useBankStore } from '~/context/bankStore'
+import { mapBanksToDisplay } from '~/utils/map'
+import { CleanString, formatToBRLInput } from '~/utils/util'
+import { validarCNPJ, validarCPF } from '~/utils/validator'
+import type { FormError, PasswordStrength, RegisterRequest } from '~/types/account'
+import { ProgressSteps } from '~/components/ProgressBar/ProgressSteps'
+import { BankCard } from '~/components/Tabs/BankCard'
 
 export function RegistrationForm() {
   const [currentStep, setCurrentStep] = useState<number>(1);

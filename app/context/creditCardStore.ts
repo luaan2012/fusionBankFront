@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { LevelError, type ErrorApi } from '~/models/response/errorResponse'
-import type { CreditCard } from '~/models/creditCard'
-import { creditCardApi } from '~/services/creditCardApi'
+import { creditCardApi } from '~/services/creditCardService'
+import { LevelError, type ErrorApi } from '~/types/api'
+import type { CreditCard } from '~/types/creditCard'
 
 // Tipagem do estado de autenticação
 interface CreditCardState {

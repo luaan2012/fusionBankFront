@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { eventApi } from '../services/eventApi'
-import { type ErrorApi } from '~/models/response/errorResponse'
-import type { EventMessage } from '~/models/eventMessage'
+import { eventApi } from '~/services/eventService'
+import type { ErrorApi } from '~/types/api'
+import type { EventMessage } from '~/types/notification'
 
 // Tipagem do estado de autenticação
 interface EventState {

@@ -1,10 +1,10 @@
-import ThemeToggle from '~/components/ThemeToggle'
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUniversity } from '@fortawesome/free-solid-svg-icons'
 import LoginForm from './login/LoginForm'
 import { RegistrationForm } from './register/RegistrationForm'
-import TabNavigation from '~/components/TabNavigationSign'
+import { ThemeToggle } from '~/components/Themes/ThemeToggle'
+import { TabNavigation } from '~/components/Tabs/TabNavigationSign'
 
 export function Index() {
     const [activeTab, setActiveTab] = useState<string>('login');

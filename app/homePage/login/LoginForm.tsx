@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faWallet, faIdCard, faEnvelope, faSignInAlt, faFingerprint, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faWallet, faIdCard, faEnvelope, faSignInAlt, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { loginSchema, type LoginFormData, type AccountFormErrors, type DocumentFormErrors, type EmailFormErrors, type LoginPayload } from '../schema/loginSchema';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router';
 import { useAccountStore } from '~/context/accountStore';
 import { IMaskInput } from 'react-imask';
-import { useToast } from '~/components/ToastContext'
 import { decryptString , encryptObject} from '~/services/encryptService'
+import { useToast } from '~/components/Toasts/ToastContext'
 
 interface LoginFormProps {
   switchToRegister: () => void;

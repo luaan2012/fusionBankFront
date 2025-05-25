@@ -1,6 +1,0 @@
-export enum CreditCardFlag {
-    VISA = "VISA",
-    MASTERCARD = "MASTERCARD",
-    DISCOVER = "DISCOVER",
-    AMERICANEXPRESS = "AMERICANEXPRESS",
-}

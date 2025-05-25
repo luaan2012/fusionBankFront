@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { validarCPF, validarCNPJ } from '~/utils/validators';
 import { type FieldErrors } from 'react-hook-form';
+import { validarCNPJ, validarCPF } from '~/utils/validator'
 
 // Custom validator for CPF/CNPJ
 const documentValidator = z

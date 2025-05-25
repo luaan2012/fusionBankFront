@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { type FieldErrors } from 'react-hook-form';
-import { validarCNPJ, validarCPF } from '~/utils/validators'
+import { validarCPF, validarCNPJ } from '~/utils/validator'
 
 // Esquemas base para cada tipo de login
 const accountSchema = z.object({
