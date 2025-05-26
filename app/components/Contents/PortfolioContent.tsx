@@ -39,7 +39,7 @@ const iconMap: Record<string, any> = {
 const colorMap: Record<string, string> = {
   CDB: 'blue',
   LCI: 'green',
-  LCA: 'lime',
+  LCA: 'red',
   FII: 'purple',
   STOCK: 'sky',
 };

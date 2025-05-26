@@ -118,7 +118,7 @@ export const ExploreContent = () => {
       success = await createInvest(investmentRequest);
     }
   
-    if(success) {
+    if(success) {      
       await listInvestmentsUser(user.accountId, 0)
       updateLocalUser('balance', user.balance - investmentRequest.amount);
     }
@@ -126,6 +126,7 @@ export const ExploreContent = () => {
     setIsModalOpen(false);
     setSelectedInvestment(null);
     setIsModalTransactionOpen(false);
+    await availableInvestments(user.accountId)
   };
 
   const handleReset = () => {
